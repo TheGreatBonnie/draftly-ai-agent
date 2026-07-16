@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 
 from src.api.routes import reviews, docs, memory
+from src.database import get_pool, close_pool
 
 templates = Jinja2Templates(directory="src/api/templates")
 
