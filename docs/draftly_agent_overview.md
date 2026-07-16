@@ -1,14 +1,45 @@
 # Project Name
 
-**Draftly AI**
+---
 
-### An Autonomous Documentation Engineering Agent with Persistent Organizational Memory
+# Draftly AI
 
-> An AI system that continuously learns from engineering conversations, support requests and GitHub activity to create, review, improve and publish documentation while remembering every decision ever made.
+## Autonomous Documentation Engineering with Persistent Agentic Memory
 
-This is much bigger than a chatbot.
+> **Draftly** is an autonomous documentation engineering platform powered by AI agents that continuously transforms support conversations into accurate, production-ready documentation. Built with **LangChain Deep Agents**, **CockroachDB**, and **AWS**, Draftly doesn't just answer questions—it remembers every interaction, learns from every review, and continuously improves an organization's documentation over time.
 
-It becomes an AI documentation engineer.
+Modern engineering teams spend countless hours answering the same technical questions across GitHub Issues, Slack, Discord, and community forums. While these conversations often contain valuable solutions and best practices, they remain scattered across multiple platforms, making institutional knowledge difficult to discover and easy to lose.
+
+Draftly solves this problem by introducing a team of autonomous AI agents that collaborate to capture, organize, and evolve an organization's technical knowledge. Whenever a new support request arrives, a **Documentation Engineering Manager** (a LangChain Deep Agent) analyzes the request, creates an execution plan, and delegates specialized tasks to a team of subagents responsible for memory retrieval, GitHub research, Slack and Discord analysis, knowledge synthesis, technical writing, documentation review, and publishing.
+
+Unlike traditional RAG applications or AI documentation assistants, Draftly is designed around **persistent organizational memory**. Every support conversation, documentation revision, reviewer decision, approval, and publication becomes part of the system's long-term memory. Rather than treating memory as a temporary prompt, Draftly stores and continuously enriches knowledge inside **CockroachDB**, allowing every future decision to benefit from previous experience.
+
+CockroachDB serves as the intelligent memory layer for the entire platform. It stores multiple forms of agent memory, including episodic memory from historical support conversations, semantic memory through distributed vector embeddings, procedural memory describing workflow execution, reviewer memory capturing human feedback, and organizational memory preserving approved documentation, architectural decisions, and best practices. Because every specialized agent shares the same persistent memory, the system becomes progressively smarter as more documentation is created and reviewed.
+
+When Draftly generates documentation, it doesn't immediately publish the result. The generated content first passes through an autonomous review process before entering a **Human-in-the-Loop (HITL)** workflow, where technical reviewers validate accuracy, improve explanations, and approve publication. Reviewer edits are not discarded—they become new organizational knowledge that improves future generations and increases the quality of subsequent documentation.
+
+After approval, Draftly automatically publishes the documentation to the organization's documentation platform and responds directly to the original GitHub Issue, Slack thread, or Discord discussion with the approved answer. This creates a continuous knowledge lifecycle where support conversations generate documentation, documentation resolves future questions, and every interaction strengthens the organization's collective memory.
+
+To deliver a production-ready architecture, Draftly combines **CockroachDB's Distributed Vector Indexing** for semantic retrieval, the **CockroachDB Cloud Managed MCP Server** for secure memory access, the **CockroachDB Agent Skills Repository** for database-aware agent capabilities, and the **ccloud CLI** for infrastructure automation. On AWS, services such as **Amazon Bedrock**, **Amazon ECS**, **Amazon SQS**, **AWS Lambda**, **Amazon S3**, **Amazon EventBridge**, **AWS Secrets Manager**, and **Amazon CloudWatch** provide scalable reasoning, event processing, secure deployment, observability, and resilient infrastructure.
+
+## Why Draftly?
+
+Most AI documentation tools are stateless assistants that generate answers based only on the current prompt.
+
+Draftly is fundamentally different.
+
+It is an autonomous documentation engineering system that:
+
+- Continuously learns from GitHub Issues, Slack, Discord, and existing documentation.
+- Uses LangChain Deep Agents to dynamically plan tasks and coordinate specialized subagents.
+- Treats CockroachDB as a persistent organizational memory rather than just a database.
+- Stores transactional, semantic, procedural, and reviewer memory in a unified platform.
+- Implements Human-in-the-Loop approval to ensure documentation quality and trust.
+- Learns from every reviewer edit to continuously improve future documentation.
+- Automatically publishes approved documentation and responds to the original support channels.
+- Preserves institutional knowledge so valuable engineering expertise is never lost.
+
+Instead of simply generating documentation, Draftly continuously **builds, remembers, improves, and maintains** an organization's technical knowledge, transforming everyday support conversations into a living, searchable, and continuously evolving knowledge base powered by persistent agentic memory.
 
 ---
 
