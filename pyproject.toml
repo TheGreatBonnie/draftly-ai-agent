@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=75.0.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
 [project]
 name = "draftly"
 version = "0.1.0"
@@ -46,6 +50,16 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["slack_bolt.*", "slack_sdk.*", "discord.*", "pgvector.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
