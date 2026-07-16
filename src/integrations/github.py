@@ -1,0 +1,36 @@
+from __future__ import annotations
+
+import httpx
+import structlog
+
+from src.config import settings
+
+logger = structlog.get_logger()
+
+
+async def post_github_comment(owner: str, repo: str, issue_number: int, body: str) -> dict:
+    headers = {"Authorization": f"token {settings.github_token.get_secret_value()}", "Content-Type": "application/json"}
+    payload = {"body": body}
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments",
+            headers=headers,
+            json=payload,
+            timeout=10,
+        )
+        if resp.status_code not in (200, 201):
+            logger.error("github_comment_failed", status=resp.status_code, body=resp.text)
+        return resp.json()
+
+
+async def get_github_issue(owner: str, repo: str, issue_number: int) -> dict:
+    headers = {"Authorization": f"token {settings.github_token.get_secret_value()}"}
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}",
+            headers=headers,
+            timeout=10,
+        )
+        return resp.json()

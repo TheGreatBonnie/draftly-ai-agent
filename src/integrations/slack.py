@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+import httpx
+import structlog
+
+from src.config import settings
+
+logger = structlog.get_logger()
+
+
+async def send_slack_message(channel: str, text: str, thread_ts: str | None = None) -> dict:
+    headers = {"Authorization": f"Bearer {settings.slack_bot_token.get_secret_value()}", "Content-Type": "application/json"}
+    payload = {"channel": channel, "text": text}
+    if thread_ts:
+        payload["thread_ts"] = thread_ts
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post("https://slack.com/api/chat.postMessage", headers=headers, json=payload, timeout=10)
+        result = resp.json()
+        if not result.get("ok"):
+            logger.error("slack_send_failed", error=result.get("error"))
+        return result
+
+
+async def send_dm(user_id: str, text: str) -> dict:
+    headers = {"Authorization": f"Bearer {settings.slack_bot_token.get_secret_value()}", "Content-Type": "application/json"}
+    payload = {"channel": user_id, "text": text}
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post("https://slack.com/api/chat.postMessage", headers=headers, json=payload, timeout=10)
+        return resp.json()
+
+
+async def add_reaction(channel: str, timestamp: str, emoji: str) -> dict:
+    headers = {"Authorization": f"Bearer {settings.slack_bot_token.get_secret_value()}", "Content-Type": "application/json"}
+    payload = {"channel": channel, "timestamp": timestamp, "name": emoji}
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post("https://slack.com/api/reactions.add", headers=headers, json=payload, timeout=10)
+        return resp.json()
