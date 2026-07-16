@@ -1,3 +1,6 @@
+from typing import Literal
+
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 
@@ -11,22 +14,22 @@ class Settings(BaseSettings):
     bedrock_embedding_model: str = "amazon.titan-embed-text-v2:0"
 
     # Slack
-    slack_bot_token: str = ""
-    slack_signing_secret: str = ""
+    slack_bot_token: SecretStr = SecretStr("")
+    slack_signing_secret: SecretStr = SecretStr("")
 
     # Discord
-    discord_bot_token: str = ""
-    discord_public_key: str = ""
+    discord_bot_token: SecretStr = SecretStr("")
+    discord_public_key: SecretStr = SecretStr("")
 
     # GitHub
-    github_token: str = ""
-    github_webhook_secret: str = ""
+    github_token: SecretStr = SecretStr("")
+    github_webhook_secret: SecretStr = SecretStr("")
 
     # App
     app_url: str = "http://localhost:8000"
     review_dashboard_url: str = "http://localhost:8000"
-    environment: str = "development"
-    log_level: str = "INFO"
+    environment: Literal["development", "staging", "production"] = "development"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

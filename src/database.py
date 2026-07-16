@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import asyncpg
 import structlog
 
@@ -31,22 +33,21 @@ async def close_pool() -> None:
         logger.info("cockroachdb_pool_closed")
 
 
-async def fetch_one(query: str, *args) -> asyncpg.Record | None:
+async def fetch_one(query: str, *args: Any) -> asyncpg.Record | None:
     pool = await get_pool()
     return await pool.fetchrow(query, *args)
 
 
-async def fetch_all(query: str, *args) -> list[asyncpg.Record]:
+async def fetch_all(query: str, *args: Any) -> list[asyncpg.Record]:
     pool = await get_pool()
     return await pool.fetch(query, *args)
 
 
-async def execute(query: str, *args) -> str:
+async def execute(query: str, *args: Any) -> str:
     pool = await get_pool()
     return await pool.execute(query, *args)
 
 
-async def fetch_val(query: str, *args):
+async def fetch_val(query: str, *args: Any) -> Any | None:
     pool = await get_pool()
-    row = await pool.fetchrow(query, *args)
-    return row[0] if row else None
+    return await pool.fetchval(query, *args)
