@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+
 import structlog
-from src.database import fetch_one, fetch_all, execute
+
+from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
 
@@ -19,7 +21,10 @@ async def create_workflow(
         VALUES ($1, $2, $3::jsonb, $4, 'running')
         RETURNING id::text
         """,
-        org_id, thread_id, json.dumps(graph_state), current_node,
+        org_id,
+        thread_id,
+        json.dumps(graph_state),
+        current_node,
     )
     logger.info("workflow_created", id=row["id"])
     return row["id"]
@@ -79,6 +84,7 @@ async def get_workflows_by_status(org_id: str, status: str) -> list[dict]:
         WHERE org_id = $1 AND status = $2
         ORDER BY created_at DESC
         """,
-        org_id, status,
+        org_id,
+        status,
     )
     return [dict(r) for r in rows]

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+
 import structlog
 from langchain_aws import BedrockEmbeddings
 
 from src.config import settings
-from src.database import fetch_all, fetch_one, execute
+from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
 

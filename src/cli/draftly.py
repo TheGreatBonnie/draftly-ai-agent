@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import sys
 
 import structlog
 
 from src.agents.graph import compile_graph
-from src.database import get_pool, close_pool
+from src.database import close_pool, get_pool
 
 logger = structlog.get_logger()
 
@@ -49,7 +48,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str = "defaul
 
     result = await graph.ainvoke(initial_state, config)
 
-    print(f"\n✅ Completed!")
+    print("\n✅ Completed!")
     print(f"Title: {result.get('draft_title', 'N/A')}")
     print(f"Confidence: {result.get('confidence_score', 0):.2f}")
     print(f"Doc Type: {result.get('doc_type', 'N/A')}")

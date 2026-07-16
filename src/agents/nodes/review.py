@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+
 import structlog
 
 from src.agents.state import DocumentationState
-from src.integrations.bedrock import call_bedrock
 from src.database import execute
+from src.integrations.bedrock import call_bedrock
 
 logger = structlog.get_logger()
 
@@ -51,11 +52,17 @@ async def ai_review_node(state: DocumentationState) -> dict:
         review = json.loads(response)
     except json.JSONDecodeError:
         import re
-        json_match = re.search(r'\{[\s\S]*\}', response)
+
+        json_match = re.search(r"\{[\s\S]*\}", response)
         if json_match:
             review = json.loads(json_match.group())
         else:
-            review = {"confidence": 0.5, "issues": ["Review parsing failed"], "suggestions": [], "passed": False}
+            review = {
+                "confidence": 0.5,
+                "issues": ["Review parsing failed"],
+                "suggestions": [],
+                "passed": False,
+            }
 
     confidence = review.get("confidence", 0.5)
 
@@ -64,7 +71,8 @@ async def ai_review_node(state: DocumentationState) -> dict:
     if doc_id:
         await execute(
             "UPDATE documentation SET confidence_score = $1 WHERE id = $2",
-            confidence, doc_id,
+            confidence,
+            doc_id,
         )
 
     logger.info("ai_review_completed", confidence=confidence, passed=review.get("passed", False))

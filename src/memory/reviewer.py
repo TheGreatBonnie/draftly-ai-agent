@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+
 import structlog
-from src.database import fetch_one, fetch_all, execute
+
+from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
 
@@ -18,7 +20,9 @@ async def create_review_session(
         VALUES ($1, $2, $3, 'pending')
         RETURNING id::text
         """,
-        doc_id, reviewer_id, confidence_before,
+        doc_id,
+        reviewer_id,
+        confidence_before,
     )
     logger.info("review_created", id=row["id"], doc_id=doc_id)
     return row["id"]
@@ -38,7 +42,11 @@ async def complete_review(
             confidence_after = $4, completed_at = now()
         WHERE id = $5
         """,
-        status, feedback, json.dumps(edits_made or {}), confidence_after, review_id,
+        status,
+        feedback,
+        json.dumps(edits_made or {}),
+        confidence_after,
+        review_id,
     )
     logger.info("review_completed", id=review_id, status=status)
 
@@ -67,7 +75,8 @@ async def get_review_history(org_id: str, limit: int = 10) -> list[dict]:
         ORDER BY rs.completed_at DESC
         LIMIT $2
         """,
-        org_id, limit,
+        org_id,
+        limit,
     )
     return [dict(r) for r in rows]
 
@@ -80,6 +89,7 @@ async def get_reviewer_memory(org_id: str, limit: int = 10) -> list[dict]:
         ORDER BY created_at DESC
         LIMIT $2
         """,
-        org_id, limit,
+        org_id,
+        limit,
     )
     return [dict(r) for r in rows]

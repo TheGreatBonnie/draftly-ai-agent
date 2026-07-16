@@ -30,15 +30,17 @@ async def human_review_node(state: DocumentationState) -> dict:
         details={"review_id": review_id, "confidence": state.get("confidence_score", 0)},
     )
 
-    decision = interrupt({
-        "type": "documentation_review",
-        "doc_id": doc_id,
-        "review_id": review_id,
-        "title": state.get("draft_title", ""),
-        "content": state.get("draft_content", ""),
-        "confidence": state.get("confidence_score", 0),
-        "question": state["question"],
-    })
+    decision = interrupt(
+        {
+            "type": "documentation_review",
+            "doc_id": doc_id,
+            "review_id": review_id,
+            "title": state.get("draft_title", ""),
+            "content": state.get("draft_content", ""),
+            "confidence": state.get("confidence_score", 0),
+            "question": state["question"],
+        }
+    )
 
     human_decision = decision.get("decision", "reject") if isinstance(decision, dict) else "reject"
     human_feedback = decision.get("feedback", "") if isinstance(decision, dict) else ""

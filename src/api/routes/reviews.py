@@ -14,6 +14,7 @@ class ReviewDecision(BaseModel):
 @router.get("/pending")
 async def get_pending():
     from src.memory.reviewer import get_pending_reviews
+
     return await get_pending_reviews(org_id="default")
 
 
@@ -33,6 +34,7 @@ async def decide_review(review_id: str, body: ReviewDecision):
 @router.get("/{review_id}")
 async def get_review(review_id: str):
     from src.database import fetch_one
+
     row = await fetch_one(
         "SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score "
         "FROM review_sessions rs JOIN documentation d ON d.id = rs.doc_id WHERE rs.id = $1",

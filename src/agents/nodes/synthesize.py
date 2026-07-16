@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+
 import structlog
 
 from src.agents.state import DocumentationState
@@ -8,7 +9,8 @@ from src.integrations.bedrock import call_bedrock
 
 logger = structlog.get_logger()
 
-SYNTHESIZE_PROMPT = """You are a knowledge synthesis agent. Merge the following research into a unified knowledge package for documentation.
+SYNTHESIZE_PROMPT = """You are a knowledge synthesis agent. Merge the following
+research into a unified knowledge package for documentation.
 
 ## Original Question
 {question}
@@ -37,7 +39,8 @@ Create a JSON knowledge package with:
 - "code_examples": any code snippets found
 - "gaps": information that's missing or contradictory
 - "sources": list of source references
-- "recommended_doc_type": one of "howto", "faq", "tutorial", "troubleshooting", "reference"
+- "recommended_doc_type": one of "howto", "faq", "tutorial",
+  "troubleshooting", "reference"
 
 Return ONLY valid JSON, no other text."""
 
@@ -52,7 +55,9 @@ async def synthesize_node(state: DocumentationState) -> dict:
         existing_docs=json.dumps(state.get("existing_docs", [])[:3], indent=2),
         github_context="\n".join(state.get("github_context", [])[:2]),
         slack_context="\n".join(state.get("slack_context", [])[:2]),
-        reviewer_feedback_history=json.dumps(state.get("reviewer_feedback_history", [])[:3], indent=2),
+        reviewer_feedback_history=json.dumps(
+            state.get("reviewer_feedback_history", [])[:3], indent=2
+        ),
     )
 
     response = await call_bedrock(prompt)
@@ -61,7 +66,8 @@ async def synthesize_node(state: DocumentationState) -> dict:
         knowledge_package = json.loads(response)
     except json.JSONDecodeError:
         import re
-        json_match = re.search(r'\{[\s\S]*\}', response)
+
+        json_match = re.search(r"\{[\s\S]*\}", response)
         if json_match:
             knowledge_package = json.loads(json_match.group())
         else:
@@ -76,7 +82,8 @@ async def synthesize_node(state: DocumentationState) -> dict:
 
     doc_type = knowledge_package.get("recommended_doc_type", "howto")
 
-    logger.info("synthesize_completed", doc_type=doc_type, facts=len(knowledge_package.get("key_facts", [])))
+    facts = knowledge_package.get("key_facts", [])
+    logger.info("synthesize_completed", doc_type=doc_type, facts=len(facts))
 
     return {
         "knowledge_package": knowledge_package,

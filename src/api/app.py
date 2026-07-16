@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 
-from src.api.routes import reviews, docs, memory
-from src.database import get_pool, close_pool
+from src.api.routes import docs, memory, reviews
+from src.database import close_pool, get_pool
 
 templates = Jinja2Templates(directory="src/api/templates")
 
@@ -28,6 +28,7 @@ app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 @app.get("/")
 async def dashboard():
     from src.memory.reviewer import get_pending_reviews
+
     reviews = await get_pending_reviews(org_id="default")
     return templates.TemplateResponse("dashboard.html", {"request": {}, "reviews": reviews})
 
@@ -35,9 +36,11 @@ async def dashboard():
 @app.get("/review/{review_id}")
 async def review_page(review_id: str):
     from src.database import fetch_one
+
     review = await fetch_one(
         "SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score "
         "FROM review_sessions rs JOIN documentation d ON d.id = rs.doc_id WHERE rs.id = $1",
         review_id,
     )
-    return templates.TemplateResponse("review.html", {"request": {}, "review": dict(review) if review else None})
+    review_data = dict(review) if review else None
+    return templates.TemplateResponse("review.html", {"request": {}, "review": review_data})

@@ -3,10 +3,10 @@ from __future__ import annotations
 import structlog
 
 from src.agents.state import DocumentationState
-from src.memory.vector_store import search_similar
 from src.memory.episodic import search_threads
 from src.memory.organizational import search_memory
 from src.memory.reviewer import get_reviewer_memory
+from src.memory.vector_store import search_similar
 
 logger = structlog.get_logger()
 
@@ -24,16 +24,14 @@ async def memory_retrieve_node(state: DocumentationState) -> dict:
     episodic_results = await search_threads(org_id, question, limit=5)
 
     # 3. Organizational memory — best practices, known solutions
-    org_results = await search_memory(org_id, key_pattern=question.split()[0] if question else "", limit=5)
+    pattern = question.split()[0] if question else ""
+    org_results = await search_memory(org_id, key_pattern=pattern, limit=5)
 
     # 4. Reviewer memory — past feedback
     reviewer_results = await get_reviewer_memory(org_id, limit=5)
 
     # 5. Search for existing documentation on this topic
-    existing_docs = [
-        r for r in semantic_results
-        if r["content_type"] == "documentation"
-    ]
+    existing_docs = [r for r in semantic_results if r["content_type"] == "documentation"]
 
     logger.info(
         "memory_retrieve_completed",

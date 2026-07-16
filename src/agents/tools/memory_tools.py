@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from src.memory.vector_store import search_similar
 from src.memory.episodic import search_threads
 from src.memory.organizational import search_memory
 from src.memory.reviewer import get_reviewer_memory
+from src.memory.vector_store import search_similar
 
 
 @tool
@@ -38,10 +38,7 @@ async def search_organizational_memory(org_id: str, key: str) -> str:
     results = await search_memory(org_id, key_pattern=key, limit=5)
     if not results:
         return "No organizational memory found."
-    return "\n".join(
-        f"[{r['memory_type']}] {r['key']}: {str(r['value'])[:200]}"
-        for r in results
-    )
+    return "\n".join(f"[{r['memory_type']}] {r['key']}: {str(r['value'])[:200]}" for r in results)
 
 
 @tool
@@ -50,10 +47,7 @@ async def get_reviewer_context(org_id: str) -> str:
     results = await get_reviewer_memory(org_id, limit=5)
     if not results:
         return "No reviewer history found."
-    return "\n".join(
-        f"[reviewer] {r['key']}: {str(r['value'])[:200]}"
-        for r in results
-    )
+    return "\n".join(f"[reviewer] {r['key']}: {str(r['value'])[:200]}" for r in results)
 
 
 MEMORY_TOOLS = [

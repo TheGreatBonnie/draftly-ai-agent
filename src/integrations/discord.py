@@ -9,7 +9,8 @@ logger = structlog.get_logger()
 
 
 async def send_discord_message(channel_id: str, content: str) -> dict:
-    headers = {"Authorization": f"Bot {settings.discord_bot_token.get_secret_value()}", "Content-Type": "application/json"}
+    token = settings.discord_bot_token.get_secret_value()
+    headers = {"Authorization": f"Bot {token}", "Content-Type": "application/json"}
     payload = {"content": content}
 
     async with httpx.AsyncClient() as client:
@@ -25,7 +26,8 @@ async def send_discord_message(channel_id: str, content: str) -> dict:
 
 
 async def send_discord_thread_reply(thread_id: str, content: str) -> dict:
-    headers = {"Authorization": f"Bot {settings.discord_bot_token.get_secret_value()}", "Content-Type": "application/json"}
+    token = settings.discord_bot_token.get_secret_value()
+    headers = {"Authorization": f"Bot {token}", "Content-Type": "application/json"}
     payload = {"content": content}
 
     async with httpx.AsyncClient() as client:

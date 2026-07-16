@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
-import structlog
+
 import boto3
+import structlog
 
 from src.config import settings
 

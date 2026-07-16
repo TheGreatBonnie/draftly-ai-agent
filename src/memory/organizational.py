@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+
 import structlog
-from src.database import fetch_one, fetch_all, execute
+
+from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
 
@@ -21,7 +23,12 @@ async def store_memory(
         VALUES ($1, $2, $3, $4::jsonb, $5, $6)
         RETURNING id::text
         """,
-        org_id, memory_type, key, json.dumps(value), source, confidence,
+        org_id,
+        memory_type,
+        key,
+        json.dumps(value),
+        source,
+        confidence,
     )
     logger.info("memory_stored", id=row["id"], memory_type=memory_type, key=key)
     return row["id"]
@@ -54,15 +61,14 @@ async def search_memory(
         ORDER BY confidence DESC, created_at DESC
         LIMIT ${idx}
         """,
-        *args, limit,
+        *args,
+        limit,
     )
     return [dict(r) for r in rows]
 
 
 async def update_memory_access(memory_id: str) -> None:
-    await execute(
-        "UPDATE agent_memory SET last_accessed = now() WHERE id = $1", memory_id
-    )
+    await execute("UPDATE agent_memory SET last_accessed = now() WHERE id = $1", memory_id)
 
 
 async def store_audit_log(
@@ -76,9 +82,15 @@ async def store_audit_log(
 ) -> None:
     await execute(
         """
-        INSERT INTO audit_logs (org_id, actor, actor_id, action, resource_type, resource_id, details)
+        INSERT INTO audit_logs
+            (org_id, actor, actor_id, action, resource_type, resource_id, details)
         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
         """,
-        org_id, actor, actor_id, action, resource_type, resource_id,
+        org_id,
+        actor,
+        actor_id,
+        action,
+        resource_type,
+        resource_id,
         json.dumps(details or {}),
     )

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+
 import structlog
 
 from src.agents.state import DocumentationState
-from src.integrations.bedrock import call_bedrock
 from src.database import fetch_one
+from src.integrations.bedrock import call_bedrock
 
 logger = structlog.get_logger()
 
@@ -54,11 +55,16 @@ async def write_docs_node(state: DocumentationState) -> dict:
     org_id = state["org_id"]
     row = await fetch_one(
         """
-        INSERT INTO documentation (org_id, title, content, doc_type, status, source_thread_id, confidence_score)
+        INSERT INTO documentation
+            (org_id, title, content, doc_type, status, source_thread_id, confidence_score)
         VALUES ($1, $2, $3, $4, 'draft', $5, 0.0)
         RETURNING id::text
         """,
-        org_id, title, content, state.get("doc_type", "howto"), state.get("thread_id"),
+        org_id,
+        title,
+        content,
+        state.get("doc_type", "howto"),
+        state.get("thread_id"),
     )
     doc_id = row["id"]
 

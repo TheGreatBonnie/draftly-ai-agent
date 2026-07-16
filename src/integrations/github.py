@@ -9,7 +9,8 @@ logger = structlog.get_logger()
 
 
 async def post_github_comment(owner: str, repo: str, issue_number: int, body: str) -> dict:
-    headers = {"Authorization": f"token {settings.github_token.get_secret_value()}", "Content-Type": "application/json"}
+    token = settings.github_token.get_secret_value()
+    headers = {"Authorization": f"token {token}", "Content-Type": "application/json"}
     payload = {"body": body}
 
     async with httpx.AsyncClient() as client:
