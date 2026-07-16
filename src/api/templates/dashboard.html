@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Draftly{% endblock %}
+{% block content %}
+<h2>Pending Reviews ({{ reviews|length }})</h2>
+{% for review in reviews %}
+<div class="card">
+    <h3>{{ review.title }}</h3>
+    <p>Type: {{ review.doc_type }} | Confidence: {{ review.confidence_score }}</p>
+    <p>Created: {{ review.created_at }}</p>
+    <a href="/review/{{ review.id }}">Review →</a>
+</div>
+{% empty %}
+<p>No pending reviews.</p>
+{% endfor %}
+{% endblock %}

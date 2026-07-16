@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Review - Draftly{% endblock %}
+{% block content %}
+{% if review %}
+<h2>{{ review.title }}</h2>
+<p>Type: {{ review.doc_type }} | Confidence: {{ review.confidence_score }}</p>
+<div class="card">
+    <h3>Generated Documentation</h3>
+    <pre>{{ review.content }}</pre>
+</div>
+<div class="card">
+    <h3>Your Review</h3>
+    <textarea id="feedback" rows="4" style="width:100%"></textarea>
+    <br><br>
+    <button class="btn-approve" onclick="decide('approve')">Approve</button>
+    <button class="btn-revise" onclick="decide('revise')">Request Changes</button>
+    <button class="btn-reject" onclick="decide('reject')">Reject</button>
+</div>
+<script>
+async function decide(decision) {
+    const feedback = document.getElementById('feedback').value;
+    await fetch('/api/reviews/{{ review.id }}/decide', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({decision, feedback})
+    });
+    window.location.href = '/';
+}
+</script>
+{% else %}
+<p>Review not found.</p>
+{% endif %}
+{% endblock %}
