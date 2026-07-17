@@ -8,10 +8,11 @@ class Settings(BaseSettings):
     # CockroachDB
     cockroachdb_url: str
 
-    # Bedrock
-    aws_region: str = "us-east-1"
-    bedrock_model: str = "anthropic.claude-sonnet-4-20250514-v1:0"
-    bedrock_embedding_model: str = "amazon.titan-embed-text-v2:0"
+    # Requesty (OpenAI-compatible API)
+    requesty_api_key: str
+    requesty_base_url: str = "https://api.requesty.ai/v1"
+    llm_model: str = "tensorx/deepseek-v4-flash"
+    embedding_model: str = "azure/openai/text-embedding-3-large@francecentral"
 
     # Slack
     slack_bot_token: SecretStr = SecretStr("")
@@ -28,6 +29,8 @@ class Settings(BaseSettings):
     # App
     app_url: str = "http://localhost:8000"
     review_dashboard_url: str = "http://localhost:8000"
+    uvicorn_host: str = "0.0.0.0"
+    uvicorn_port: int = 8000
     environment: Literal["development", "staging", "production"] = "development"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 

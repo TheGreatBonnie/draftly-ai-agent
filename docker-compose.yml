@@ -1,21 +1,28 @@
-version: "3.8"
 services:
   app:
     build: .
     ports:
       - "8000:8000"
     env_file: .env
+    environment:
+      - COCKROACHDB_URL=postgresql://root@cockroachdb:26258/defaultdb?sslmode=disable
     depends_on:
-      - cockroachdb
+      cockroachdb:
+        condition: service_healthy
 
   cockroachdb:
     image: cockroachdb/cockroach:latest
-    command: start-single-node --insecure
+    command: start-single-node --insecure --advertise-addr=cockroachdb --listen-addr=127.0.0.1:26257 --sql-addr=0.0.0.0:26258 --http-addr=0.0.0.0:8080
     ports:
-      - "26257:26257"
+      - "26258:26258"
       - "8080:8080"
     volumes:
       - cockroach-data:/var/lib/cockroach
+    healthcheck:
+      test: ["CMD", "cockroach", "sql", "--insecure", "--host=localhost:26258", "-e", "SELECT 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   cockroach-data:

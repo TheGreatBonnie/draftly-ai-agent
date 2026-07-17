@@ -1,9 +1,13 @@
 """Seed CockroachDB with demo data for the hackathon demo."""
 
 import asyncio
-import json
 import random
-from src.database import get_pool, execute, fetch_one
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from src.database import fetch_one, get_pool
 from src.memory.vector_store import store_embedding
 
 DEMO_ORG = {
@@ -34,6 +38,7 @@ async def seed():
         DEMO_ORG["name"], DEMO_ORG["slack_workspace_id"],
         DEMO_ORG["discord_guild_id"], DEMO_ORG["github_org"],
     )
+    assert org_row is not None
     org_id = org_row["id"]
     print(f"Created org: {org_id}")
 
@@ -45,6 +50,7 @@ async def seed():
             org_id, thread["source"], f"C{random.randint(100,999)}",
             f"T{random.randint(1000,9999)}", thread["title"], thread["question"],
         )
+        assert row is not None
         thread_id = row["id"]
 
         # Create embeddings for each thread
@@ -68,6 +74,7 @@ async def seed():
             "VALUES ($1, $2, $3, $4, 'approved', 0.85) RETURNING id::text",
             org_id, doc["title"], doc["content"], doc["doc_type"],
         )
+        assert row is not None
         doc_id = row["id"]
 
         await store_embedding(

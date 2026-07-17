@@ -2,8 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY pyproject.toml .
-RUN pip install --no-cache-dir -e ".[dev]"
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --dev
 
 COPY src/ src/
 COPY infrastructure/ infrastructure/
@@ -11,4 +13,4 @@ COPY scripts/ scripts/
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

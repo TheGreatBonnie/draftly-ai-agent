@@ -6,7 +6,7 @@ import structlog
 
 from src.agents.state import DocumentationState
 from src.database import execute
-from src.integrations.bedrock import call_bedrock
+from src.integrations.llm import call_bedrock
 
 logger = structlog.get_logger()
 

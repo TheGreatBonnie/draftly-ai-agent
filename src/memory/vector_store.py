@@ -3,22 +3,23 @@ from __future__ import annotations
 import json
 
 import structlog
-from langchain_aws import BedrockEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 from src.config import settings
 from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
 
-_embeddings_model: BedrockEmbeddings | None = None
+_embeddings_model: OpenAIEmbeddings | None = None
 
 
-def get_embeddings_model() -> BedrockEmbeddings:
+def get_embeddings_model() -> OpenAIEmbeddings:
     global _embeddings_model
     if _embeddings_model is None:
-        _embeddings_model = BedrockEmbeddings(
-            model_id=settings.bedrock_embedding_model,
-            region_name=settings.aws_region,
+        _embeddings_model = OpenAIEmbeddings(
+            openai_api_key=settings.requesty_api_key,
+            openai_api_base=settings.requesty_base_url,
+            model=settings.embedding_model,
         )
     return _embeddings_model
 
