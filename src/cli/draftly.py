@@ -4,8 +4,10 @@ import asyncio
 import sys
 
 import structlog
+from langchain_cockroachdb import AsyncCockroachDBSaver
 
-from src.agents.graph import compile_graph
+from src.agents.graph import build_graph
+from src.config import settings
 from src.database import close_pool, get_pool
 
 logger = structlog.get_logger()
@@ -13,7 +15,6 @@ logger = structlog.get_logger()
 
 async def run_workflow(question: str, source: str = "cli", org_id: str = "default"):
     await get_pool()
-    graph = await compile_graph()
 
     initial_state = {
         "org_id": org_id,
@@ -44,9 +45,13 @@ async def run_workflow(question: str, source: str = "cli", org_id: str = "defaul
 
     config = {"configurable": {"thread_id": f"cli-{hash(question)}"}}
 
-    print(f"\n🔄 Processing: {question}\n")
+    async with AsyncCockroachDBSaver.from_conn_string(settings.cockroachdb_url) as checkpointer:
+        await checkpointer.setup()
+        graph = build_graph().compile(checkpointer=checkpointer)
 
-    result = await graph.ainvoke(initial_state, config)
+        print(f"\n🔄 Processing: {question}\n")
+
+        result = await graph.ainvoke(initial_state, config)
 
     print("\n✅ Completed!")
     print(f"Title: {result.get('draft_title', 'N/A')}")

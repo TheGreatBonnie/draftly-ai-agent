@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import structlog
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.graph import END, StateGraph
 
 from src.agents.nodes.human import human_review_node
@@ -13,7 +12,6 @@ from src.agents.nodes.review import ai_review_node
 from src.agents.nodes.synthesize import synthesize_node
 from src.agents.nodes.write import write_docs_node
 from src.agents.state import DocumentationState
-from src.config import settings
 
 logger = structlog.get_logger()
 
@@ -60,11 +58,3 @@ def build_graph():
 
     logger.info("graph_built")
     return graph
-
-
-async def compile_graph():
-    checkpointer = AsyncPostgresSaver.from_conn_string(settings.cockroachdb_url)
-    graph = build_graph()
-    compiled = graph.compile(checkpointer=checkpointer)
-    logger.info("graph_compiled")
-    return compiled
