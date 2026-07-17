@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime
 
 import structlog
 
@@ -11,7 +12,12 @@ logger = structlog.get_logger()
 
 
 def _serialize_row(row) -> dict:
-    return {k: str(v) if isinstance(v, uuid.UUID) else v for k, v in dict(row).items()}
+    return {
+        k: str(v) if isinstance(v, uuid.UUID)
+        else v.isoformat() if isinstance(v, datetime)
+        else v
+        for k, v in dict(row).items()
+    }
 
 
 async def create_review_session(
