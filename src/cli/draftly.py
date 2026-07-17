@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from uuid import uuid4
 
 import structlog
 from langchain_cockroachdb import AsyncCockroachDBSaver
@@ -35,7 +36,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         "org_id": org_id,
         "source": source,
         "channel_id": "cli",
-        "thread_id": "cli-test",
+        "thread_id": f"cli-{uuid4().hex[:12]}",
         "question": question,
         "similar_threads": [],
         "existing_docs": [],
