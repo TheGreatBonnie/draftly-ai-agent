@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import uuid
 
 import structlog
 
 from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
+
+
+def _serialize_row(row) -> dict:
+    return {k: str(v) if isinstance(v, uuid.UUID) else v for k, v in dict(row).items()}
 
 
 async def create_thread(
@@ -58,7 +63,7 @@ async def search_threads(org_id: str, query: str, limit: int = 10) -> list[dict]
         query,
         limit,
     )
-    return [dict(r) for r in rows]
+    return [_serialize_row(r) for r in rows]
 
 
 async def resolve_thread(thread_id: str, resolution: str) -> None:
@@ -85,4 +90,4 @@ async def get_recent_threads(org_id: str, limit: int = 20) -> list[dict]:
         org_id,
         limit,
     )
-    return [dict(r) for r in rows]
+    return [_serialize_row(r) for r in rows]

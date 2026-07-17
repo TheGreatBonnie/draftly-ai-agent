@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import uuid
 
 import structlog
 
 from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
+
+
+def _serialize_row(row) -> dict:
+    return {k: str(v) if isinstance(v, uuid.UUID) else v for k, v in dict(row).items()}
 
 
 async def create_workflow(
@@ -87,4 +92,4 @@ async def get_workflows_by_status(org_id: str, status: str) -> list[dict]:
         org_id,
         status,
     )
-    return [dict(r) for r in rows]
+    return [_serialize_row(r) for r in rows]

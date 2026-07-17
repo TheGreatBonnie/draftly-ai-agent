@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import uuid
 
 import structlog
 
 from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
+
+
+def _serialize_row(row) -> dict:
+    return {k: str(v) if isinstance(v, uuid.UUID) else v for k, v in dict(row).items()}
 
 
 async def create_review_session(
@@ -62,7 +67,7 @@ async def get_pending_reviews(org_id: str) -> list[dict]:
         """,
         org_id,
     )
-    return [dict(r) for r in rows]
+    return [_serialize_row(r) for r in rows]
 
 
 async def get_review_history(org_id: str, limit: int = 10) -> list[dict]:
@@ -78,7 +83,7 @@ async def get_review_history(org_id: str, limit: int = 10) -> list[dict]:
         org_id,
         limit,
     )
-    return [dict(r) for r in rows]
+    return [_serialize_row(r) for r in rows]
 
 
 async def get_reviewer_memory(org_id: str, limit: int = 10) -> list[dict]:
@@ -92,4 +97,4 @@ async def get_reviewer_memory(org_id: str, limit: int = 10) -> list[dict]:
         org_id,
         limit,
     )
-    return [dict(r) for r in rows]
+    return [_serialize_row(r) for r in rows]
