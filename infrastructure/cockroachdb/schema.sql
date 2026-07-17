@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS organizations (
 CREATE TABLE IF NOT EXISTS support_threads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    source STRING NOT NULL CHECK (source IN ('slack', 'discord', 'github')),
+    source STRING NOT NULL CHECK (source IN ('slack', 'discord', 'github', 'cli')),
     channel_id STRING NOT NULL,
     thread_id STRING NOT NULL,
     title STRING,
