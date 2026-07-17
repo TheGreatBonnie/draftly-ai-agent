@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS embeddings (
     content_type STRING NOT NULL CHECK (content_type IN ('documentation', 'support_thread', 'review_feedback')),
     content_id UUID NOT NULL,
     content_text TEXT NOT NULL,
-    embedding VECTOR(1536) NOT NULL,
+    embedding VECTOR(3072) NOT NULL,
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT now()
 );
