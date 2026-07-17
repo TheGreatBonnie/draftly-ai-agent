@@ -8,13 +8,28 @@ from langchain_cockroachdb import AsyncCockroachDBSaver
 
 from src.agents.graph import build_graph
 from src.config import settings
-from src.database import close_pool, get_pool
+from src.database import close_pool, fetch_one, get_pool
 
 logger = structlog.get_logger()
 
 
-async def run_workflow(question: str, source: str = "cli", org_id: str = "default"):
+async def get_or_create_org(name: str = "default") -> str:
+    row = await fetch_one("SELECT id::text FROM organizations WHERE name = $1", name)
+    if row:
+        return row["id"]
+    row = await fetch_one(
+        "INSERT INTO organizations (name) VALUES ($1) RETURNING id::text",
+        name,
+    )
+    logger.info("org_created", name=name, id=row["id"])
+    return row["id"]
+
+
+async def run_workflow(question: str, source: str = "cli", org_id: str | None = None):
     await get_pool()
+
+    if org_id is None:
+        org_id = await get_or_create_org("default")
 
     initial_state = {
         "org_id": org_id,
