@@ -41,6 +41,7 @@ async def ingest_node(state: DocumentationState) -> dict:
     logger.info("ingest_completed", thread_record_id=st_id)
 
     return {
+        "support_thread_id": st_id,
         "similar_threads": [],
         "existing_docs": [],
         "reviewer_feedback_history": [],

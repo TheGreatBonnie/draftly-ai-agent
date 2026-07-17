@@ -64,7 +64,7 @@ async def write_docs_node(state: DocumentationState) -> dict:
         title,
         content,
         state.get("doc_type", "howto"),
-        state.get("thread_id"),
+        state.get("support_thread_id"),
     )
     doc_id = row["id"]
 

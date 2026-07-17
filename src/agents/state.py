@@ -8,7 +8,7 @@ from langgraph.graph.message import add_messages
 class DocumentationState(TypedDict):
     # Input
     org_id: str
-    source: Literal["slack", "discord", "github"]
+    source: Literal["slack", "discord", "github", "cli"]
     channel_id: str
     thread_id: str
     question: str
@@ -44,6 +44,7 @@ class DocumentationState(TypedDict):
     published_urls: list[dict]
 
     # Tracking
+    support_thread_id: str
     workflow_id: str
     doc_id: str
     messages: Annotated[list, add_messages]

@@ -37,6 +37,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         "source": source,
         "channel_id": "cli",
         "thread_id": f"cli-{uuid4().hex[:12]}",
+        "support_thread_id": "",
         "question": question,
         "similar_threads": [],
         "existing_docs": [],
