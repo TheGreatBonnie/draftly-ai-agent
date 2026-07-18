@@ -48,3 +48,10 @@ class DocumentationState(TypedDict):
     workflow_id: str
     doc_id: str
     messages: Annotated[list, add_messages]
+
+    # Hybrid Deep agents fields
+    question_type: str  # "simple", "moderate", "complex"
+    research_skill: dict  # Selected research skill
+    investigation_plan: list[dict]  # Todo-driven investigation plan
+    rubric_status: dict  # Rubric evaluation results
+    subagent_results: dict  # Results from subagent execution
