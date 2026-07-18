@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 
 from src.api.routes import docs, memory, reviews
+from src.api.routes.review import router as review_router
 from src.database import close_pool, get_pool
 
 templates = Jinja2Templates(directory="src/api/templates")
@@ -21,6 +22,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Draftly Review Dashboard", lifespan=lifespan)
 
 app.include_router(reviews.router, prefix="/api/reviews", tags=["reviews"])
+app.include_router(review_router, prefix="/api/review", tags=["review"])
 app.include_router(docs.router, prefix="/api/docs", tags=["docs"])
 app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 
