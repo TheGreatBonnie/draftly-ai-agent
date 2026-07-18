@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     github_token: SecretStr = SecretStr("")
     github_webhook_secret: SecretStr = SecretStr("")
 
+    # Deep agents
+    deepagents_model: str = "anthropic:claude-sonnet-4-6"
+    rubric_grader_model: str = "anthropic:claude-haiku-4-5"
+    rubric_max_iterations: int = 3
+    research_max_concurrent: int = 3
+
     # App
     app_url: str = "http://localhost:8000"
     review_dashboard_url: str = "http://localhost:8000"
