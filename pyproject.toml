@@ -27,6 +27,9 @@ dependencies = [
     "slack-bolt>=1.20.0",
     "slack-sdk>=3.30.0",
     "discord.py>=2.4.0",
+    # GitHub App
+    "pyjwt>=2.8.0",
+    "cryptography>=42.0.0",
     # Utilities
     "pydantic>=2.9.0",
     "pydantic-settings>=2.5.0",
@@ -57,7 +60,7 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["slack_bolt.*", "slack_sdk.*", "discord.*", "pgvector.*"]
+module = ["slack_bolt.*", "slack_sdk.*", "discord.*", "pgvector.*", "jwt.*", "cryptography.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

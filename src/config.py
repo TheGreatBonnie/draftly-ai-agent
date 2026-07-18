@@ -24,7 +24,9 @@ class Settings(BaseSettings):
 
     # GitHub
     github_token: SecretStr = SecretStr("")
-    github_webhook_secret: SecretStr = SecretStr("")
+    github_webhook_secret: str = ""
+    github_app_id: str = ""
+    github_private_key_path: str = "./private-key.pem"
 
     # App
     app_url: str = "http://localhost:8000"
