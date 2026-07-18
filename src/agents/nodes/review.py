@@ -82,3 +82,74 @@ async def ai_review_node(state: DocumentationState) -> dict:
         "review_result": review,
         "review_feedback": json.dumps(review.get("issues", [])),
     }
+
+
+async def ai_review_node_hybrid(state: DocumentationState) -> dict:
+    """Enhanced review node with rubric grading for hybrid pipeline."""
+    from src.agents.middleware.rubric import RubricMiddleware
+    from src.agents.rubrics import DOCUMENTATION_RUBRIC
+
+    logger.info("ai_review_hybrid_started", org_id=state["org_id"])
+
+    # Standard review
+    prompt = REVIEW_PROMPT.format(
+        question=state["question"],
+        content=state.get("draft_content", ""),
+        knowledge_package=json.dumps(state.get("knowledge_package", {}), indent=2),
+    )
+
+    response = await call_bedrock(prompt)
+
+    try:
+        review = json.loads(response)
+    except json.JSONDecodeError:
+        import re
+
+        json_match = re.search(r"\{[\s\S]*\}", response)
+        if json_match:
+            review = json.loads(json_match.group())
+        else:
+            review = {
+                "confidence": 0.5,
+                "issues": ["Review parsing failed"],
+                "suggestions": [],
+                "passed": False,
+            }
+
+    # Rubric evaluation
+    rubric_middleware = RubricMiddleware(DOCUMENTATION_RUBRIC)
+    rubric_result = await rubric_middleware.evaluate(state, response)
+
+    # Combine scores
+    confidence = review.get("confidence", 0.5)
+    rubric_confidence = rubric_result.get("confidence", 0.5)
+    
+    # Use rubric confidence if available, otherwise use standard confidence
+    final_confidence = rubric_confidence if rubric_result.get("satisfied") else confidence
+
+    # Update documentation
+    doc_id = state.get("doc_id")
+    if doc_id:
+        await execute(
+            "UPDATE documentation SET confidence_score = $1 WHERE id = $2",
+            final_confidence,
+            doc_id,
+        )
+
+    logger.info(
+        "ai_review_hybrid_completed",
+        confidence=final_confidence,
+        rubric_satisfied=rubric_result.get("satisfied", False),
+    )
+
+    return {
+        "confidence_score": final_confidence,
+        "review_result": review,
+        "review_feedback": json.dumps(review.get("issues", [])),
+        "rubric_status": {
+            "satisfied": rubric_result.get("satisfied", False),
+            "needs_revision": rubric_result.get("needs_revision", False),
+            "research_needed": rubric_result.get("research_needed", False),
+            "feedback": rubric_result.get("feedback", ""),
+        },
+    }
