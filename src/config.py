@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     github_token: SecretStr = SecretStr("")
     github_webhook_secret: SecretStr = SecretStr("")
 
+    # Email (SendGrid)
+    sendgrid_api_key: SecretStr = SecretStr("")
+    sendgrid_from_email: str = "noreply@draftly.app"
+    sendgrid_from_name: str = "Draftly"
+
+    # Security
+    secret_key: str = "change-me-in-production"
+
     # App
     app_url: str = "http://localhost:8000"
     review_dashboard_url: str = "http://localhost:8000"
