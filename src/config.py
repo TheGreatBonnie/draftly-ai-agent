@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     github_token: SecretStr = SecretStr("")
     github_webhook_secret: SecretStr = SecretStr("")
 
+    # Web Search (SerpAPI, Google Custom Search, etc.)
+    search_api_key: str = ""
+
     # App
     app_url: str = "http://localhost:8000"
     review_dashboard_url: str = "http://localhost:8000"

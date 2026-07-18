@@ -5,8 +5,7 @@ import asyncio
 import structlog
 
 from src.agents.state import DocumentationState
-from src.agents.tools.github_tools import search_github_issues
-from src.agents.tools.slack_tools import search_slack_messages
+from src.agents.tools.web_tools import search_documentation, search_web
 
 logger = structlog.get_logger()
 
@@ -17,34 +16,33 @@ async def research_node(state: DocumentationState) -> dict:
 
     logger.info("research_started", org_id=org_id)
 
-    github_task = search_github_issues.ainvoke(
+    web_task = search_web.ainvoke(
         {
             "query": question,
-            "org": "",
+            "limit": 10,
+        }
+    )
+    doc_task = search_documentation.ainvoke(
+        {
+            "query": question,
             "limit": 5,
         }
     )
-    slack_task = search_slack_messages.ainvoke(
-        {
-            "query": question,
-            "limit": 5,
-        }
+
+    web_result, doc_result = await asyncio.gather(
+        web_task, doc_task, return_exceptions=True
     )
 
-    github_result, slack_result = await asyncio.gather(
-        github_task, slack_task, return_exceptions=True
+    web_context = (
+        [web_result] if not isinstance(web_result, Exception) else [f"Error: {web_result}"]
+    )
+    doc_context = (
+        [doc_result] if not isinstance(doc_result, Exception) else [f"Error: {doc_result}"]
     )
 
-    github_context = (
-        [github_result] if not isinstance(github_result, Exception) else [f"Error: {github_result}"]
-    )
-    slack_context = (
-        [slack_result] if not isinstance(slack_result, Exception) else [f"Error: {slack_result}"]
-    )
-
-    logger.info("research_completed", github=len(github_context), slack=len(slack_context))
+    logger.info("research_completed", web=len(web_context), doc=len(doc_context))
 
     return {
-        "github_context": github_context,
-        "slack_context": slack_context,
+        "web_context": web_context,
+        "doc_context": doc_context,
     }

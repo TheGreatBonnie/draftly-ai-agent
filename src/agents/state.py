@@ -20,8 +20,8 @@ class DocumentationState(TypedDict):
     semantic_context: list[dict]
 
     # Research results
-    github_context: list[dict]
-    slack_context: list[dict]
+    web_context: list[dict]
+    doc_context: list[dict]
 
     # Synthesis
     knowledge_package: dict
