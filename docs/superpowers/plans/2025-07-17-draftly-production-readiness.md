@@ -2686,6 +2686,1060 @@ git commit -m "chore: final production-readiness validation
 
 ---
 
+## Phase 7: Bot Integration
+
+### Task 25: Create shared pipeline runner
+
+**Files:**
+- Create: `src/agents/pipeline.py`
+
+- [ ] **Step 1: Create pipeline runner**
+
+```python
+# src/agents/pipeline.py
+from __future__ import annotations
+
+from uuid import uuid4
+
+import structlog
+from langchain_cockroachdb import AsyncCockroachDBSaver
+
+from src.agents.graph import build_graph
+from src.cli.draftly import get_or_create_org
+from src.config import settings
+from src.database import get_pool
+
+logger = structlog.get_logger()
+
+
+async def run_pipeline(
+    source: str,
+    question: str,
+    channel_id: str,
+    thread_id: str,
+    org_id: str | None = None,
+) -> dict:
+    """Run the documentation pipeline from any platform.
+
+    Args:
+        source: Platform source (slack, discord, github, cli)
+        question: The user's question or request
+        channel_id: Platform channel/channel ID
+        thread_id: Platform thread/message ID
+        org_id: Organization UUID (auto-created if None)
+
+    Returns:
+        Pipeline result dict with draft_title, draft_content, etc.
+    """
+    await get_pool()
+
+    if org_id is None:
+        org_id = await get_or_create_org("default")
+
+    pipeline_thread_id = f"{source}-{uuid4().hex[:12]}"
+
+    initial_state = {
+        "org_id": org_id,
+        "source": source,
+        "channel_id": channel_id,
+        "thread_id": pipeline_thread_id,
+        "support_thread_id": "",
+        "question": question,
+        "similar_threads": [],
+        "existing_docs": [],
+        "reviewer_feedback_history": [],
+        "semantic_context": [],
+        "github_context": [],
+        "slack_context": [],
+        "knowledge_package": {},
+        "draft_content": "",
+        "draft_title": "",
+        "doc_type": "howto",
+        "confidence_score": 0.0,
+        "review_result": {},
+        "review_feedback": "",
+        "human_decision": "",
+        "human_feedback": "",
+        "published_urls": [],
+        "workflow_id": "",
+        "doc_id": "",
+        "messages": [],
+    }
+
+    config = {"configurable": {"thread_id": pipeline_thread_id}}
+
+    logger.info(
+        "pipeline_started",
+        source=source,
+        question=question[:100],
+        thread_id=pipeline_thread_id,
+    )
+
+    async with AsyncCockroachDBSaver.from_conn_string(
+        settings.cockroachdb_url.get_secret_value()
+    ) as checkpointer:
+        await checkpointer.setup()
+        graph = build_graph().compile(checkpointer=checkpointer)
+        result = await graph.ainvoke(initial_state, config)
+
+    logger.info(
+        "pipeline_completed",
+        source=source,
+        title=result.get("draft_title", ""),
+        confidence=result.get("confidence_score", 0),
+    )
+
+    return result
+```
+
+- [ ] **Step 2: Run ruff check**
+
+```bash
+uv run ruff check src/agents/pipeline.py
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/agents/pipeline.py
+git commit -m "feat: add shared pipeline runner for bot integrations"
+```
+
+---
+
+### Task 26: Add Slack webhook handler + slash commands
+
+**Files:**
+- Create: `src/webhooks/__init__.py`
+- Create: `src/webhooks/slack.py`
+
+- [ ] **Step 1: Create webhooks package**
+
+```python
+# src/webhooks/__init__.py
+```
+
+- [ ] **Step 2: Create Slack webhook handler**
+
+```python
+# src/webhooks/slack.py
+from __future__ import annotations
+
+import hashlib
+import hmac
+
+import structlog
+from fastapi import APIRouter, Request, HTTPException
+
+from src.config import settings
+
+logger = structlog.get_logger()
+
+router = APIRouter()
+
+
+def verify_slack_signature(body: bytes, timestamp: str, signature: str) -> bool:
+    """Verify Slack request signature using signing secret."""
+    secret = settings.slack_signing_secret.get_secret_value()
+    if not secret:
+        return False
+
+    sig_basestring = f"v0:{timestamp}:{body.decode()}"
+    computed = "v0=" + hmac.new(
+        secret.encode(), sig_basestring.encode(), hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(computed, signature)
+
+
+@router.post("/slack")
+async def handle_slack_webhook(request: Request):
+    body = await request.body()
+    timestamp = request.headers.get("X-Slack-Request-Timestamp", "")
+    signature = request.headers.get("X-Slack-Signature", "")
+
+    if not verify_slack_signature(body, timestamp, signature):
+        raise HTTPException(status_code=401, detail="Invalid Slack signature")
+
+    payload = await request.json()
+
+    # URL verification challenge
+    if payload.get("type") == "url_verification":
+        return {"challenge": payload["challenge"]}
+
+    # Event callback
+    if payload.get("type") == "event_callback":
+        event = payload.get("event", {})
+        event_type = event.get("type")
+
+        if event_type == "app_mention":
+            await _handle_app_mention(event)
+        elif event_type == "message":
+            # Only handle direct messages, not bot messages
+            if event.get("channel_type") == "im" and not event.get("bot_id"):
+                await _handle_dm(event)
+
+    return {"ok": True}
+
+
+async def _handle_app_mention(event: dict):
+    """Handle @bot mentions in channels."""
+    from src.agents.pipeline import run_pipeline
+    from src.integrations.slack import send_slack_message, add_reaction
+
+    text = event.get("text", "")
+    channel = event.get("channel", "")
+    thread_ts = event.get("thread_ts", event.get("ts", ""))
+
+    # Acknowledge with eyes emoji
+    try:
+        await add_reaction(channel, event["ts"], "eyes")
+    except Exception as e:
+        logger.warning("slack_reaction_failed", error=str(e))
+
+    # Strip bot mention from text
+    import re
+    question = re.sub(r"<@[A-Z0-9]+>", "", text).strip()
+    if not question:
+        await send_slack_message(channel, "Please ask a question after mentioning me.", thread_ts)
+        return
+
+    # Run pipeline
+    try:
+        result = await run_pipeline(
+            source="slack",
+            question=question,
+            channel_id=channel,
+            thread_id=thread_ts,
+        )
+
+        title = result.get("draft_title", "Documentation")
+        content = result.get("draft_content", "")
+        confidence = result.get("confidence_score", 0)
+
+        reply = f"📄 *{title}* (confidence: {confidence:.0%})\n\n{content[:2000]}"
+        if len(content) > 2000:
+            reply += "\n\n... *(truncated)*"
+
+        await send_slack_message(channel, reply, thread_ts)
+
+    except Exception as e:
+        logger.error("slack_pipeline_failed", error=str(e))
+        await send_slack_message(
+            channel,
+            f"⚠️ Error processing your request: {e}",
+            thread_ts,
+        )
+
+
+async def _handle_dm(event: dict):
+    """Handle direct messages to the bot."""
+    from src.agents.pipeline import run_pipeline
+    from src.integrations.slack import send_dm
+
+    text = event.get("text", "")
+    user = event.get("user", "")
+    channel = event.get("channel", "")
+
+    if not text or not user:
+        return
+
+    try:
+        result = await run_pipeline(
+            source="slack",
+            question=text,
+            channel_id=channel,
+            thread_id=event.get("ts", ""),
+        )
+
+        title = result.get("draft_title", "Documentation")
+        content = result.get("draft_content", "")
+
+        reply = f"📄 *{title}*\n\n{content[:2000]}"
+        await send_dm(user, reply)
+
+    except Exception as e:
+        logger.error("slack_dm_pipeline_failed", error=str(e))
+        await send_dm(user, f"⚠️ Error: {e}")
+
+
+@router.post("/slack/commands")
+async def handle_slack_command(request: Request):
+    """Handle Slack slash commands for HITL review."""
+    body = await request.body()
+    timestamp = request.headers.get("X-Slack-Request-Timestamp", "")
+    signature = request.headers.get("X-Slack-Signature", "")
+
+    if not verify_slack_signature(body, timestamp, signature):
+        raise HTTPException(status_code=401, detail="Invalid Slack signature")
+
+    from urllib.parse import parse_qs
+    form_data = parse_qs(body.decode())
+    command = form_data.get("command", [""])[0]
+    text = form_data.get("text", [""])[0]
+    user_id = form_data.get("user_id", [""])[0]
+
+    parts = text.split(" ", 1)
+    review_id = parts[0] if parts else ""
+    feedback = parts[1] if len(parts) > 1 else ""
+
+    if not review_id:
+        return {"text": "Usage: /approve <review_id> [feedback]"}
+
+    if command == "/approve":
+        from src.memory.reviewer import complete_review
+        await complete_review(review_id=review_id, status="approved", feedback=feedback)
+        return {"text": f"✅ Review {review_id[:8]}... approved"}
+
+    elif command == "/reject":
+        from src.memory.reviewer import complete_review
+        await complete_review(review_id=review_id, status="rejected", feedback=feedback)
+        return {"text": f"❌ Review {review_id[:8]}... rejected"}
+
+    elif command == "/revise":
+        from src.memory.reviewer import complete_review
+        await complete_review(review_id=review_id, status="needs_changes", feedback=feedback)
+        return {"text": f"🔄 Review {review_id[:8]}... sent for revision"}
+
+    return {"text": f"Unknown command: {command}"}
+```
+
+- [ ] **Step 3: Mount webhook routes in app.py**
+
+In `src/api/app.py`, add:
+
+```python
+from src.webhooks.slack import router as slack_webhook_router
+
+app.include_router(slack_webhook_router, prefix="/webhooks", tags=["webhooks"])
+```
+
+- [ ] **Step 4: Run ruff check**
+
+```bash
+uv run ruff check src/webhooks/slack.py
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/webhooks/ src/api/app.py
+git commit -m "feat: add Slack webhook handler with event parsing and slash commands"
+```
+
+---
+
+### Task 27: Add Discord webhook handler + slash commands
+
+**Files:**
+- Create: `src/webhooks/discord.py`
+
+- [ ] **Step 1: Create Discord webhook handler**
+
+```python
+# src/webhooks/discord.py
+from __future__ import annotations
+
+import hashlib
+import hmac
+import json
+
+import structlog
+from fastapi import APIRouter, Request, HTTPException
+
+from src.config import settings
+
+logger = structlog.get_logger()
+
+router = APIRouter()
+
+
+def verify_discord_signature(body: bytes, signature: str) -> bool:
+    """Verify Discord Interactions endpoint signature."""
+    public_key = settings.discord_public_key.get_secret_value()
+    if not public_key:
+        return False
+
+    from nacl.signing import VerifyKey
+    from nacl.exceptions import BadSignatureError
+
+    verify_key = VerifyKey(bytes.fromhex(public_key))
+    try:
+        verify_key.verify(body, bytes.fromhex(signature))
+        return True
+    except BadSignatureError:
+        return False
+
+
+@router.post("/discord")
+async def handle_discord_webhook(request: Request):
+    body = await request.body()
+    signature = request.headers.get("X-Signature-Ed25519", "")
+    timestamp = request.headers.get("X-Signature-Timestamp", "")
+
+    if not verify_discord_signature(body, signature):
+        raise HTTPException(status_code=401, detail="Invalid Discord signature")
+
+    payload = await request.json()
+
+    # PING interaction
+    if payload.get("type") == 1:
+        return {"type": 1}
+
+    # Application command (slash command)
+    if payload.get("type") == 2:
+        return await _handle_slash_command(payload)
+
+    # Message component (buttons)
+    if payload.get("type") == 3:
+        return await _handle_component(payload)
+
+    return {"type": 4, "data": {"content": "Unknown interaction type"}}
+
+
+async def _handle_slash_command(payload: dict) -> dict:
+    """Handle Discord slash commands."""
+    command_name = payload["data"]["name"]
+    options = {opt["name"]: opt["value"] for opt in payload["data"].get("options", [])}
+    user_id = payload["member"]["user"]["id"]
+
+    if command_name == "approve":
+        review_id = options.get("review_id", "")
+        if not review_id:
+            return {"type": 4, "data": {"content": "Usage: /approve <review_id>"}}
+        from src.memory.reviewer import complete_review
+        await complete_review(review_id=review_id, status="approved")
+        return {"type": 4, "data": {"content": f"✅ Review {review_id[:8]}... approved"}}
+
+    elif command_name == "reject":
+        review_id = options.get("review_id", "")
+        feedback = options.get("feedback", "")
+        if not review_id:
+            return {"type": 4, "data": {"content": "Usage: /reject <review_id> [feedback]"}}
+        from src.memory.reviewer import complete_review
+        await complete_review(review_id=review_id, status="rejected", feedback=feedback)
+        return {"type": 4, "data": {"content": f"❌ Review {review_id[:8]}... rejected"}}
+
+    elif command_name == "revise":
+        review_id = options.get("review_id", "")
+        instructions = options.get("instructions", "")
+        if not review_id:
+            return {"type": 4, "data": {"content": "Usage: /revise <review_id> [instructions]"}}
+        from src.memory.reviewer import complete_review
+        await complete_review(review_id=review_id, status="needs_changes", feedback=instructions)
+        return {"type": 4, "data": {"content": f"🔄 Review {review_id[:8]}... sent for revision"}}
+
+    elif command_name == "ask":
+        question = options.get("question", "")
+        if not question:
+            return {"type": 4, "data": {"content": "Usage: /ask <your question>"}}
+
+        # Defer the response (takes time)
+        # The actual processing happens via followup
+        import asyncio
+        asyncio.create_task(_process_discord_ask(payload, question))
+
+        return {"type": 5}  # ACK with loading state
+
+    return {"type": 4, "data": {"content": f"Unknown command: {command_name}"}}
+
+
+async def _process_discord_ask(payload: dict, question: str):
+    """Process a Discord /ask command in the background."""
+    from src.agents.pipeline import run_pipeline
+    from src.integrations.discord import send_discord_message
+
+    channel_id = payload["channel_id"]
+    user_id = payload["member"]["user"]["id"]
+
+    try:
+        result = await run_pipeline(
+            source="discord",
+            question=question,
+            channel_id=channel_id,
+            thread_id=str(payload["id"]),
+        )
+
+        title = result.get("draft_title", "Documentation")
+        content = result.get("draft_content", "")
+
+        reply = f"📄 **{title}**\n\n{content[:2000]}"
+        if len(content) > 2000:
+            reply += "\n\n... *(truncated)*"
+
+        await send_discord_message(channel_id, reply)
+
+    except Exception as e:
+        logger.error("discord_ask_failed", error=str(e))
+        await send_discord_message(channel_id, f"⚠️ Error: {e}")
+
+
+async def _handle_component(payload: dict) -> dict:
+    """Handle Discord message component interactions (buttons)."""
+    custom_id = payload["data"]["custom_id"]
+
+    if custom_id.startswith("approve:"):
+        review_id = custom_id.split(":", 1)[1]
+        from src.memory.reviewer import complete_review
+        await complete_review(review_id=review_id, status="approved")
+        return {"type": 7, "data": {"content": f"✅ Approved", "components": []}}
+
+    elif custom_id.startswith("reject:"):
+        review_id = custom_id.split(":", 1)[1]
+        from src.memory.reviewer import complete_review
+        await complete_review(review_id=review_id, status="rejected")
+        return {"type": 7, "data": {"content": f"❌ Rejected", "components": []}}
+
+    return {"type": 4, "data": {"content": "Unknown action"}}
+```
+
+- [ ] **Step 2: Install PyNaCl for Discord signature verification**
+
+In `pyproject.toml`, add:
+
+```python
+    "PyNaCl>=1.5.0",
+```
+
+Then run:
+
+```bash
+uv sync
+```
+
+- [ ] **Step 3: Mount webhook routes in app.py**
+
+In `src/api/app.py`, add:
+
+```python
+from src.webhooks.discord import router as discord_webhook_router
+
+app.include_router(discord_webhook_router, prefix="/webhooks", tags=["webhooks"])
+```
+
+- [ ] **Step 4: Run ruff check**
+
+```bash
+uv run ruff check src/webhooks/discord.py
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/webhooks/discord.py pyproject.toml src/api/app.py
+git commit -m "feat: add Discord webhook handler with slash commands and interactions"
+```
+
+---
+
+### Task 28: Add GitHub webhook handler
+
+**Files:**
+- Create: `src/webhooks/github.py`
+
+- [ ] **Step 1: Create GitHub webhook handler**
+
+```python
+# src/webhooks/github.py
+from __future__ import annotations
+
+import hashlib
+import hmac
+
+import structlog
+from fastapi import APIRouter, Request, HTTPException
+
+from src.config import settings
+
+logger = structlog.get_logger()
+
+router = APIRouter()
+
+
+def verify_github_signature(body: bytes, signature: str) -> bool:
+    """Verify GitHub webhook signature (X-Hub-Signature-256)."""
+    secret = settings.github_webhook_secret.get_secret_value()
+    if not secret:
+        return False
+
+    expected = "sha256=" + hmac.new(
+        secret.encode(), body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+
+@router.post("/github")
+async def handle_github_webhook(request: Request):
+    body = await request.body()
+    signature = request.headers.get("X-Hub-Signature-256", "")
+
+    if not verify_github_signature(body, signature):
+        raise HTTPException(status_code=401, detail="Invalid GitHub signature")
+
+    event_type = request.headers.get("X-GitHub-Event", "")
+    payload = await request.json()
+
+    if event_type == "issues":
+        await _handle_issues(payload)
+    elif event_type == "issue_comment":
+        await _handle_issue_comment(payload)
+    elif event_type == "ping":
+        logger.info("github_ping", zen=payload.get("zen", ""))
+
+    return {"ok": True}
+
+
+async def _handle_issues(payload: dict):
+    """Handle GitHub issue events."""
+    action = payload.get("action", "")
+
+    if action == "opened":
+        issue = payload["issue"]
+        repo = payload["repository"]
+        question = f"{issue['title']}\n\n{issue.get('body', '')}"
+
+        from src.agents.pipeline import run_pipeline
+        from src.integrations.github import post_github_comment
+
+        try:
+            result = await run_pipeline(
+                source="github",
+                question=question,
+                channel_id=str(repo["id"]),
+                thread_id=str(issue["number"]),
+            )
+
+            title = result.get("draft_title", "Documentation")
+            content = result.get("draft_content", "")
+            confidence = result.get("confidence_score", 0)
+
+            comment_body = (
+                f"## 📄 {title}\n\n"
+                f"*Confidence: {confidence:.0%}*\n\n"
+                f"{content}"
+            )
+
+            await post_github_comment(
+                owner=repo["owner"]["login"],
+                repo=repo["name"],
+                issue_number=issue["number"],
+                body=comment_body,
+            )
+
+        except Exception as e:
+            logger.error("github_issue_pipeline_failed", error=str(e))
+            from src.integrations.github import post_github_comment
+            await post_github_comment(
+                owner=repo["owner"]["login"],
+                repo=repo["name"],
+                issue_number=issue["number"],
+                body=f"⚠️ Error generating documentation: {e}",
+            )
+
+
+async def _handle_issue_comment(payload: dict):
+    """Handle GitHub issue comment events (for HITL from GitHub)."""
+    action = payload.get("action", "")
+    comment = payload.get("comment", {})
+    body_text = comment.get("body", "").strip()
+
+    if action != "created":
+        return
+
+    # Check for review commands in comments
+    if body_text.startswith("/approve"):
+        import re
+        match = re.search(r"review[_-]?id[:\s]+([a-f0-9-]+)", body_text, re.IGNORECASE)
+        if match:
+            review_id = match.group(1)
+            from src.memory.reviewer import complete_review
+            await complete_review(review_id=review_id, status="approved")
+            from src.integrations.github import post_github_comment
+            repo = payload["repository"]
+            await post_github_comment(
+                owner=repo["owner"]["login"],
+                repo=repo["name"],
+                issue_number=payload["issue"]["number"],
+                body=f"✅ Review `{review_id[:8]}...` approved by @{comment['user']['login']}",
+            )
+
+    elif body_text.startswith("/reject"):
+        import re
+        match = re.search(r"review[_-]?id[:\s]+([a-f0-9-]+)", body_text, re.IGNORECASE)
+        feedback_match = re.search(r"feedback[:\s]+(.+)", body_text, re.IGNORECASE)
+        if match:
+            review_id = match.group(1)
+            feedback = feedback_match.group(1) if feedback_match else ""
+            from src.memory.reviewer import complete_review
+            await complete_review(review_id=review_id, status="rejected", feedback=feedback)
+            from src.integrations.github import post_github_comment
+            repo = payload["repository"]
+            await post_github_comment(
+                owner=repo["owner"]["login"],
+                repo=repo["name"],
+                issue_number=payload["issue"]["number"],
+                body=f"❌ Review `{review_id[:8]}...` rejected by @{comment['user']['login']}",
+            )
+```
+
+- [ ] **Step 2: Mount webhook routes in app.py**
+
+In `src/api/app.py`, add:
+
+```python
+from src.webhooks.github import router as github_webhook_router
+
+app.include_router(github_webhook_router, prefix="/webhooks", tags=["webhooks"])
+```
+
+- [ ] **Step 3: Run ruff check**
+
+```bash
+uv run ruff check src/webhooks/github.py
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/webhooks/github.py src/api/app.py
+git commit -m "feat: add GitHub webhook handler with issue and comment parsing"
+```
+
+---
+
+### Task 29: Update publish_node to reply to platforms
+
+**Files:**
+- Modify: `src/agents/nodes/publish.py`
+
+- [ ] **Step 1: Add platform replies to publish_node**
+
+After the audit log call (line 79), add platform-specific replies:
+
+```python
+# src/agents/nodes/publish.py — add after store_audit_log
+    # Reply to the originating platform
+    source = state.get("source", "")
+    channel_id = state.get("channel_id", "")
+    thread_id = state.get("thread_id", "")
+
+    try:
+        if source == "slack" and channel_id:
+            from src.integrations.slack import send_slack_message
+            reply = f"✅ *Documentation Published*\n\n*{title}*\n\n{content[:1500]}..."
+            await send_slack_message(channel_id, reply, thread_ts=thread_id)
+
+        elif source == "discord" and channel_id:
+            from src.integrations.discord import send_discord_thread_reply
+            reply = f"✅ **Documentation Published**\n\n**{title}**\n\n{content[:1500]}..."
+            await send_discord_thread_reply(thread_id, reply)
+
+        elif source == "github" and channel_id:
+            from src.integrations.github import post_github_comment
+            # channel_id is repo ID, need owner/repo
+            # For now, store the reply info for later
+            pass
+    except Exception as e:
+        logger.error("publish_reply_failed", source=source, error=str(e))
+```
+
+- [ ] **Step 2: Run ruff check**
+
+```bash
+uv run ruff check src/agents/nodes/publish.py
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/agents/nodes/publish.py
+git commit -m "feat: publish_node replies to originating platform after publishing"
+```
+
+---
+
+### Task 30: Update human_node to send HITL notifications
+
+**Files:**
+- Modify: `src/agents/nodes/human.py`
+
+- [ ] **Step 1: Add platform notifications to human_node**
+
+After creating the review session (line 19), add notifications:
+
+```python
+# src/agents/nodes/human.py — add after create_review_session
+    # Send HITL notification to the originating platform
+    source = state.get("source", "")
+    channel_id = state.get("channel_id", "")
+    thread_id = state.get("thread_id", "")
+
+    try:
+        review_url = f"{settings.review_dashboard_url}/review/{review_id}"
+
+        if source == "slack" and channel_id:
+            from src.integrations.slack import send_slack_message
+            notification = (
+                f"👀 *Human Review Required*\n\n"
+                f"*{state.get('draft_title', 'Untitled')}*\n"
+                f"Confidence: {state.get('confidence_score', 0):.0%}\n\n"
+                f"<{review_url}|Review Documentation>\n"
+                f"Or use: `/approve {review_id}` | `/reject {review_id}` | `/revise {review_id}`"
+            )
+            await send_slack_message(channel_id, notification, thread_ts=thread_id)
+
+        elif source == "discord" and channel_id:
+            from src.integrations.discord import send_discord_message
+            notification = (
+                f"👀 **Human Review Required**\n\n"
+                f"**{state.get('draft_title', 'Untitled')}**\n"
+                f"Confidence: {state.get('confidence_score', 0):.0%}\n\n"
+                f"[Review Documentation]({review_url})\n"
+                f"Or use: `/approve {review_id}` | `/reject {review_id}` | `/revise {review_id}`"
+            )
+            await send_discord_message(channel_id, notification)
+
+        elif source == "github" and channel_id:
+            from src.integrations.github import post_github_comment
+            # Post as issue comment — need owner/repo from channel_id
+            pass
+    except Exception as e:
+        logger.error("hitl_notification_failed", source=source, error=str(e))
+```
+
+- [ ] **Step 2: Run ruff check**
+
+```bash
+uv run ruff check src/agents/nodes/human.py
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/agents/nodes/human.py
+git commit -m "feat: human_node sends HITL notifications to originating platform"
+```
+
+---
+
+### Task 31: Add Slack Bolt app for development mode
+
+**Files:**
+- Create: `src/bots/__init__.py`
+- Create: `src/bots/slack_bot.py`
+- Create: `src/bots/discord_bot.py`
+
+- [ ] **Step 1: Create bots package**
+
+```python
+# src/bots/__init__.py
+```
+
+- [ ] **Step 2: Create Slack Bolt app (dev mode)**
+
+```python
+# src/bots/slack_bot.py
+"""Slack Bolt app for local development with Socket Mode.
+
+Usage: uv run python -m src.bots.slack_bot
+"""
+from __future__ import annotations
+
+import asyncio
+import re
+import sys
+
+from slack_bolt.async_app import AsyncApp
+from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
+
+sys.path.insert(0, ".")
+
+from src.config import settings
+from src.logging_config import configure_logging
+
+app = AsyncApp(
+    token=settings.slack_bot_token.get_secret_value(),
+    signing_secret=settings.slack_signing_secret.get_secret_value(),
+)
+
+
+@app.event("app_mention")
+async def handle_mention(event, say):
+    question = re.sub(r"<@[A-Z0-9]+>", "", event.get("text", "")).strip()
+    channel = event["channel"]
+    thread_ts = event.get("thread_ts", event["ts"])
+
+    if not question:
+        await say(text="Please ask a question after mentioning me.", thread_ts=thread_ts)
+        return
+
+    await app.client.reactions_add(channel=channel, timestamp=event["ts"], name="eyes")
+
+    from src.agents.pipeline import run_pipeline
+    result = await run_pipeline(
+        source="slack",
+        question=question,
+        channel_id=channel,
+        thread_id=thread_ts,
+    )
+
+    title = result.get("draft_title", "Documentation")
+    content = result.get("draft_content", "")
+    await say(text=f"📄 *{title}*\n\n{content[:2000]}", thread_ts=thread_ts)
+
+
+@app.event("message.im")
+async def handle_dm(event, say):
+    text = event.get("text", "")
+    if not text or event.get("bot_id"):
+        return
+
+    from src.agents.pipeline import run_pipeline
+    result = await run_pipeline(
+        source="slack",
+        question=text,
+        channel_id=event["channel"],
+        thread_id=event.get("ts", ""),
+    )
+
+    title = result.get("draft_title", "Documentation")
+    content = result.get("draft_content", "")
+    await say(text=f"📄 *{title}*\n\n{content[:2000]}")
+
+
+async def main():
+    configure_logging(log_level="INFO", json_output=False)
+    handler = AsyncSocketModeHandler(app, settings.slack_app_token.get_secret_value())
+    await handler.start_async()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+- [ ] **Step 3: Create Discord bot (dev mode)**
+
+```python
+# src/bots/discord_bot.py
+"""Discord bot for local development.
+
+Usage: uv run python -m src.bots.discord_bot
+"""
+from __future__ import annotations
+
+import asyncio
+import sys
+
+import discord
+from discord import app_commands
+
+sys.path.insert(0, ".")
+
+from src.config import settings
+from src.logging_config import configure_logging
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = discord.Client(intents=intents)
+tree = app_commands.CommandTree(bot)
+
+
+@bot.event
+async def on_ready():
+    await tree.sync()
+    print(f"Logged in as {bot.user}")
+
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+    if not bot.user.mentioned_in(message):
+        return
+
+    question = message.content
+    await message.add_reaction("👀")
+
+    from src.agents.pipeline import run_pipeline
+    result = await run_pipeline(
+        source="discord",
+        question=question,
+        channel_id=str(message.channel.id),
+        thread_id=str(message.id),
+    )
+
+    title = result.get("draft_title", "Documentation")
+    content = result.get("draft_content", "")
+
+    if isinstance(message.channel, discord.Thread):
+        await message.channel.send(f"📄 **{title}**\n\n{content[:2000]}")
+    else:
+        thread = await message.create_thread(name=f"Docs: {question[:50]}")
+        await thread.send(f"📄 **{title}**\n\n{content[:2000]}")
+
+
+@tree.command(name="ask", description="Ask Draftly a documentation question")
+@app_commands.describe(question="Your question")
+async def ask_command(interaction, question: str):
+    await interaction.response.defer()
+    from src.agents.pipeline import run_pipeline
+    result = await run_pipeline(
+        source="discord",
+        question=question,
+        channel_id=str(interaction.channel_id),
+        thread_id=str(interaction.id),
+    )
+    title = result.get("draft_title", "Documentation")
+    content = result.get("draft_content", "")
+    await interaction.followup.send(f"📄 **{title}**\n\n{content[:2000]}")
+
+
+@tree.command(name="approve", description="Approve a documentation review")
+async def approve_command(interaction, review_id: str):
+    from src.memory.reviewer import complete_review
+    await complete_review(review_id=review_id, status="approved")
+    await interaction.response.send_message(f"✅ Review {review_id[:8]}... approved")
+
+
+@tree.command(name="reject", description="Reject a documentation review")
+async def reject_command(interaction, review_id: str, feedback: str = ""):
+    from src.memory.reviewer import complete_review
+    await complete_review(review_id=review_id, status="rejected", feedback=feedback)
+    await interaction.response.send_message(f"❌ Review {review_id[:8]}... rejected")
+
+
+def main():
+    configure_logging(log_level="INFO", json_output=False)
+    bot.run(settings.discord_bot_token.get_secret_value())
+
+
+if __name__ == "__main__":
+    main()
+```
+
+- [ ] **Step 4: Add slack_app_token to config**
+
+In `src/config.py`, add:
+
+```python
+    slack_app_token: SecretStr = SecretStr("")  # For Socket Mode
+```
+
+- [ ] **Step 5: Run ruff check**
+
+```bash
+uv run ruff check src/bots/
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/bots/ src/config.py
+git commit -m "feat: add Slack Bolt and Discord bot apps for local development"
+```
+
+---
+
 ## Summary
 
 | Phase | Tasks | Files Changed | Key Outcome |
@@ -2696,4 +3750,5 @@ git commit -m "chore: final production-readiness validation
 | **4: Deployment** | 2 | 2 | Production-ready Docker |
 | **5: AWS Integration** | 5 | 12 | S3, CloudWatch, Secrets Manager, Lambda+SQS, ECS |
 | **6: CI/CD** | 3 | 3 | GitHub Actions CI/CD + final validation |
-| **Total** | **24** | **42** | Full production system |
+| **7: Bot Integration** | 7 | 10 | Slack + Discord + GitHub bots |
+| **Total** | **31** | **52** | Full production system |
