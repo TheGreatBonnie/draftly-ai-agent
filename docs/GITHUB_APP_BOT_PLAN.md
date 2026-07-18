@@ -3,7 +3,41 @@
 **Project:** Draftly - Autonomous Documentation Engineering
 **Feature:** GitHub App Bot for Issue Triage & Documentation Generation
 **Date:** 2025-07-18
-**Status:** Planning
+**Status:** In Progress
+
+---
+
+## Quick Start
+
+### 1. Create GitHub App
+
+1. Go to GitHub Settings > Developer Settings > GitHub Apps
+2. Click "New GitHub App"
+3. Fill in:
+   - **Name:** `draftly-bot`
+   - **Homepage URL:** `https://your-app-url.com`
+   - **Webhook URL:** `https://your-app-url.com/api/github/webhook`
+   - **Webhook Secret:** Generate a strong random string
+4. Set permissions:
+   - Issues: Read & Write
+   - Metadata: Read-only
+5. Subscribe to events: Issues
+6. Create app and download private key (.pem)
+
+### 2. Configure Environment
+
+Add to your `.env` file:
+```bash
+GITHUB_APP_ID=your-app-id
+GITHUB_WEBHOOK_SECRET=your-webhook-secret
+GITHUB_PRIVATE_KEY_PATH=./private-key.pem
+```
+
+### 3. Install App
+
+1. Go to your GitHub App settings
+2. Click "Install App"
+3. Select repositories to install
 
 ---
 
