@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import httpx
 import structlog
 
 from src.agents.state import DocumentationState
 from src.database import execute
+from src.integrations.github_app import get_installation_token
 from src.memory.organizational import store_audit_log, store_memory
 from src.memory.vector_store import store_embedding
 
@@ -80,6 +82,10 @@ async def publish_node(state: DocumentationState) -> dict:
 
     published_urls = [{"platform": "draftly", "doc_id": doc_id}]
 
+    # Post to GitHub if source is github
+    if state.get("source") == "github":
+        await _post_to_github(state, published_urls)
+
     logger.info("publish_completed", doc_id=doc_id, title=title)
 
     return {
@@ -87,3 +93,40 @@ async def publish_node(state: DocumentationState) -> dict:
         "human_decision": "",
         "human_feedback": "",
     }
+
+
+async def _post_to_github(state: DocumentationState, published_urls: list[dict]):
+    """Post documentation to GitHub issue as a comment."""
+    try:
+        # Get installation token from workflow context
+        # For now, we'll use a simple approach - this will be enhanced later
+        channel_id = state.get("channel_id", "")
+        if "/" not in channel_id:
+            return
+
+        owner, repo = channel_id.split("/")
+        issue_number = state.get("thread_id", "")
+
+        if not issue_number or not owner or not repo:
+            return
+
+        # Get installation token (this is a simplified approach)
+        # In production, we'd store the installation_id in the workflow
+        from src.memory.organizations import get_org_by_github
+
+        org = await get_org_by_github(owner)
+        if not org:
+            return
+
+        # For now, we'll skip posting if we don't have the installation token
+        # This will be enhanced when we have the full workflow context
+        logger.info(
+            "github_post_skipped",
+            owner=owner,
+            repo=repo,
+            issue_number=issue_number,
+            reason="installation_token_not_available",
+        )
+
+    except Exception as e:
+        logger.error("github_post_failed", error=str(e))
