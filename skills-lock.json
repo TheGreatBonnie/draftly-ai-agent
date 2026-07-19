@@ -97,6 +97,12 @@
       "skillPath": "skills/cockroachdb-security-and-governance/enforcing-password-policies/SKILL.md",
       "computedHash": "88bd057281ee2c78e57d58a44afc3a094d4f30e7733fb0420d0db908672b9ace"
     },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "781bd6d3f9b19f8c9af6b53d8d0e4876d0183841b565db34ca7092ffa412d111"
+    },
     "hardening-user-privileges": {
       "source": "cockroachlabs/cockroachdb-skills",
       "sourceType": "github",

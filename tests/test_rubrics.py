@@ -1,0 +1,102 @@
+import pytest
+from src.agents.rubrics import (
+    DOCUMENTATION_RUBRIC,
+    RESEARCH_RUBRIC,
+    SYNTHESIS_RUBRIC,
+    get_rubric_for_node,
+    extract_confidence_from_rubric,
+    extract_feedback_from_rubric,
+)
+
+
+def test_documentation_rubric_exists():
+    """Test that documentation rubric is defined."""
+    assert DOCUMENTATION_RUBRIC is not None
+    assert "Accuracy" in DOCUMENTATION_RUBRIC
+    assert "Completeness" in DOCUMENTATION_RUBRIC
+
+
+def test_research_rubric_exists():
+    """Test that research rubric is defined."""
+    assert RESEARCH_RUBRIC is not None
+    assert "Coverage" in RESEARCH_RUBRIC
+
+
+def test_synthesis_rubric_exists():
+    """Test that synthesis rubric is defined."""
+    assert SYNTHESIS_RUBRIC is not None
+    assert "Coherence" in SYNTHESIS_RUBRIC
+
+
+def test_get_rubric_for_node():
+    """Test getting rubric by node name."""
+    assert get_rubric_for_node("ai_review") == DOCUMENTATION_RUBRIC
+    assert get_rubric_for_node("research") == RESEARCH_RUBRIC
+    assert get_rubric_for_node("synthesize") == SYNTHESIS_RUBRIC
+    assert get_rubric_for_node("unknown") == DOCUMENTATION_RUBRIC
+
+
+def test_extract_confidence_from_rubric():
+    """Test extracting confidence score from rubric results."""
+    # All passed
+    result_all_passed = {
+        "criteria": [
+            {"name": "Accuracy", "passed": True},
+            {"name": "Completeness", "passed": True},
+            {"name": "Clarity", "passed": True},
+        ]
+    }
+    assert extract_confidence_from_rubric(result_all_passed) == 1.0
+
+    # Some passed
+    result_some_passed = {
+        "criteria": [
+            {"name": "Accuracy", "passed": True},
+            {"name": "Completeness", "passed": False},
+            {"name": "Clarity", "passed": True},
+        ]
+    }
+    assert extract_confidence_from_rubric(result_some_passed) == pytest.approx(2 / 3)
+
+    # None passed
+    result_none_passed = {
+        "criteria": [
+            {"name": "Accuracy", "passed": False},
+            {"name": "Completeness", "passed": False},
+        ]
+    }
+    assert extract_confidence_from_rubric(result_none_passed) == 0.0
+
+    # Empty result
+    assert extract_confidence_from_rubric({}) == 0.5
+    assert extract_confidence_from_rubric(None) == 0.5
+
+
+def test_extract_feedback_from_rubric():
+    """Test extracting feedback from rubric results."""
+    # With explanation
+    result_with_explanation = {
+        "explanation": "Good documentation overall",
+        "criteria": [
+            {"name": "Accuracy", "passed": True},
+        ],
+    }
+    feedback = extract_feedback_from_rubric(result_with_explanation)
+    assert "Good documentation overall" in feedback
+
+    # With failing criteria
+    result_with_failures = {
+        "explanation": "Needs improvement",
+        "criteria": [
+            {"name": "Accuracy", "passed": False, "gap": "Missing citations"},
+            {"name": "Completeness", "passed": True},
+        ],
+    }
+    feedback = extract_feedback_from_rubric(result_with_failures)
+    assert "Issues found" in feedback
+    assert "Accuracy" in feedback
+    assert "Missing citations" in feedback
+
+    # Empty result
+    assert extract_feedback_from_rubric({}) == "No rubric evaluation available"
+    assert extract_feedback_from_rubric(None) == "No rubric evaluation available"
