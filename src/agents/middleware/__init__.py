@@ -1,3 +1,3 @@
-from src.agents.middleware.rubric import create_rubric_middleware
+from src.agents.middleware.rubric import grade_with_rubric
 
-__all__ = ["create_rubric_middleware"]
+__all__ = ["grade_with_rubric"]

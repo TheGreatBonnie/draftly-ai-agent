@@ -38,7 +38,8 @@ async def grade_with_rubric(
             "Return a JSON object with:\n"
             '- "result": "satisfied" or "needs_revision"\n'
             '- "explanation": brief overall explanation\n'
-            '- "criteria": list of {{"name": str, "passed": bool, "gap": str}} for each criterion\n\n'
+            '- "criteria": list of {{"name": str, "passed": bool, "gap": str}}\n'
+            '  for each criterion\n\n'
             "Return ONLY valid JSON."
         )
 
