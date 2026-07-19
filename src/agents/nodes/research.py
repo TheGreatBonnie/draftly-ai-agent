@@ -8,13 +8,12 @@ logger = structlog.get_logger()
 
 
 async def research_node_hybrid(state: DocumentationState) -> dict:
-    """Enhanced research node with subagent patterns and parallel execution."""
-    from deepagents import create_deep_agent
-
+    """Research node: runs search_web directly, then synthesizes via call_llm."""
     from src.agents.planners.investigation import create_investigation_plan
     from src.agents.skills import get_skill_for_question
-    from src.agents.subagents import research_analyst_subagent
+    from src.agents.tools.web_tools import search_web
     from src.config import settings
+    from src.integrations.llm import call_llm
 
     question = state["question"]
     org_id = state["org_id"]
@@ -27,49 +26,38 @@ async def research_node_hybrid(state: DocumentationState) -> dict:
     # Create investigation plan
     investigation_plan = create_investigation_plan(question)
 
-    # Create deep agent with research subagent
-    agent = create_deep_agent(
-        model=settings.deepagents_model,
-        system_prompt=(
-            "You are a research coordinator. Use the research-analyst subagent "
-            "to search the web for documentation, tutorials, and articles. "
-            "Synthesize findings into a comprehensive research summary."
-        ),
-        subagents=[research_analyst_subagent],
-    )
+    # Execute web searches directly for each plan task
+    web_results = []
+    for task in investigation_plan[:5]:
+        query = task.get("description", task.get("task", question))
+        try:
+            result = await search_web.ainvoke({"query": query, "max_results": 3})
+            web_results.append(result)
+        except Exception as e:
+            logger.warning("search_failed", query=query, error=str(e))
 
-    # Build research prompt with skill guidance
+    # Synthesize findings via LLM
+    research_context = "\n\n---\n\n".join(web_results) if web_results else "No web results found."
+
     skill_strategy = research_skill.get("strategy", {})
     research_focus = skill_strategy.get("focus", "general research")
 
-    prompt = (
-        "Research the following question and return a comprehensive summary:\n\n"
+    synthesis_prompt = (
+        f"Research the following question and return a comprehensive summary.\n\n"
         f"Question: {question}\n\n"
         f"Research focus: {research_focus}\n\n"
-        "Investigation plan tasks:\n"
+        f"Web search results:\n{research_context}"
     )
-    for i, task in enumerate(investigation_plan[:5], 1):
-        prompt += f"{i}. {task.get('description', task.get('task', 'Unknown'))}\n"
 
-    # Invoke agent - it will use task tool to delegate to research-analyst
-    result = await agent.ainvoke({
-        "messages": [{"role": "user", "content": prompt}],
-    })
-
-    # Extract results from messages
-    messages = result.get("messages", [])
-    last_message = messages[-1].content if messages else ""
-
-    # Collect web search results from tool calls
-    web_results = []
-    for msg in messages:
-        if hasattr(msg, "tool_call_id"):  # Tool message
-            content = msg.content if isinstance(msg.content, str) else str(msg.content)
-            web_results.append(content)
-
-    # Use the final message as research summary if no tool results
-    if not web_results:
-        web_results = [last_message] if last_message else []
+    summary = await call_llm(
+        prompt=synthesis_prompt,
+        system_prompt=(
+            "You are a research coordinator. Synthesize the provided web search results "
+            "into a comprehensive research summary with key findings, source URLs, "
+            "and confidence assessment."
+        ),
+        model=settings.research_model,
+    )
 
     logger.info(
         "research_hybrid_completed",
@@ -84,7 +72,7 @@ async def research_node_hybrid(state: DocumentationState) -> dict:
         "research_skill": research_skill,
         "investigation_plan": investigation_plan,
         "subagent_results": {
-            "summary": last_message,
+            "summary": summary,
             "web_results": web_results,
         },
     }
