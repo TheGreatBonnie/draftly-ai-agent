@@ -31,12 +31,44 @@ Be specific and actionable. Focus on finding accurate, current information.
 """
 
 
-async def create_investigation_plan(question: str) -> list[dict]:
+def create_investigation_plan(question: str) -> list[dict]:
     """Create a todo-driven investigation plan for a question."""
-    from src.agents.tools.web_tools import search_web
-
     # Classify question complexity
-    complexity = await _classify_complexity(question)
+    question_lower = question.lower()
+
+    # Simple indicators
+    simple_patterns = [
+        "what is", "can you", "does",
+        "is there", "where is", "when was",
+    ]
+
+    # Moderate indicators
+    moderate_patterns = [
+        "how do i", "how to", "configure", "setup", "install",
+    ]
+
+    # Complex indicators
+    complex_patterns = [
+        "compare", "difference between", "which is better",
+        "best practices", "architecture", "design pattern",
+        "optimize", "performance", "scale",
+    ]
+
+    # Count patterns
+    simple_count = sum(1 for p in simple_patterns if p in question_lower)
+    moderate_count = sum(1 for p in moderate_patterns if p in question_lower)
+    complex_count = sum(1 for p in complex_patterns if p in question_lower)
+    word_count = len(question.split())
+
+    # Classify
+    if complex_count > 0 or word_count > 25:
+        complexity = "complex"
+    elif moderate_count > 0 or (simple_count > 0 and word_count > 10):
+        complexity = "moderate"
+    elif simple_count > 0 and word_count < 15:
+        complexity = "simple"
+    else:
+        complexity = "moderate"
 
     # Generate plan based on complexity
     if complexity == "simple":
@@ -51,8 +83,13 @@ async def _classify_complexity(question: str) -> str:
     """Classify question complexity based on characteristics."""
     # Simple indicators
     simple_patterns = [
-        "what is", "how do i", "can you", "does",
+        "what is", "can you", "does",
         "is there", "where is", "when was",
+    ]
+
+    # Moderate indicators
+    moderate_patterns = [
+        "how do i", "how to", "configure", "setup", "install",
     ]
 
     # Complex indicators
@@ -67,16 +104,21 @@ async def _classify_complexity(question: str) -> str:
     # Count simple patterns
     simple_count = sum(1 for p in simple_patterns if p in question_lower)
 
+    # Count moderate patterns
+    moderate_count = sum(1 for p in moderate_patterns if p in question_lower)
+
     # Count complex patterns
     complex_count = sum(1 for p in complex_patterns if p in question_lower)
 
     # Check question length
     word_count = len(question.split())
 
-    if simple_count > 0 and complex_count == 0 and word_count < 15:
-        return "simple"
-    elif complex_count > 0 or word_count > 25:
+    if complex_count > 0 or word_count > 25:
         return "complex"
+    elif moderate_count > 0 or (simple_count > 0 and word_count > 10):
+        return "moderate"
+    elif simple_count > 0 and word_count < 15:
+        return "simple"
     else:
         return "moderate"
 
@@ -140,7 +182,7 @@ def _create_complex_plan(question: str) -> list[dict]:
     return [
         {
             "id": "task_1",
-            "description": "Research core concepts",
+            "description": "Research core concepts and definitions",
             "search_query": f"{question[:50]} explained",
             "priority": "high",
             "expected_output": "Conceptual understanding",
@@ -154,35 +196,35 @@ def _create_complex_plan(question: str) -> list[dict]:
         },
         {
             "id": "task_3",
-            "description": "Gather multiple perspectives",
+            "description": "Gather multiple perspectives and comparisons",
             "search_query": f"{question[:50]} comparison",
             "priority": "high",
-            "expected_output": "Different approaches",
+            "expected_output": "Different approaches compared",
         },
         {
             "id": "task_4",
-            "description": "Find real-world examples",
+            "description": "Find real-world examples and use cases",
             "search_query": f"{question[:50]} examples",
             "priority": "medium",
             "expected_output": "Practical implementations",
         },
         {
             "id": "task_5",
-            "description": "Check community discussions",
+            "description": "Check community discussions and feedback",
             "search_query": f"{question[:50]} stackoverflow",
             "priority": "medium",
             "expected_output": "Community insights",
         },
         {
             "id": "task_6",
-            "description": "Research performance implications",
+            "description": "Research performance and scalability implications",
             "search_query": f"{question[:50]} performance",
             "priority": "low",
             "expected_output": "Performance considerations",
         },
         {
             "id": "task_7",
-            "description": "Validate findings",
+            "description": "Validate findings with authoritative sources",
             "search_query": f"{question[:50]} verification",
             "priority": "medium",
             "expected_output": "Confirmed information",

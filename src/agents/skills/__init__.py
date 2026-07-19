@@ -29,7 +29,7 @@ RESEARCH_SKILLS = {
 - Stack Overflow: [Stack Overflow](URL)
 - GitHub: [GitHub](URL)
 """,
-    
+
     "configuration": """
 # Configuration Research Strategy
 
@@ -57,7 +57,7 @@ RESEARCH_SKILLS = {
 - GitHub examples: [Example](URL)
 - Blog posts: [Guide](URL)
 """,
-    
+
     "troubleshooting": """
 # Troubleshooting Research Strategy
 
@@ -85,7 +85,7 @@ RESEARCH_SKILLS = {
 - Stack Overflow: [Solution](URL)
 - Forums: [Discussion](URL)
 """,
-    
+
     "tutorial": """
 # Tutorial Research Strategy
 
@@ -113,7 +113,7 @@ RESEARCH_SKILLS = {
 - Video guides: [Video](URL)
 - Blog posts: [Guide](URL)
 """,
-    
+
     "conceptual": """
 # Conceptual Research Strategy
 
@@ -147,6 +147,48 @@ RESEARCH_SKILLS = {
 def get_skill_for_question_type(question_type: str) -> str:
     """Get research skill for a question type."""
     return RESEARCH_SKILLS.get(question_type, RESEARCH_SKILLS["api_question"])
+
+
+def get_skill_for_question(question: str, skill_type: str = "research") -> dict:
+    """Get research skill based on question content."""
+    question_lower = question.lower()
+
+    if any(w in question_lower for w in ["error", "exception", "fail", "bug", "issue"]):
+        skill_name = "troubleshooting"
+    elif any(w in question_lower for w in ["config", "setting", "env", "environment"]):
+        skill_name = "configuration"
+    elif any(w in question_lower for w in ["tutorial", "how to", "guide", "step by step"]):
+        skill_name = "tutorial"
+    elif any(w in question_lower for w in ["what is", "explain", "concept", "overview"]):
+        skill_name = "conceptual"
+    else:
+        skill_name = "api_question"
+
+    return {
+        "name": skill_name,
+        "strategy": RESEARCH_SKILLS.get(skill_name, RESEARCH_SKILLS["api_question"]),
+    }
+
+
+def select_documentation_type(question: str) -> str:
+    """Select documentation type based on question content."""
+    question_lower = question.lower()
+
+    error_terms = ["error", "exception", "fail", "bug", "issue", "problem"]
+    tutorial_terms = ["tutorial", "how to", "guide", "step", "getting started"]
+    faq_terms = ["what is", "explain", "concept", "difference", "overview"]
+    reference_terms = ["api", "reference", "parameter", "method", "function"]
+
+    if any(w in question_lower for w in error_terms):
+        return "troubleshooting"
+    elif any(w in question_lower for w in tutorial_terms):
+        return "tutorial"
+    elif any(w in question_lower for w in faq_terms):
+        return "faq"
+    elif any(w in question_lower for w in reference_terms):
+        return "reference"
+    else:
+        return "howto"
 
 
 def get_all_skills() -> dict:

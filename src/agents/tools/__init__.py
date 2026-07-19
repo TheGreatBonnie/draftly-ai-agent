@@ -1,1 +1,1 @@
-"""Agent tools for memory, GitHub, and Slack."""
+"""Agent tools for memory, GitHub, Slack, and web search."""

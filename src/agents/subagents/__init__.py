@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from deepagents.middleware.subagents import SubAgent
+
+from src.agents.tools.web_tools import search_web
+
 RESEARCH_ANALYST_INSTRUCTIONS = """
 You are a research analyst specializing in documentation research.
 
@@ -63,10 +67,11 @@ Be thorough but practical. Focus on critical issues.
 
 
 # Subagent definitions for Deep agents
-research_analyst_subagent = {
+research_analyst_subagent: SubAgent = {
     "name": "research-analyst",
     "description": "Research a specific documentation topic and return findings with citations",
     "system_prompt": RESEARCH_ANALYST_INSTRUCTIONS,
+    "tools": [search_web],
 }
 
 synthesis_analyst_subagent = {

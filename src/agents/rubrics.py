@@ -94,6 +94,21 @@ def get_rubric_for_node(node_name: str) -> str:
     return rubrics.get(node_name, DOCUMENTATION_RUBRIC)
 
 
+STATUS_TO_CONFIDENCE = {
+    "satisfied": 1.0,
+    "needs_revision": 0.6,
+    "max_iterations_reached": 0.4,
+    "failed": 0.3,
+    "grader_error": 0.5,
+    "unknown": 0.5,
+}
+
+
+def extract_confidence_from_status(status: str) -> float:
+    """Map rubric terminal status to a confidence score."""
+    return STATUS_TO_CONFIDENCE.get(status, 0.5)
+
+
 def extract_confidence_from_rubric(rubric_result: dict) -> float:
     """Extract confidence score from rubric evaluation results."""
     if not rubric_result:

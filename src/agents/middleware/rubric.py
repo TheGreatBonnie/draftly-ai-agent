@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import structlog
+from deepagents.middleware.rubric import RubricEvaluation
 
 from src.config import settings
 
@@ -27,13 +28,13 @@ def create_rubric_middleware(rubric: str | None = None):
     )
 
 
-def _log_evaluation(ev: dict) -> None:
+def _log_evaluation(ev: RubricEvaluation) -> None:
     """Log rubric evaluation results."""
     logger.info(
         "rubric_evaluation",
-        grading_run_id=ev.get("grading_run_id"),
-        iteration=ev.get("iteration"),
-        result=ev.get("result"),
-        explanation=ev.get("explanation", "")[:200],
-        criteria_count=len(ev.get("criteria", [])),
+        grading_run_id=ev["grading_run_id"],
+        iteration=ev["iteration"],
+        result=ev["result"],
+        explanation=ev["explanation"][:200],
+        criteria_count=len(ev["criteria"]),
     )

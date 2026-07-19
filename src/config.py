@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     github_token: SecretStr = SecretStr("")
     github_webhook_secret: SecretStr = SecretStr("")
 
+    # Email (SendGrid)
+    sendgrid_api_key: SecretStr = SecretStr("")
+    sendgrid_from_email: str = "noreply@draftly.app"
+    sendgrid_from_name: str = "Draftly"
+
+    # Security
+    secret_key: str = "change-me-in-production"
+
     # Deep agents
     deepagents_model: str = "anthropic:claude-sonnet-4-6"
     rubric_grader_model: str = "anthropic:claude-haiku-4-5"

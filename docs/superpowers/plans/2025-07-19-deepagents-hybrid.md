@@ -3,12 +3,14 @@
 **Date:** 2025-07-19
 **Feature:** Integrate Deep agents capabilities into existing LangGraph workflow
 **Status:** Ready for implementation
+**Note:** Most components are already implemented. This plan focuses on fixing integration issues.
 
 ---
 
 ## Overview
 
 Enhance Draftly's LangGraph pipeline with Deep agents capabilities:
+
 1. **Rubric Grading** - Replace simple confidence scoring with LLM-as-a-judge
 2. **Parallel Research** - Use subagents for concurrent research tasks
 3. **Skills-Guided Retrieval** - Adaptive research strategies
@@ -19,6 +21,7 @@ Enhance Draftly's LangGraph pipeline with Deep agents capabilities:
 ## Architecture
 
 ### Current State
+
 ```
 ┌─────────┐    ┌──────────────┐    ┌──────────┐    ┌───────────┐
 │ Ingest  │───▶│ Memory       │───▶│ Research │───▶│ Synthesize│
@@ -31,12 +34,13 @@ Enhance Draftly's LangGraph pipeline with Deep agents capabilities:
   └─────────┘    └──────────────┘    └──────────┘    └───────────┘
 ```
 
-### Hybrid State
+### Hybrid State (Target)
+
 ```
 ┌─────────┐    ┌──────────────┐    ┌──────────┐    ┌───────────┐
 │ Ingest  │───▶│ Memory       │───▶│ Research │───▶│ Synthesize│
-└─────────┘    └──────────────┘    │(Subagent)│    └───────────┘
-                                   └──────────┘          │
+│(hybrid) │    └──────────────┘    │(subagent)│    └───────────┘
+└─────────┘                        └──────────┘          │
                                                          ▼
   ┌─────────┐    ┌──────────────┐    ┌──────────┐    ┌───────────┐
   │ Publish │◀───│ Human Review │◀───│ Rubric   │◀───│ Write     │
@@ -46,21 +50,293 @@ Enhance Draftly's LangGraph pipeline with Deep agents capabilities:
 
 ---
 
-## Phase 1: Configuration
+## Existing Implementation Status
 
-### 1.1 Add Deep agents settings
+### ✅ Already Implemented
 
-**File:** `src/config.py`
+| Component | File | Status |
+|-----------|------|--------|
+| Documentation rubric | `src/agents/rubrics.py` | Complete |
+| Research/Synthesis/Review rubrics | `src/agents/rubrics.py` | Complete |
+| Rubric helper functions | `src/agents/rubrics.py` | Complete |
+| Research subagent definition | `src/agents/subagents/__init__.py` | Complete |
+| Synthesis subagent definition | `src/agents/subagents/__init__.py` | Complete |
+| Review subagent definition | `src/agents/subagents/__init__.py` | Complete |
+| Research skills (5 types) | `src/agents/skills/__init__.py` | Complete |
+| Investigation planner | `src/agents/planners/investigation.py` | Complete |
+| Rubric middleware wrapper | `src/agents/middleware/rubric.py` | Complete |
+| State schema (hybrid fields) | `src/agents/state.py` | Complete |
+| Hybrid graph builder | `src/agents/graph.py` | Complete |
+| Rubric routing logic | `src/agents/graph.py` | Complete |
+| Hybrid ingest node | `src/agents/nodes/ingest.py` | Complete |
+| Hybrid research node | `src/agents/nodes/research.py` | Complete |
+| Hybrid review node | `src/agents/nodes/review.py` | Complete |
+
+### ❌ Issues to Fix
+
+| Issue | File | Problem |
+|-------|------|---------|
+| Graph uses standard nodes | `src/agents/graph.py` | `build_hybrid_graph()` uses `ingest_node` instead of `ingest_node_hybrid` |
+| Import error in agents init | `src/agents/__init__.py` | Imports `RubricMiddleware` which doesn't exist in module |
+| Missing skills functions | `src/agents/skills/__init__.py` | `get_skill_for_question` and `select_documentation_type` not defined |
+| Missing planner export | `src/agents/planners/__init__.py` | `_classify_complexity` not exported |
+
+---
+
+## Phase 1: Fix Import Errors
+
+### 1.1 Fix agents __init__.py
+
+**File:** `src/agents/__init__.py`
+
+The file imports `RubricMiddleware` from `src.agents.middleware.rubric`, but that module only exports `create_rubric_middleware`.
+
+**Fix:** Remove the invalid import or update it to the correct function.
+
+---
+
+## Phase 2: Fix Graph Integration
+
+### 2.1 Update hybrid graph to use hybrid nodes
+
+**File:** `src/agents/graph.py`
+
+Current `build_hybrid_graph()` uses standard nodes. It should use the hybrid variants:
 
 ```python
-# Deep agents
-deepagents_model: str = "anthropic:claude-sonnet-4-6"
-rubric_grader_model: str = "anthropic:claude-haiku-4-5"
-rubric_max_iterations: int = 3
-research_max_concurrent: int = 3
+def build_hybrid_graph():
+    """Build enhanced graph with Deep agents capabilities."""
+    from src.agents.middleware.rubric import create_rubric_middleware
+    from src.agents.nodes.ingest import ingest_node_hybrid
+    from src.agents.nodes.research import research_node_hybrid
+    from src.agents.nodes.review import ai_review_node_hybrid
+
+    graph = StateGraph(DocumentationState)
+
+    # Add hybrid nodes
+    graph.add_node("ingest", ingest_node_hybrid)
+    graph.add_node("memory_retrieve", memory_retrieve_node)
+    graph.add_node("research", research_node_hybrid)
+    graph.add_node("synthesize", synthesize_node)
+    graph.add_node("write_docs", write_docs_node)
+    graph.add_node("ai_review", ai_review_node_hybrid)
+    graph.add_node("human_review", human_review_node)
+    graph.add_node("publish", publish_node)
+
+    # ... rest of edges
 ```
 
-### 1.2 Add dependencies
+---
+
+## Phase 3: Fix Missing Functions
+
+### 3.1 Add get_skill_for_question function
+
+**File:** `src/agents/skills/__init__.py`
+
+The `ingest_node_hybrid` calls `get_skill_for_question(question, "research")` but only `get_skill_for_question_type` exists.
+
+**Fix:** Add the missing function:
+
+```python
+def get_skill_for_question(question: str, skill_type: str = "research") -> dict:
+    """Get research skill based on question content."""
+    # Simple heuristic classification
+    question_lower = question.lower()
+    
+    if any(w in question_lower for w in ["error", "exception", "fail", "bug"]):
+        skill_name = "troubleshooting"
+    elif any(w in question_lower for w in ["config", "setting", "env"]):
+        skill_name = "configuration"
+    elif any(w in question_lower for w in ["tutorial", "how to", "guide"]):
+        skill_name = "tutorial"
+    elif any(w in question_lower for w in ["what is", "explain", "concept"]):
+        skill_name = "conceptual"
+    else:
+        skill_name = "api_question"
+    
+    return {
+        "name": skill_name,
+        "strategy": RESEARCH_SKILLS.get(skill_name, RESEARCH_SKILLS["api_question"]),
+    }
+```
+
+### 3.2 Add select_documentation_type function
+
+**File:** `src/agents/skills/__init__.py`
+
+```python
+def select_documentation_type(question: str) -> str:
+    """Select documentation type based on question."""
+    question_lower = question.lower()
+    
+    if any(w in question_lower for w in ["error", "exception", "fail", "bug", "issue"]):
+        return "troubleshooting"
+    elif any(w in question_lower for w in ["tutorial", "how to", "guide", "step"]):
+        return "tutorial"
+    elif any(w in question_lower for w in ["what is", "explain", "concept", "difference"]):
+        return "faq"
+    elif any(w in question_lower for w in ["api", "reference", "parameter", "method"]):
+        return "reference"
+    else:
+        return "howto"
+```
+
+### 3.3 Export _classify_complexity
+
+**File:** `src/agents/planners/__init__.py`
+
+```python
+from src.agents.planners.investigation import (
+    create_investigation_plan,
+    format_plan_for_display,
+    _classify_complexity,
+)
+
+__all__ = ["create_investigation_plan", "format_plan_for_display", "_classify_complexity"]
+```
+
+---
+
+## Phase 4: Fix Rubric Middleware Usage
+
+### 4.1 Update review node to use deepagents correctly
+
+**File:** `src/agents/nodes/review.py`
+
+The current `ai_review_node_hybrid` has incorrect RubricMiddleware usage. Based on the actual API:
+
+```python
+async def ai_review_node_hybrid(state: DocumentationState) -> dict:
+    """Enhanced review node with rubric grading for hybrid pipeline."""
+    from deepagents import create_deep_agent, RubricMiddleware
+    from src.agents.rubrics import DOCUMENTATION_RUBRIC, extract_confidence_from_rubric, extract_feedback_from_rubric
+    from src.config import settings
+
+    logger.info("ai_review_hybrid_started", org_id=state["org_id"])
+
+    # Standard review prompt
+    prompt = REVIEW_PROMPT.format(
+        question=state["question"],
+        content=state.get("draft_content", ""),
+        knowledge_package=json.dumps(state.get("knowledge_package", {}), indent=2),
+    )
+
+    # Create agent with rubric middleware
+    rubric_middleware = RubricMiddleware(
+        model=settings.rubric_grader_model,
+        max_iterations=settings.rubric_max_iterations,
+        on_evaluation=_log_rubric_evaluation,
+    )
+
+    agent = create_deep_agent(
+        model=settings.deepagents_model,
+        system_prompt="You are a documentation reviewer. Evaluate quality and provide feedback.",
+        middleware=[rubric_middleware],
+    )
+
+    # Invoke with rubric
+    result = await agent.ainvoke({
+        "messages": [{"role": "user", "content": prompt}],
+        "rubric": DOCUMENTATION_RUBRIC,
+    })
+
+    # Extract results from rubric state
+    messages = result.get("messages", [])
+    last_message = messages[-1].content if messages else ""
+
+    # Parse review from response
+    try:
+        review = json.loads(last_message)
+    except json.JSONDecodeError:
+        import re
+        json_match = re.search(r"\{[\s\S]*\}", last_message)
+        if json_match:
+            review = json.loads(json_match.group())
+        else:
+            review = {
+                "confidence": 0.5,
+                "issues": ["Review parsing failed"],
+                "suggestions": [],
+                "passed": False,
+            }
+
+    # Get rubric status from private state
+    rubric_status = result.get("_rubric_status", "unknown")
+    rubric_evaluations = result.get("_rubric_evaluations", [])
+
+    # Calculate confidence from rubric
+    if rubric_evaluations:
+        last_eval = rubric_evaluations[-1]
+        confidence = extract_confidence_from_rubric(last_eval)
+        feedback = extract_feedback_from_rubric(last_eval)
+    else:
+        confidence = review.get("confidence", 0.5)
+        feedback = review.get("issues", [])
+
+    # Update documentation
+    doc_id = state.get("doc_id")
+    if doc_id:
+        await execute(
+            "UPDATE documentation SET confidence_score = $1 WHERE id = $2",
+            confidence,
+            doc_id,
+        )
+
+    logger.info(
+        "ai_review_hybrid_completed",
+        confidence=confidence,
+        rubric_status=rubric_status,
+    )
+
+    return {
+        "confidence_score": confidence,
+        "review_result": review,
+        "review_feedback": json.dumps(feedback) if isinstance(feedback, list) else feedback,
+        "rubric_status": {
+            "satisfied": rubric_status == "satisfied",
+            "needs_revision": rubric_status == "needs_revision",
+            "research_needed": _check_research_needed(rubric_evaluations),
+            "feedback": feedback,
+        },
+    }
+
+
+def _log_rubric_evaluation(ev: dict) -> None:
+    """Log rubric evaluation results."""
+    logger.info(
+        "rubric_evaluation",
+        grading_run_id=ev.get("grading_run_id"),
+        iteration=ev.get("iteration"),
+        result=ev.get("result"),
+        explanation=ev.get("explanation", "")[:200],
+        criteria_count=len(ev.get("criteria", [])),
+    )
+
+
+def _check_research_needed(evaluations: list) -> bool:
+    """Check if research is needed based on rubric feedback."""
+    if not evaluations:
+        return False
+    
+    last_eval = evaluations[-1]
+    criteria = last_eval.get("criteria", [])
+    
+    # Check if grounding criteria failed
+    for c in criteria:
+        name = c.get("name", "").lower()
+        if "grounding" in name or "citation" in name:
+            if not c.get("passed", True):
+                return True
+    
+    return False
+```
+
+---
+
+## Phase 5: Add Deep Agents Dependency
+
+### 5.1 Update pyproject.toml
 
 **File:** `pyproject.toml`
 
@@ -73,459 +349,29 @@ dependencies = [
 
 ---
 
-## Phase 2: Rubric Grading
-
-### 2.1 Create rubric configuration
-
-**File:** `src/agents/rubrics.py`
-
-```python
-# Documentation quality rubric
-DOCUMENTATION_RUBRIC = """
-## Documentation Quality Criteria
-
-### Accuracy
-- All API references are correct and exist
-- Code examples are syntactically valid
-- Configuration options match actual settings
-
-### Completeness
-- Original question is fully addressed
-- All steps are clearly documented
-- Edge cases and error handling covered
-
-### Clarity
-- Written in clear, concise language
-- Logical structure with headings
-- Appropriate for target audience
-
-### Grounding
-- Claims are supported by retrieved sources
-- No hallucinated APIs or functions
-- Citations provided where appropriate
-
-### Format
-- Correct doc_type selected (faq, tutorial, reference, troubleshooting)
-- Appropriate length for content type
-- Proper markdown formatting
-"""
-```
-
-### 2.2 Create rubric middleware wrapper
-
-**File:** `src/agents/middleware/rubric.py`
-
-```python
-from deepagents import RubricMiddleware
-from src.config import settings
-
-def create_rubric_middleware():
-    """Create RubricMiddleware for documentation quality grading."""
-    return RubricMiddleware(
-        model=settings.rubric_grader_model,
-        system_prompt="You are a documentation quality reviewer...",
-        max_iterations=settings.rubric_max_iterations,
-        on_evaluation=log_evaluation,
-    )
-
-def log_evaluation(ev):
-    """Log rubric evaluation results."""
-    logger.info(
-        "rubric_evaluation",
-        iteration=ev["iteration"],
-        result=ev["result"],
-        explanation=ev["explanation"],
-    )
-```
-
-### 2.3 Update ai_review node
-
-**File:** `src/agents/nodes/review.py`
-
-```python
-from deepagents import create_deep_agent
-from src.agents.middleware.rubric import create_rubric_middleware
-
-async def ai_review_node(state: DocumentationState) -> dict:
-    """AI review with rubric-based grading."""
-    
-    rubric_middleware = create_rubric_middleware()
-    
-    review_agent = create_deep_agent(
-        model=settings.deepagents_model,
-        tools=[validate_documentation],
-        middleware=[rubric_middleware],
-    )
-    
-    # Build review prompt
-    review_prompt = f"""
-    Review this documentation for quality:
-    
-    Title: {state.get('draft_title')}
-    Content: {state.get('draft_content')}
-    Type: {state.get('doc_type')}
-    Question: {state['question']}
-    """
-    
-    # Invoke with rubric
-    result = await review_agent.ainvoke({
-        "messages": [HumanMessage(content=review_prompt)],
-        "rubric": DOCUMENTATION_RUBRIC,
-    })
-    
-    # Extract confidence from rubric results
-    confidence = extract_confidence_from_rubric(result)
-    
-    return {
-        "confidence_score": confidence,
-        "ai_reviewer_feedback": extract_feedback(result),
-    }
-```
-
----
-
-## Phase 3: Parallel Research
-
-### 3.1 Create research subagent
-
-**File:** `src/agents/subagents/research.py`
-
-```python
-RESEARCH_ANALYST_INSTRUCTIONS = """
-You are a research analyst specializing in documentation research.
-
-Given a specific research question:
-1. Search web for relevant documentation
-2. Search official docs for API references
-3. Look for code examples and tutorials
-4. Extract key facts and citations
-
-Return a structured summary with:
-- Key findings
-- Source URLs
-- Code examples (if applicable)
-- Confidence assessment (high/medium/low)
-"""
-
-research_analyst_subagent = {
-    "name": "research-analyst",
-    "description": "Research a specific documentation topic",
-    "system_prompt": RESEARCH_ANALYST_INSTRUCTIONS,
-}
-```
-
-### 3.2 Update research node
-
-**File:** `src/agents/nodes/research.py`
-
-```python
-from deepagents import create_deep_agent
-from src.agents.subagents.research import research_analyst_subagent
-
-async def research_node(state: DocumentationState) -> dict:
-    """Research with parallel subagent delegation."""
-    
-    # Break question into sub-questions
-    sub_questions = await decompose_question(state["question"])
-    
-    # Create research agent with subagent
-    research_agent = create_deep_agent(
-        model=settings.deepagents_model,
-        tools=[search_web, search_documentation],
-        subagents=[research_analyst_subagent],
-    )
-    
-    # Launch parallel research tasks
-    research_tasks = []
-    for sub_q in sub_questions:
-        task = research_agent.task(
-            "research-analyst",
-            f"Research: {sub_q}"
-        )
-        research_tasks.append(task)
-    
-    # Execute in parallel
-    results = await asyncio.gather(*research_tasks)
-    
-    # Synthesize results
-    web_context = []
-    doc_context = []
-    for result in results:
-        web_context.extend(result.get("web_findings", []))
-        doc_context.extend(result.get("doc_findings", []))
-    
-    return {
-        "web_context": web_context,
-        "doc_context": doc_context,
-    }
-```
-
----
-
-## Phase 4: Skills-Guided Retrieval
-
-### 4.1 Create research skills
-
-**File:** `src/agents/skills/research.py`
-
-```python
-RESEARCH_SKILLS = {
-    "api_question": """
-    # API Research Strategy
-    1. Search official documentation first
-    2. Look for API reference pages
-    3. Check for code examples
-    4. Search Stack Overflow for common issues
-    5. Verify API exists and is current
-    """,
-    
-    "configuration": """
-    # Configuration Research Strategy
-    1. Search for official configuration guides
-    2. Look for environment variable documentation
-    3. Check GitHub examples and templates
-    4. Search for best practices blog posts
-    """,
-    
-    "troubleshooting": """
-    # Troubleshooting Research Strategy
-    1. Search for error message exactly
-    2. Look for GitHub issues with same problem
-    3. Check Stack Overflow solutions
-    4. Search for community forum posts
-    """,
-}
-```
-
-### 4.2 Update ingest node
-
-**File:** `src/agents/nodes/ingest.py`
-
-```python
-from src.agents.skills.research import RESEARCH_SKILLS
-
-async def ingest_node(state: DocumentationState) -> dict:
-    """Ingest and classify question for skill selection."""
-    
-    question = state["question"]
-    
-    # Classify question type
-    question_type = await classify_question(question)
-    
-    # Select appropriate research skill
-    skill = RESEARCH_SKILLS.get(question_type, RESEARCH_SKILLS["api_question"])
-    
-    return {
-        "question": question,
-        "question_type": question_type,
-        "research_skill": skill,
-    }
-```
-
----
-
-## Phase 5: Todo-Driven Investigation
-
-### 5.1 Create investigation planner
-
-**File:** `src/agents/planners/investigation.py`
-
-```python
-INVESTIGATION_PLAN_PROMPT = """
-Break this documentation question into a research plan:
-
-Question: {question}
-
-Create a todo list of:
-1. Specific search queries to run
-2. Documentation pages to check
-3. Code examples to find
-4. Validation steps to perform
-
-Format as JSON array of tasks.
-"""
-
-async def create_investigation_plan(question: str) -> list[dict]:
-    """Create a todo-driven investigation plan."""
-    
-    planner_agent = create_deep_agent(
-        model=settings.deepagents_model,
-        tools=[],  # Planning only
-    )
-    
-    result = await planner_agent.ainvoke({
-        "messages": [HumanMessage(content=INVESTIGATION_PLAN_PROMPT.format(question=question))],
-    })
-    
-    # Parse plan from response
-    return parse_plan_from_response(result)
-```
-
-### 5.2 Update research node with planning
-
-**File:** `src/agents/nodes/research.py`
-
-```python
-async def research_node_with_planning(state: DocumentationState) -> dict:
-    """Research with todo-driven investigation."""
-    
-    # Create investigation plan
-    plan = await create_investigation_plan(state["question"])
-    
-    # Create research agent with todo tools
-    research_agent = create_deep_agent(
-        model=settings.deepagents_model,
-        tools=[search_web, search_documentation, write_todos],
-    )
-    
-    # Execute plan
-    result = await research_agent.ainvoke({
-        "messages": [HumanMessage(content=f"Investigate: {state['question']}")],
-        "todos": plan,
-    })
-    
-    # Extract findings
-    return extract_findings_from_result(result)
-```
-
----
-
-## Phase 6: Graph Integration
-
-### 6.1 Update graph.py
-
-**File:** `src/agents/graph.py`
-
-```python
-def build_hybrid_graph():
-    """Build enhanced graph with Deep agents capabilities."""
-    
-    graph = StateGraph(DocumentationState)
-    
-    # Add nodes
-    graph.add_node("ingest", ingest_node)
-    graph.add_node("memory_retrieve", memory_retrieve_node)
-    graph.add_node("research", research_node_with_planning)  # Enhanced
-    graph.add_node("synthesize", synthesize_node)
-    graph.add_node("write_docs", write_docs_node)
-    graph.add_node("ai_review", ai_review_node)  # Enhanced with rubric
-    graph.add_node("human_review", human_review_node)
-    graph.add_node("publish", publish_node)
-    
-    # Same edges as before
-    graph.set_entry_point("ingest")
-    graph.add_edge("ingest", "memory_retrieve")
-    graph.add_edge("memory_retrieve", "research")
-    graph.add_edge("research", "synthesize")
-    graph.add_edge("synthesize", "write_docs")
-    graph.add_edge("write_docs", "ai_review")
-    
-    # Rubric-based routing (replaces confidence threshold)
-    graph.add_conditional_edges(
-        "ai_review",
-        lambda state: route_by_rubric(state),
-        {"human_review": "human_review", "research": "research", "publish": "publish"},
-    )
-    
-    # HITL routing (same as before)
-    graph.add_conditional_edges(
-        "human_review",
-        lambda state: {
-            "approve": "publish",
-            "reject": END,
-            "revise": "write_docs",
-        }.get(state.get("human_decision", ""), END),
-    )
-    
-    graph.add_edge("publish", END)
-    
-    return graph
-
-def route_by_rubric(state):
-    """Route based on rubric evaluation results."""
-    rubric_status = state.get("rubric_status", {})
-    
-    if rubric_status.get("satisfied"):
-        return "publish"
-    elif rubric_status.get("needs_revision"):
-        return "research" if rubric_status.get("research_needed") else "write_docs"
-    else:
-        return "human_review"
-```
-
----
-
-## Phase 7: State Updates
-
-### 7.1 Update state schema
-
-**File:** `src/agents/state.py`
-
-```python
-class DocumentationState(TypedDict):
-    # ... existing fields ...
-    
-    # Deep agents fields
-    question_type: str  # api_question, configuration, troubleshooting
-    research_skill: str  # Selected research strategy
-    investigation_plan: list[dict]  # Todo-driven plan
-    rubric_status: dict  # Rubric evaluation results
-    subagent_results: list[dict]  # Parallel research results
-```
-
----
-
-## Files to Create/Modify
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/config.py` | Modify | Add Deep agents settings |
-| `pyproject.toml` | Modify | Add deepagents dependency |
-| `src/agents/rubrics.py` | Create | Documentation quality rubric |
-| `src/agents/middleware/rubric.py` | Create | RubricMiddleware wrapper |
-| `src/agents/subagents/research.py` | Create | Research subagent |
-| `src/agents/skills/research.py` | Create | Research strategies |
-| `src/agents/planners/investigation.py` | Create | Todo-driven planner |
-| `src/agents/nodes/review.py` | Modify | Add rubric grading |
-| `src/agents/nodes/research.py` | Modify | Add parallel research |
-| `src/agents/nodes/ingest.py` | Modify | Add skill selection |
-| `src/agents/graph.py` | Modify | Update routing logic |
-| `src/agents/state.py` | Modify | Add new state fields |
-| `tests/test_rubric.py` | Create | Rubric tests |
-| `tests/test_subagents.py` | Create | Subagent tests |
-
----
-
 ## Implementation Order
 
-| Step | Task | Branch | Time |
-|------|------|--------|------|
-| 1 | Config updates | `feature/deepagents-config` | 30 min |
-| 2 | Add deepagents dependency | `feature/deepagents-deps` | 15 min |
-| 3 | Create rubric configuration | `feature/rubric-config` | 1 hour |
-| 4 | Create rubric middleware | `feature/rubric-middleware` | 1 hour |
-| 5 | Update ai_review node | `feature/rubric-review` | 1.5 hours |
-| 6 | Create research subagent | `feature/research-subagent` | 1 hour |
-| 7 | Create research skills | `feature/research-skills` | 1 hour |
-| 8 | Create investigation planner | `feature/investigation-planner` | 1 hour |
-| 9 | Update research node | `feature/research-enhanced` | 1.5 hours |
-| 10 | Update graph routing | `feature/graph-hybrid` | 1 hour |
-| 11 | Update state schema | `feature/state-update` | 30 min |
-| 12 | Create tests | `feature/deepagents-tests` | 1.5 hours |
-| 13 | Documentation | `docs/deepagents` | 30 min |
+| Step | Task | Estimated Time |
+|------|------|----------------|
+| 1 | Fix agents __init__.py import | 5 min |
+| 2 | Add missing skills functions | 15 min |
+| 3 | Export _classify_complexity | 5 min |
+| 4 | Update hybrid graph to use hybrid nodes | 15 min |
+| 5 | Fix review node rubric usage | 30 min |
+| 6 | Add deepagents dependency | 5 min |
+| 7 | Run tests | 15 min |
 
-**Total estimated time:** ~12 hours
+**Total estimated time:** ~1.5 hours
 
 ---
 
 ## Success Criteria
 
-1. Rubric grading replaces confidence threshold
-2. Research runs in parallel via subagents
-3. Skills guide research strategy selection
-4. Complex questions broken into investigation plans
-5. All existing tests pass
-6. New tests cover hybrid features
+1. `build_hybrid_graph()` uses hybrid node variants
+2. No import errors in agents module
+3. RubricMiddleware integrates with deepagents library
+4. All existing tests pass
+5. Hybrid graph can be invoked without errors
 
 ---
 
@@ -533,7 +379,6 @@ class DocumentationState(TypedDict):
 
 | Risk | Mitigation |
 |------|------------|
-| Deep agents API changes | Pin version, monitor releases |
-| Performance overhead | Profile parallel execution |
-| Context window limits | Offload to filesystem backend |
-| Grader failures | Fallback to confidence scoring |
+| deepagents API changes | Pin version >=0.6.5, <0.7.0 |
+| RubricMiddleware beta status | Wrap in try/except, fallback to standard review |
+| Performance overhead | Profile rubric grading, adjust max_iterations |

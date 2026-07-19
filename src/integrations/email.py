@@ -1,0 +1,129 @@
+from __future__ import annotations
+
+import structlog
+from jinja2 import Template
+
+from src.config import settings
+
+logger = structlog.get_logger()
+
+REVIEW_NOTIFICATION_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; }
+        .header { background: #4A90D9; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .confidence { font-size: 24px; font-weight: bold; }
+        .actions { margin: 20px 0; }
+        .btn {
+            display: inline-block; padding: 10px 20px;
+            margin: 5px; text-decoration: none; border-radius: 5px;
+        }
+        .btn-approve { background: #28a745; color: white; }
+        .btn-reject { background: #dc3545; color: white; }
+        .btn-revise { background: #ffc107; color: black; }
+        .footer { color: #666; font-size: 12px; text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Documentation Review Required</h1>
+        </div>
+        <div class="content">
+            <h2>{{ title }}</h2>
+            <p><strong>Source:</strong> {{ source }}</p>
+            <p><strong>Confidence:</strong> <span class="confidence">{{ confidence }}%</span></p>
+            <p><strong>Original Question:</strong></p>
+            <blockquote>{{ question }}</blockquote>
+            <div class="actions">
+                <a href="{{ app_url }}/review/{{ token }}/approve" class="btn btn-approve">
+                    ✓ Approve
+                </a>
+                <a href="{{ app_url }}/review/{{ token }}/reject" class="btn btn-reject">
+                    ✗ Reject
+                </a>
+                <a href="{{ app_url }}/review/{{ token }}/revise" class="btn btn-revise">
+                    ✎ Request Changes
+                </a>
+            </div>
+            <p>
+                Or <a href="{{ dashboard_url }}/review/{{ review_id }}">
+                    review in dashboard
+                </a> for detailed editing.
+            </p>
+        </div>
+        <div class="footer">
+            <p>This review was requested by Draftly AI. Link expires in 24 hours.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+
+async def send_email(to: str, subject: str, html_content: str) -> dict:
+    """Send email via SendGrid API."""
+    import httpx
+
+    api_key = settings.sendgrid_api_key.get_secret_value()
+    if not api_key:
+        logger.warning("sendgrid_not_configured")
+        return {"ok": False, "status": "skipped", "reason": "no_api_key"}
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "personalizations": [{"to": [{"email": to}]}],
+        "from": {
+            "email": settings.sendgrid_from_email,
+            "name": settings.sendgrid_from_name,
+        },
+        "subject": subject,
+        "content": [{"type": "text/html", "value": html_content}],
+    }
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            headers=headers,
+            json=payload,
+            timeout=10,
+        )
+        if resp.status_code not in (200, 201, 202):
+            logger.error("sendgrid_send_failed", status=resp.status_code, body=resp.text)
+            return {"ok": False, "status": "failed", "error": resp.text}
+        return {"ok": True, "status": "sent"}
+
+
+async def send_review_notification(
+    to: str,
+    reviewer_name: str,
+    state: dict,
+    review_id: str,
+    token: str,
+) -> dict:
+    """Send review notification email to a reviewer."""
+    title = state.get("draft_title", "Untitled")
+    confidence = state.get("confidence_score", 0)
+    source = state.get("source_type", "unknown")
+    question = state["question"]
+
+    template = Template(REVIEW_NOTIFICATION_TEMPLATE)
+    html_content = template.render(
+        title=title,
+        source=source,
+        confidence=f"{confidence:.0%}",
+        question=question,
+        app_url=settings.app_url,
+        dashboard_url=settings.review_dashboard_url,
+        review_id=review_id,
+        token=token,
+    )
+
+    subject = f"Review Required: {title}"
+    return await send_email(to, subject, html_content)
