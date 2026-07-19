@@ -11,17 +11,21 @@ logger = structlog.get_logger()
 _llm_cache: dict[str, ChatOpenAI] = {}
 
 
-def get_llm(model: str | None = None) -> ChatOpenAI:
-    """Get a ChatOpenAI instance for the given model (or default model)."""
+def get_llm(
+    model: str | None = None, temperature: float = 0.3, max_tokens: int = 4096
+) -> ChatOpenAI:
+    """Get a ChatOpenAI instance for the given model and settings."""
     model = model or settings.llm_model
-    if model not in _llm_cache:
-        _llm_cache[model] = ChatOpenAI(
+    cache_key = f"{model}:{temperature}:{max_tokens}"
+    if cache_key not in _llm_cache:
+        _llm_cache[cache_key] = ChatOpenAI(
             openai_api_key=settings.requesty_api_key,
             openai_api_base=settings.requesty_base_url,
             model_name=model,
-            temperature=0.3,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
-    return _llm_cache[model]
+    return _llm_cache[cache_key]
 
 
 async def call_llm(
@@ -32,8 +36,7 @@ async def call_llm(
     temperature: float = 0.3,
 ) -> str:
     """Call an LLM via Requesty with the given model."""
-    llm = get_llm(model)
-    llm.temperature = temperature
+    llm = get_llm(model, temperature=temperature, max_tokens=max_tokens)
 
     messages = []
     if system_prompt:
@@ -56,4 +59,9 @@ async def call_bedrock(
     temperature: float = 0.3,
 ) -> str:
     """Backward-compatible wrapper — calls default model."""
-    return await call_llm(prompt, system_prompt=system_prompt, max_tokens=max_tokens, temperature=temperature)
+    return await call_llm(
+        prompt,
+        system_prompt=system_prompt,
+        max_tokens=max_tokens,
+        temperature=temperature,
+    )
