@@ -24,11 +24,14 @@ def build_github_state(payload: dict, org_id: str) -> DocumentationState:
 
     question = f"{issue['title']}\n\n{issue.get('body', '')}"
 
+    graph_thread_id = f"github-{repo['id']}-{issue['number']}"
+
     return {
         "org_id": org_id,
         "source": "github",
         "channel_id": repo["full_name"],
         "thread_id": str(issue["number"]),
+        "graph_thread_id": graph_thread_id,
         "question": question,
         "similar_threads": [],
         "existing_docs": [],

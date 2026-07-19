@@ -13,9 +13,7 @@ logger = structlog.get_logger()
 
 def _serialize_row(row) -> dict:
     return {
-        k: str(v) if isinstance(v, uuid.UUID)
-        else v.isoformat() if isinstance(v, datetime)
-        else v
+        k: str(v) if isinstance(v, uuid.UUID) else v.isoformat() if isinstance(v, datetime) else v
         for k, v in dict(row).items()
     }
 
@@ -24,16 +22,18 @@ async def create_review_session(
     doc_id: str,
     reviewer_id: str | None = None,
     confidence_before: float | None = None,
+    graph_thread_id: str = "",
 ) -> str:
     row = await fetch_one(
         """
-        INSERT INTO review_sessions (doc_id, reviewer_id, confidence_before, status)
-        VALUES ($1, $2, $3, 'pending')
+        INSERT INTO review_sessions (doc_id, reviewer_id, confidence_before, status, thread_id)
+        VALUES ($1, $2, $3, 'pending', $4)
         RETURNING id::text
         """,
         doc_id,
         reviewer_id,
         confidence_before,
+        graph_thread_id,
     )
     logger.info("review_created", id=row["id"], doc_id=doc_id)
     return row["id"]
@@ -104,3 +104,12 @@ async def get_reviewer_memory(org_id: str, limit: int = 10) -> list[dict]:
         limit,
     )
     return [_serialize_row(r) for r in rows]
+
+
+async def get_review_thread_id(review_id: str) -> str | None:
+    """Look up the graph thread_id from a review session for HITL resume."""
+    row = await fetch_one(
+        "SELECT thread_id FROM review_sessions WHERE id = $1",
+        review_id,
+    )
+    return row["thread_id"] if row and row["thread_id"] else None

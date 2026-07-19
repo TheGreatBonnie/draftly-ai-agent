@@ -21,11 +21,14 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
     if org_id is None:
         org_id = await get_or_create_default_org()
 
+    graph_thread_id = f"cli-{hash(question)}"
+
     initial_state = {
         "org_id": org_id,
         "source": source,
         "channel_id": "cli",
         "thread_id": f"cli-{uuid4().hex[:12]}",
+        "graph_thread_id": graph_thread_id,
         "support_thread_id": "",
         "question": question,
         "similar_threads": [],
@@ -50,7 +53,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         "source_metadata": {},
     }
 
-    config = {"configurable": {"thread_id": f"cli-{hash(question)}"}}
+    config = {"configurable": {"thread_id": graph_thread_id}}
 
     async with AsyncCockroachDBSaver.from_conn_string(settings.cockroachdb_url) as checkpointer:
         await checkpointer.setup()

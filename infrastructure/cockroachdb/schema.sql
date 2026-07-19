@@ -79,12 +79,14 @@ CREATE TABLE IF NOT EXISTS review_sessions (
     edits_made JSONB,
     confidence_before FLOAT CHECK (confidence_before >= 0 AND confidence_before <= 1),
     confidence_after FLOAT CHECK (confidence_after >= 0 AND confidence_after <= 1),
+    thread_id STRING,
     created_at TIMESTAMPTZ DEFAULT now(),
     completed_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_review_doc ON review_sessions(doc_id);
 CREATE INDEX IF NOT EXISTS idx_review_status ON review_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_review_thread ON review_sessions(thread_id);
 
 -- 6. Agent Workflows (procedural memory)
 CREATE TABLE IF NOT EXISTS agent_workflows (

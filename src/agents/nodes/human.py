@@ -74,6 +74,7 @@ async def human_review_node(state: DocumentationState) -> dict:
     review_id = await create_review_session(
         doc_id=doc_id,
         confidence_before=state.get("confidence_score", 0),
+        graph_thread_id=state.get("graph_thread_id", ""),
     )
 
     # Notify reviewers

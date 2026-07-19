@@ -68,26 +68,14 @@ def build_hybrid_graph():
 
 
 def route_by_rubric(state: DocumentationState) -> str:
-    """Route based on rubric evaluation results."""
+    """Route based on rubric evaluation results. HITL is always required."""
     rubric_status = state.get("rubric_status", {})
-    confidence = state.get("confidence_score", 0)
 
-    # If rubric passed, publish
-    if rubric_status.get("satisfied"):
-        return "publish"
-
-    # If rubric needs revision
+    # If rubric needs revision, loop back
     if rubric_status.get("needs_revision"):
-        # Check if research is needed
         if rubric_status.get("research_needed"):
             return "research"
-        # Otherwise, revise writing
         return "write_docs"
 
-    # Fallback to confidence-based routing
-    if confidence >= 0.8:
-        return "publish"
-    elif confidence >= 0.5:
-        return "human_review"
-    else:
-        return "research"
+    # All other paths go to human_review (always required)
+    return "human_review"

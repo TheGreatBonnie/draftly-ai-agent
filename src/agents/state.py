@@ -50,6 +50,9 @@ class DocumentationState(TypedDict):
     # Source reply context (platform-specific identifiers, no tokens)
     source_metadata: dict
 
+    # LangGraph checkpointer thread_id for HITL resume
+    graph_thread_id: str
+
     # Hybrid Deep agents fields
     question_type: str  # "simple", "moderate", "complex"
     research_skill: dict  # Selected research skill
