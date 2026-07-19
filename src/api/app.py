@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 
-from src.api.routes import docs, memory, review, reviewers, reviews
+from src.api.routes import docs, github, memory, review, reviewers, reviews
 from src.database import close_pool, get_pool
 
 templates = Jinja2Templates(directory="src/api/templates")
@@ -25,6 +25,7 @@ app.include_router(reviewers.router, prefix="/api/reviewers", tags=["reviewers"]
 app.include_router(review.router, prefix="/api/review", tags=["review"])
 app.include_router(docs.router, prefix="/api/docs", tags=["docs"])
 app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
+app.include_router(github.router, prefix="/api/github", tags=["github"])
 
 
 @app.get("/")

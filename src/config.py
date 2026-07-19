@@ -22,9 +22,13 @@ class Settings(BaseSettings):
     discord_bot_token: SecretStr = SecretStr("")
     discord_public_key: SecretStr = SecretStr("")
 
-    # GitHub
+    # GitHub (Personal Access Token)
     github_token: SecretStr = SecretStr("")
+
+    # GitHub App
+    github_app_id: str = ""
     github_webhook_secret: SecretStr = SecretStr("")
+    github_private_key_path: str = "./private-key.pem"
 
     # Email (SendGrid)
     sendgrid_api_key: SecretStr = SecretStr("")

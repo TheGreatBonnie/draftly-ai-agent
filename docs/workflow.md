@@ -1,0 +1,1 @@
+Track GitHub issues, Discord support request messages or slack support request messages --> Ingest the issues and support messages --> Find docs related to the issue --> LLM generates docs on how to fix the issue --> send a slack, discord or email message to human reviewer to review generated docs --> If approved, reply to original issue with approved solution using bots
