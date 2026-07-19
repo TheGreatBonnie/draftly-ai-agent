@@ -148,7 +148,9 @@ CREATE TABLE IF NOT EXISTS reviewers (
     email STRING,
     slack_user_id STRING,
     discord_user_id STRING,
-    notification_channel STRING DEFAULT 'slack' CHECK (notification_channel IN ('slack', 'discord', 'email')),
+    notify_slack BOOL DEFAULT true,
+    notify_discord BOOL DEFAULT false,
+    notify_email BOOL DEFAULT false,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now() ON UPDATE now()

@@ -1,6 +1,13 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from src.agents.nodes.human import notify_reviewers
+
+_REVIEWERS_MOD = "src.memory.reviewers"
+_SLACK_MOD = "src.integrations.slack"
+_EMAIL_MOD = "src.integrations.email"
+_EMAIL = f"{_EMAIL_MOD}.send_review_notification"
 
 
 @pytest.mark.asyncio
@@ -18,18 +25,20 @@ async def test_notify_reviewers_slack():
         {
             "id": "reviewer-1",
             "name": "John",
-            "notification_channel": "slack",
+            "notify_slack": True,
+            "notify_discord": False,
+            "notify_email": False,
             "slack_user_id": "U123456",
         }
     ]
 
-    with patch("src.agents.nodes.human.get_reviewers_by_org", new_callable=AsyncMock) as mock_get:
+    with patch(f"{_REVIEWERS_MOD}.get_reviewers_by_org", new_callable=AsyncMock) as mock_get:
         mock_get.return_value = mock_reviewers
-        with patch("src.agents.nodes.human.send_slack_message", new_callable=AsyncMock) as mock_slack:
+        with patch(f"{_SLACK_MOD}.send_slack_message", new_callable=AsyncMock) as mock_slack:
             mock_slack.return_value = {"ok": True}
             results = await notify_reviewers(state, "review-123")
             assert "reviewer-1" in results
-            assert results["reviewer-1"]["channel"] == "slack"
+            assert results["reviewer-1"]["slack"] == "sent"
 
 
 @pytest.mark.asyncio
@@ -47,18 +56,20 @@ async def test_notify_reviewers_email():
         {
             "id": "reviewer-1",
             "name": "John",
-            "notification_channel": "email",
+            "notify_slack": False,
+            "notify_discord": False,
+            "notify_email": True,
             "email": "john@example.com",
         }
     ]
 
-    with patch("src.agents.nodes.human.get_reviewers_by_org", new_callable=AsyncMock) as mock_get:
+    with patch(f"{_REVIEWERS_MOD}.get_reviewers_by_org", new_callable=AsyncMock) as mock_get:
         mock_get.return_value = mock_reviewers
-        with patch("src.agents.nodes.human.send_review_notification", new_callable=AsyncMock) as mock_email:
+        with patch(_EMAIL, new_callable=AsyncMock) as mock_email:
             mock_email.return_value = {"ok": True}
             results = await notify_reviewers(state, "review-123")
             assert "reviewer-1" in results
-            assert results["reviewer-1"]["channel"] == "email"
+            assert results["reviewer-1"]["email"] == "sent"
 
 
 @pytest.mark.asyncio
@@ -76,25 +87,29 @@ async def test_notify_handles_failure():
         {
             "id": "reviewer-1",
             "name": "John",
-            "notification_channel": "slack",
+            "notify_slack": True,
+            "notify_discord": False,
+            "notify_email": False,
             "slack_user_id": "U123456",
         },
         {
             "id": "reviewer-2",
             "name": "Jane",
-            "notification_channel": "email",
+            "notify_slack": False,
+            "notify_discord": False,
+            "notify_email": True,
             "email": "jane@example.com",
         },
     ]
 
-    with patch("src.agents.nodes.human.get_reviewers_by_org", new_callable=AsyncMock) as mock_get:
+    with patch(f"{_REVIEWERS_MOD}.get_reviewers_by_org", new_callable=AsyncMock) as mock_get:
         mock_get.return_value = mock_reviewers
-        with patch("src.agents.nodes.human.send_slack_message", new_callable=AsyncMock) as mock_slack:
+        with patch(f"{_SLACK_MOD}.send_slack_message", new_callable=AsyncMock) as mock_slack:
             mock_slack.side_effect = Exception("Slack error")
-            with patch("src.agents.nodes.human.send_review_notification", new_callable=AsyncMock) as mock_email:
+            with patch(_EMAIL, new_callable=AsyncMock) as mock_email:
                 mock_email.return_value = {"ok": True}
                 results = await notify_reviewers(state, "review-123")
                 assert "reviewer-1" in results
                 assert results["reviewer-1"]["status"] == "failed"
                 assert "reviewer-2" in results
-                assert results["reviewer-2"]["channel"] == "email"
+                assert results["reviewer-2"]["email"] == "sent"

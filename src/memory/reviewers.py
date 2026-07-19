@@ -25,14 +25,16 @@ async def create_reviewer(
     email: str | None = None,
     slack_user_id: str | None = None,
     discord_user_id: str | None = None,
-    notification_channel: str = "slack",
+    notify_slack: bool = True,
+    notify_discord: bool = False,
+    notify_email: bool = False,
 ) -> dict:
     """Create a new reviewer."""
     row = await fetch_one(
         """
         INSERT INTO reviewers (org_id, name, email, slack_user_id,
-                               discord_user_id, notification_channel)
-        VALUES ($1, $2, $3, $4, $5, $6)
+                               discord_user_id, notify_slack, notify_discord, notify_email)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
         """,
         org_id,
@@ -40,7 +42,9 @@ async def create_reviewer(
         email,
         slack_user_id,
         discord_user_id,
-        notification_channel,
+        notify_slack,
+        notify_discord,
+        notify_email,
     )
     logger.info("reviewer_created", id=row["id"], org_id=org_id, name=name)
     return _serialize_row(row)
@@ -79,7 +83,7 @@ async def update_reviewer(
     """Update a reviewer."""
     allowed_fields = {
         "name", "email", "slack_user_id", "discord_user_id",
-        "notification_channel", "is_active",
+        "notify_slack", "notify_discord", "notify_email", "is_active",
     }
     updates = {k: v for k, v in kwargs.items() if k in allowed_fields}
 

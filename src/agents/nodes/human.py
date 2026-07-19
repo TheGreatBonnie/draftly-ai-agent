@@ -40,15 +40,15 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
         )
 
         try:
-            if reviewer["notification_channel"] == "slack" and reviewer.get("slack_user_id"):
+            if reviewer.get("notify_slack") and reviewer.get("slack_user_id"):
                 await send_slack_message(reviewer["slack_user_id"], message)
-                results[reviewer["id"]] = {"channel": "slack", "status": "sent"}
+                results.setdefault(reviewer["id"], {})["slack"] = "sent"
 
-            elif reviewer["notification_channel"] == "discord" and reviewer.get("discord_user_id"):
+            if reviewer.get("notify_discord") and reviewer.get("discord_user_id"):
                 await send_discord_message(reviewer["discord_user_id"], message)
-                results[reviewer["id"]] = {"channel": "discord", "status": "sent"}
+                results.setdefault(reviewer["id"], {})["discord"] = "sent"
 
-            elif reviewer["notification_channel"] == "email" and reviewer.get("email"):
+            if reviewer.get("notify_email") and reviewer.get("email"):
                 await send_review_notification(
                     to=reviewer["email"],
                     reviewer_name=reviewer["name"],
@@ -56,7 +56,7 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
                     review_id=review_id,
                     token=token,
                 )
-                results[reviewer["id"]] = {"channel": "email", "status": "sent"}
+                results.setdefault(reviewer["id"], {})["email"] = "sent"
 
         except Exception as e:
             logger.error("notification_failed", reviewer_id=reviewer["id"], error=str(e))

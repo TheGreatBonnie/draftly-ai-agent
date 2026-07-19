@@ -20,7 +20,9 @@ class CreateReviewerRequest(BaseModel):
     email: str | None = None
     slack_user_id: str | None = None
     discord_user_id: str | None = None
-    notification_channel: str = "slack"
+    notify_slack: bool = True
+    notify_discord: bool = False
+    notify_email: bool = False
 
 
 class UpdateReviewerRequest(BaseModel):
@@ -28,7 +30,9 @@ class UpdateReviewerRequest(BaseModel):
     email: str | None = None
     slack_user_id: str | None = None
     discord_user_id: str | None = None
-    notification_channel: str | None = None
+    notify_slack: bool | None = None
+    notify_discord: bool | None = None
+    notify_email: bool | None = None
     is_active: bool | None = None
 
 
@@ -41,7 +45,9 @@ async def create(request: CreateReviewerRequest):
         email=request.email,
         slack_user_id=request.slack_user_id,
         discord_user_id=request.discord_user_id,
-        notification_channel=request.notification_channel,
+        notify_slack=request.notify_slack,
+        notify_discord=request.notify_discord,
+        notify_email=request.notify_email,
     )
     return reviewer
 

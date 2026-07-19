@@ -1,11 +1,11 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from src.memory.reviewers import (
     create_reviewer,
     get_reviewers_by_org,
-    get_reviewer_by_id,
     update_reviewer,
-    delete_reviewer,
 )
 
 
@@ -19,7 +19,9 @@ async def test_create_reviewer():
         "email": "john@example.com",
         "slack_user_id": "U123456",
         "discord_user_id": None,
-        "notification_channel": "slack",
+        "notify_slack": True,
+        "notify_discord": False,
+        "notify_email": False,
         "is_active": True,
         "created_at": "2025-07-19T00:00:00",
         "updated_at": "2025-07-19T00:00:00",
@@ -57,7 +59,8 @@ async def test_update_reviewer():
     mock_row = {
         "id": "test-id",
         "name": "John Updated",
-        "notification_channel": "email",
+        "notify_slack": False,
+        "notify_email": True,
     }
 
     with patch("src.memory.reviewers.fetch_one", new_callable=AsyncMock) as mock_fetch:
@@ -65,7 +68,8 @@ async def test_update_reviewer():
         updated = await update_reviewer(
             reviewer_id="test-id",
             name="John Updated",
-            notification_channel="email",
+            notify_slack=False,
+            notify_email=True,
         )
         assert updated["name"] == "John Updated"
-        assert updated["notification_channel"] == "email"
+        assert updated["notify_email"] is True
