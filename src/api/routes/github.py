@@ -26,7 +26,7 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
     signature = request.headers.get("X-Hub-Signature-256")
 
     # 2. Verify webhook signature
-    if not verify_webhook_signature(body, signature):
+    if signature is None or not verify_webhook_signature(body, signature):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
     # 3. Parse payload

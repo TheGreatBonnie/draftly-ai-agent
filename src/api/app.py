@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 
 from src.api.routes import docs, github, memory, review, reviewers, reviews
@@ -29,15 +29,17 @@ app.include_router(github.router, prefix="/api/github", tags=["github"])
 
 
 @app.get("/")
-async def dashboard():
+async def dashboard(request: Request):
+    from src.memory.organizations import get_or_create_default_org
     from src.memory.reviewer import get_pending_reviews
 
-    reviews = await get_pending_reviews(org_id="default")
-    return templates.TemplateResponse("dashboard.html", {"request": {}, "reviews": reviews})
+    org_id = await get_or_create_default_org()
+    reviews = await get_pending_reviews(org_id=org_id)
+    return templates.TemplateResponse(request, "dashboard.html", {"reviews": reviews})
 
 
 @app.get("/review/{review_id}")
-async def review_page(review_id: str):
+async def review_page(request: Request, review_id: str):
     from src.database import fetch_one
 
     review = await fetch_one(
@@ -46,4 +48,4 @@ async def review_page(review_id: str):
         review_id,
     )
     review_data = dict(review) if review else None
-    return templates.TemplateResponse("review.html", {"request": {}, "review": review_data})
+    return templates.TemplateResponse(request, "review.html", {"review": review_data})

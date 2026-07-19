@@ -18,3 +18,5 @@ uv.lock
 
 # Mypy
 .mypy_cache/
+
+private-key.pem

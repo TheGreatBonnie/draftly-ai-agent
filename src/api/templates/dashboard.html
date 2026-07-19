@@ -9,7 +9,7 @@
     <p>Created: {{ review.created_at }}</p>
     <a href="/review/{{ review.id }}">Review →</a>
 </div>
-{% empty %}
+{% else %}
 <p>No pending reviews.</p>
 {% endfor %}
 {% endblock %}

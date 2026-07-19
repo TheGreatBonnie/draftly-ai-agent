@@ -7,6 +7,23 @@ from src.database import fetch_one
 logger = structlog.get_logger()
 
 
+async def get_or_create_default_org(name: str = "default") -> str:
+    """Get or create an org by name. Used by API routes and CLI."""
+    existing = await fetch_one(
+        "SELECT id::text FROM organizations WHERE name = $1",
+        name,
+    )
+    if existing:
+        return existing["id"]
+
+    row = await fetch_one(
+        "INSERT INTO organizations (name) VALUES ($1) RETURNING id::text",
+        name,
+    )
+    logger.info("org_created", name=name, id=row["id"])
+    return row["id"]
+
+
 async def get_or_create_org(github_org: str, name: str | None = None) -> str:
     """Get or create organization for GitHub repo."""
     org_name = name or github_org
@@ -124,9 +141,7 @@ async def store_github_workflow(
     return row["id"]
 
 
-async def get_github_workflow_by_issue(
-    owner: str, repo: str, issue_number: int
-) -> dict | None:
+async def get_github_workflow_by_issue(owner: str, repo: str, issue_number: int) -> dict | None:
     """Get workflow by GitHub issue identifiers."""
     row = await fetch_one(
         """SELECT id::text, workflow_id, installation_id, owner, repo, issue_number, status
@@ -140,9 +155,7 @@ async def get_github_workflow_by_issue(
     return dict(row) if row else None
 
 
-async def update_github_workflow_status(
-    workflow_id: str, status: str
-) -> None:
+async def update_github_workflow_status(workflow_id: str, status: str) -> None:
     """Update workflow status."""
     from src.database import execute
 

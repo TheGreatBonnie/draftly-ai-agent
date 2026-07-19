@@ -13,9 +13,11 @@ class ReviewDecision(BaseModel):
 
 @router.get("/pending")
 async def get_pending():
+    from src.memory.organizations import get_or_create_default_org
     from src.memory.reviewer import get_pending_reviews
 
-    return await get_pending_reviews(org_id="default")
+    org_id = await get_or_create_default_org()
+    return await get_pending_reviews(org_id=org_id)
 
 
 @router.post("/{review_id}/decide")

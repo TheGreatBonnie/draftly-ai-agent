@@ -47,6 +47,9 @@ class DocumentationState(TypedDict):
     doc_id: str
     messages: Annotated[list, add_messages]
 
+    # Source reply context (platform-specific identifiers, no tokens)
+    source_metadata: dict
+
     # Hybrid Deep agents fields
     question_type: str  # "simple", "moderate", "complex"
     research_skill: dict  # Selected research skill
