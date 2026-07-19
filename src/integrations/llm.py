@@ -8,19 +8,45 @@ from src.config import settings
 
 logger = structlog.get_logger()
 
-_llm: ChatOpenAI | None = None
+_llm_cache: dict[str, ChatOpenAI] = {}
 
 
-def get_llm() -> ChatOpenAI:
-    global _llm
-    if _llm is None:
-        _llm = ChatOpenAI(
+def get_llm(model: str | None = None) -> ChatOpenAI:
+    """Get a ChatOpenAI instance for the given model (or default model)."""
+    model = model or settings.llm_model
+    if model not in _llm_cache:
+        _llm_cache[model] = ChatOpenAI(
             openai_api_key=settings.requesty_api_key,
             openai_api_base=settings.requesty_base_url,
-            model_name=settings.llm_model,
+            model_name=model,
             temperature=0.3,
         )
-    return _llm
+    return _llm_cache[model]
+
+
+async def call_llm(
+    prompt: str,
+    system_prompt: str = "",
+    model: str | None = None,
+    max_tokens: int = 4096,
+    temperature: float = 0.3,
+) -> str:
+    """Call an LLM via Requesty with the given model."""
+    llm = get_llm(model)
+    llm.temperature = temperature
+
+    messages = []
+    if system_prompt:
+        messages.append(SystemMessage(content=system_prompt))
+    messages.append(HumanMessage(content=prompt))
+
+    logger.info("llm_call", model=model or settings.llm_model, prompt_length=len(prompt))
+
+    response = await llm.ainvoke(messages)
+
+    text = response.content if isinstance(response.content, str) else str(response.content)
+    logger.info("llm_response", response_length=len(text))
+    return text
 
 
 async def call_bedrock(
@@ -29,18 +55,5 @@ async def call_bedrock(
     max_tokens: int = 4096,
     temperature: float = 0.3,
 ) -> str:
-    llm = get_llm()
-    llm.temperature = temperature
-
-    messages = []
-    if system_prompt:
-        messages.append(SystemMessage(content=system_prompt))
-    messages.append(HumanMessage(content=prompt))
-
-    logger.info("llm_call", model=settings.llm_model, prompt_length=len(prompt))
-
-    response = await llm.ainvoke(messages)
-
-    text = response.content if isinstance(response.content, str) else str(response.content)
-    logger.info("llm_response", response_length=len(text))
-    return text
+    """Backward-compatible wrapper — calls default model."""
+    return await call_llm(prompt, system_prompt=system_prompt, max_tokens=max_tokens, temperature=temperature)
