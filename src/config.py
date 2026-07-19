@@ -38,11 +38,11 @@ class Settings(BaseSettings):
     # Security
     secret_key: str = "change-me-in-production"
 
-    # Deep agents
-    deepagents_model: str = "anthropic:claude-sonnet-4-6"
-    rubric_grader_model: str = "anthropic:claude-haiku-4-5"
+    # Per-stage LLM models (all routed through Requesty)
+    research_model: str = "anthropic/claude-sonnet-4-6"
+    review_model: str = "anthropic/claude-sonnet-4-6"
+    rubric_grader_model: str = "anthropic/claude-haiku-4-5"
     rubric_max_iterations: int = 3
-    research_max_concurrent: int = 3
 
     # App
     app_url: str = "http://localhost:8000"
