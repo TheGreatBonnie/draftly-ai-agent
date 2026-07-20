@@ -4,6 +4,7 @@ import json
 
 import structlog
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from src.agents.runners.github_runner import run_github_pipeline
@@ -31,6 +32,17 @@ async def github_installations():
     from src.memory.organizations import list_github_installations
 
     return await list_github_installations()
+
+
+@router.get("/setup-callback")
+async def github_setup_callback(
+    installation_id: int | None = None,
+    setup_action: str | None = None,
+):
+    frontend_url = f"{settings.app_url}/settings"
+    if installation_id:
+        frontend_url += f"?github=connected&installation_id={installation_id}"
+    return RedirectResponse(url=frontend_url)
 
 
 @router.post("/webhook")
