@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from src.api.auth import get_verified_token
+from src.api.auth import get_verified_token, require_admin_role
 from src.memory.reviewers import (
     create_reviewer,
     delete_reviewer,
@@ -38,7 +38,7 @@ class UpdateReviewerRequest(BaseModel):
 
 
 @router.post("")
-async def create(request: CreateReviewerRequest, token: dict = Depends(get_verified_token)):
+async def create(request: CreateReviewerRequest, token: dict = Depends(require_admin_role)):
     """Create a new reviewer."""
     org_id = token.get("org_id") or request.org_id or "default"
     reviewer = await create_reviewer(
@@ -87,7 +87,7 @@ async def get_reviewer(reviewer_id: str, token: dict = Depends(get_verified_toke
 
 
 @router.put("/{reviewer_id}")
-async def update(reviewer_id: str, request: UpdateReviewerRequest, token: dict = Depends(get_verified_token)):
+async def update(reviewer_id: str, request: UpdateReviewerRequest, token: dict = Depends(require_admin_role)):
     """Update a reviewer."""
     existing = await get_reviewer_by_id(reviewer_id)
     if not existing:
@@ -102,7 +102,7 @@ async def update(reviewer_id: str, request: UpdateReviewerRequest, token: dict =
 
 
 @router.delete("/{reviewer_id}")
-async def delete(reviewer_id: str, token: dict = Depends(get_verified_token)):
+async def delete(reviewer_id: str, token: dict = Depends(require_admin_role)):
     """Delete a reviewer."""
     existing = await get_reviewer_by_id(reviewer_id)
     if not existing:

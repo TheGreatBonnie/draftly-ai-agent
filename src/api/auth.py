@@ -61,3 +61,13 @@ async def get_verified_token(request: Request) -> dict:
         "org_role": org_role,
         "raw": payload,
     }
+
+
+async def require_admin_role(token: dict = Depends(get_verified_token)) -> dict:
+    """Require the user to have admin role in the current organization."""
+    if token.get("org_role") not in ("org:admin",):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin role required for this action",
+        )
+    return token
