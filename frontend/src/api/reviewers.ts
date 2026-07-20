@@ -5,8 +5,8 @@ import type {
   UpdateReviewerPayload,
 } from "./types";
 
-export async function listReviewers(orgId: string): Promise<{ reviewers: Reviewer[] }> {
-  return request(`/reviewers?org_id=${orgId}`);
+export async function listReviewers(): Promise<{ reviewers: Reviewer[] }> {
+  return request("/reviewers");
 }
 
 export async function getReviewer(id: string): Promise<Reviewer> {

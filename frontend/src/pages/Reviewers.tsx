@@ -11,14 +11,13 @@ export function Reviewers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CreateReviewerPayload>({
-    org_id: "default",
     name: "",
     email: "",
   });
 
   function load() {
     setLoading(true);
-    listReviewers("default")
+    listReviewers()
       .then((res) => setReviewers(res.reviewers))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -30,7 +29,7 @@ export function Reviewers() {
     if (!form.name.trim()) return;
     try {
       await createReviewer(form);
-      setForm({ org_id: "default", name: "", email: "" });
+      setForm({ name: "", email: "" });
       load();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Create failed");

@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 class CreateReviewerRequest(BaseModel):
-    org_id: str
+    org_id: str | None = None
     name: str
     email: str | None = None
     slack_user_id: str | None = None
@@ -39,8 +39,13 @@ class UpdateReviewerRequest(BaseModel):
 @router.post("")
 async def create(request: CreateReviewerRequest):
     """Create a new reviewer."""
+    org_id = request.org_id
+    if org_id is None:
+        from src.memory.organizations import get_or_create_default_org
+
+        org_id = await get_or_create_default_org()
     reviewer = await create_reviewer(
-        org_id=request.org_id,
+        org_id=org_id,
         name=request.name,
         email=request.email,
         slack_user_id=request.slack_user_id,
@@ -53,8 +58,12 @@ async def create(request: CreateReviewerRequest):
 
 
 @router.get("")
-async def list_reviewers(org_id: str, active_only: bool = True):
+async def list_reviewers(org_id: str | None = None, active_only: bool = True):
     """List reviewers for an organization."""
+    if org_id is None:
+        from src.memory.organizations import get_or_create_default_org
+
+        org_id = await get_or_create_default_org()
     reviewers = await get_reviewers_by_org(org_id, active_only=active_only)
     return {"reviewers": reviewers}
 

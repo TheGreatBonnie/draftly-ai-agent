@@ -37,7 +37,7 @@ export interface Reviewer {
 }
 
 export interface CreateReviewerPayload {
-  org_id: string;
+  org_id?: string;
   name: string;
   email?: string;
   slack_user_id?: string;

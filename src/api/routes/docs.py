@@ -8,10 +8,13 @@ router = APIRouter()
 @router.get("/")
 async def list_docs():
     from src.database import fetch_all
+    from src.memory.organizations import get_or_create_default_org
 
+    org_id = await get_or_create_default_org()
     rows = await fetch_all(
         "SELECT *, id::text as id FROM documentation "
-        "WHERE org_id = 'default' ORDER BY created_at DESC LIMIT 50"
+        "WHERE org_id = $1 ORDER BY created_at DESC LIMIT 50",
+        org_id,
     )
     return [dict(r) for r in rows]
 
