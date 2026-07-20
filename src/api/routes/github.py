@@ -26,6 +26,13 @@ async def github_install_url():
     return {"install_url": f"https://github.com/apps/{settings.github_app_slug}/installations/new"}
 
 
+@router.get("/installations")
+async def github_installations():
+    from src.memory.organizations import list_github_installations
+
+    return await list_github_installations()
+
+
 @router.post("/webhook")
 async def github_webhook(request: Request, background_tasks: BackgroundTasks) -> WebhookResponse:
     """Receive and process GitHub webhook events."""
