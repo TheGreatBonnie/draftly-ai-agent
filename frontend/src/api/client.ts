@@ -1,9 +1,19 @@
 const BASE_URL = "/api";
 
 let _token: string | null = null;
+let _pendingToken: Promise<string | null> | null = null;
 
 export function setApiToken(token: string | null) {
   _token = token;
+  _pendingToken = token !== null ? Promise.resolve(token) : null;
+}
+
+export function setPendingToken(promise: Promise<string | null>) {
+  _pendingToken = promise;
+  promise.then((token) => {
+    _token = token;
+    _pendingToken = null;
+  });
 }
 
 class ApiError extends Error {
@@ -16,6 +26,10 @@ class ApiError extends Error {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  if (_pendingToken) {
+    await _pendingToken;
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };

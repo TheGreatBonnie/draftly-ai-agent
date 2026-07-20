@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAuth } from "@clerk/react";
-import { setApiToken } from "../api/client";
+import { setApiToken, setPendingToken } from "../api/client";
 
 export function AuthTokenSetter() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -11,7 +11,11 @@ export function AuthTokenSetter() {
       setApiToken(null);
       return;
     }
-    getToken({ skipCache: true }).then((token) => setApiToken(token));
+    const promise = getToken({ skipCache: true }).then((token) => {
+      setApiToken(token);
+      return token;
+    });
+    setPendingToken(promise);
   }, [getToken, isLoaded, isSignedIn]);
 
   return null;
