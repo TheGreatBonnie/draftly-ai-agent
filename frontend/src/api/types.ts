@@ -90,3 +90,17 @@ export interface SearchResult {
   score: number;
   metadata: unknown;
 }
+
+export interface GitHubInstallation {
+  id: string;
+  installation_id: number;
+  github_org: string;
+  repositories: { full_name: string; id: number }[];
+  created_at: string;
+  updated_at: string;
+  org_name: string;
+}
+
+export interface GitHubInstallUrl {
+  install_url: string;
+}
