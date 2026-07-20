@@ -51,10 +51,14 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
         )
 
         action = payload.get("action")
-        installation = payload["installation"]
+        installation = payload.get("installation")
+        if not installation:
+            logger.warning("github_installation_malformed")
+            return WebhookResponse(status="Bad request")
+
         installation_id = installation["id"]
-        account = installation["account"]
-        github_org = account["login"]
+        account = installation.get("account") or {}
+        github_org = account.get("login", "unknown")
 
         if action == "created":
             repositories = [
@@ -74,6 +78,7 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
                 org=github_org,
                 repo_count=len(repositories),
             )
+            return WebhookResponse(status="Installation created")
 
         elif action == "deleted":
             await remove_github_installation(installation_id)
@@ -82,8 +87,9 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
                 installation_id=installation_id,
                 org=github_org,
             )
+            return WebhookResponse(status="Installation deleted")
 
-        return WebhookResponse(status=f"Installation {action}")
+        return WebhookResponse(status=f"Installation {action} (unhandled)")
 
     # Handle issue events
     if event_type == "issues" and payload.get("action") == "opened":
