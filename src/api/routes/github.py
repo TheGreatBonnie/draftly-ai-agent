@@ -39,6 +39,8 @@ async def github_setup_callback(
     installation_id: int | None = None,
     setup_action: str | None = None,
 ):
+    if setup_action:
+        logger.info("github_setup_callback", installation_id=installation_id, setup_action=setup_action)
     frontend_url = f"{settings.app_url}/settings"
     if installation_id:
         frontend_url += f"?github=connected&installation_id={installation_id}"
@@ -73,7 +75,7 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
         installation = payload.get("installation")
         if not installation:
             logger.warning("github_installation_malformed")
-            return WebhookResponse(status="Bad request")
+            raise HTTPException(status_code=400, detail="Missing installation in payload")
 
         installation_id = installation["id"]
         account = installation.get("account") or {}

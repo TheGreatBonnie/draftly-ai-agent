@@ -269,6 +269,6 @@ class TestGithubWebhook:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 400
         data = response.json()
-        assert data["status"] == "Bad request"
+        assert data["detail"] == "Missing installation in payload"

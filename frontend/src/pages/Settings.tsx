@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getInstallUrl, listInstallations } from "../api/github";
 import type { GitHubInstallation, GitHubInstallUrl } from "../api/types";
 
@@ -8,7 +8,7 @@ export function Settings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -23,18 +23,18 @@ export function Settings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // Re-fetch when page gains focus (e.g., returning from GitHub install)
   useEffect(() => {
     const onFocus = () => fetchData();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, []);
+  }, [fetchData]);
 
   if (loading) {
     return <p className="text-gray-500">Loading settings...</p>;
