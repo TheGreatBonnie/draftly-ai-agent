@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     github_app_id: str = ""
     github_webhook_secret: SecretStr = SecretStr("")
     github_private_key_path: str = "./private-key.pem"
+    github_app_slug: str = ""
 
     # Email (SendGrid)
     sendgrid_api_key: SecretStr = SecretStr("")
