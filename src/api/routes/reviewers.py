@@ -59,12 +59,24 @@ async def create(request: CreateReviewerRequest):
 
 @router.get("")
 async def list_reviewers(org_id: str | None = None, active_only: bool = True):
-    """List reviewers for an organization."""
-    if org_id is None:
-        from src.memory.organizations import get_or_create_default_org
+    """List reviewers. If org_id is provided, filter by org. Otherwise, return all."""
+    from src.database import fetch_all
 
-        org_id = await get_or_create_default_org()
-    reviewers = await get_reviewers_by_org(org_id, active_only=active_only)
+    if org_id is not None:
+        reviewers = await get_reviewers_by_org(org_id, active_only=active_only)
+    else:
+        query = """
+            SELECT r.*, r.id::text as id, o.name as org_name
+            FROM reviewers r
+            LEFT JOIN organizations o ON o.id = r.org_id
+        """
+        if active_only:
+            query += " WHERE r.is_active = true"
+        query += " ORDER BY r.created_at DESC"
+        rows = await fetch_all(query)
+        from src.memory.reviewers import _serialize_row
+
+        reviewers = [_serialize_row(r) for r in rows]
     return {"reviewers": reviewers}
 
 

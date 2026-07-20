@@ -24,6 +24,7 @@ export interface ReviewDecision {
 export interface Reviewer {
   id: string;
   org_id: string;
+  org_name?: string;
   name: string;
   email: string | null;
   slack_user_id: string | null;

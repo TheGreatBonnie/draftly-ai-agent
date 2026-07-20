@@ -10,7 +10,6 @@ const links = [
 export function Sidebar() {
   return (
     <aside className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 p-4">
-      <h1 className="mb-6 text-lg font-bold text-gray-900">Draftly</h1>
       <nav className="flex flex-col gap-1">
         {links.map((link) => (
           <NavLink
