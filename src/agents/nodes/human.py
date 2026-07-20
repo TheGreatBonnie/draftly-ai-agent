@@ -16,13 +16,15 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
     from src.integrations.discord import send_discord_message
     from src.integrations.email import send_review_notification
     from src.integrations.slack import send_slack_message
+    from src.integrations.slack_blocks import build_review_notification_card
     from src.memory.reviewers import get_reviewers_by_org
     from src.security.tokens import generate_review_token
 
     reviewers = await get_reviewers_by_org(state["org_id"])
-    title = state.get("draft_title", "Untitled")
-    confidence = state.get("confidence_score", 0)
-    source = state.get("source_type", "unknown")
+    title = str(state.get("draft_title", "Untitled"))
+    confidence = float(state.get("confidence_score", 0))
+    source = str(state.get("source_type", "unknown"))
+    draft_content = str(state.get("draft_content", ""))
 
     results = {}
 
@@ -30,7 +32,7 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
         token = generate_review_token(reviewer["id"], review_id)
         dashboard_url = f"{settings.review_dashboard_url}/{token}"
 
-        message = (
+        plain_message = (
             f"📝 *Documentation Review Required*\n\n"
             f"*Title:* {title}\n"
             f"*Source:* {source}\n"
@@ -39,13 +41,26 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
             f"Or use: `/approve {token}` | `/reject {token}` | `/revise {token}`"
         )
 
+        card = build_review_notification_card(
+            title=title,
+            source=source,
+            confidence=confidence,
+            dashboard_url=dashboard_url,
+            review_token=token,
+            draft_content=draft_content,
+        )
+
         try:
             if reviewer.get("notify_slack") and reviewer.get("slack_user_id"):
-                await send_slack_message(reviewer["slack_user_id"], message)
+                await send_slack_message(
+                    reviewer["slack_user_id"],
+                    card["text"],
+                    blocks=card["blocks"],
+                )
                 results.setdefault(reviewer["id"], {})["slack"] = "sent"
 
             if reviewer.get("notify_discord") and reviewer.get("discord_user_id"):
-                await send_discord_message(reviewer["discord_user_id"], message)
+                await send_discord_message(reviewer["discord_user_id"], plain_message)
                 results.setdefault(reviewer["id"], {})["discord"] = "sent"
 
             if reviewer.get("notify_email") and reviewer.get("email"):

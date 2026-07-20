@@ -8,12 +8,19 @@ from src.config import settings
 logger = structlog.get_logger()
 
 
-async def send_slack_message(channel: str, text: str, thread_ts: str | None = None) -> dict:
+async def send_slack_message(
+    channel: str,
+    text: str,
+    thread_ts: str | None = None,
+    blocks: list[dict] | None = None,
+) -> dict:
     token = settings.slack_bot_token.get_secret_value()
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    payload = {"channel": channel, "text": text}
+    payload: dict = {"channel": channel, "text": text}
     if thread_ts:
         payload["thread_ts"] = thread_ts
+    if blocks:
+        payload["blocks"] = blocks
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(

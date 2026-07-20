@@ -113,3 +113,42 @@ async def test_notify_handles_failure():
                 assert results["reviewer-1"]["status"] == "failed"
                 assert "reviewer-2" in results
                 assert results["reviewer-2"]["email"] == "sent"
+
+
+@pytest.mark.asyncio
+@patch(f"{_REVIEWERS_MOD}.get_reviewers_by_org", new_callable=AsyncMock)
+@patch(f"{_SLACK_MOD}.send_slack_message", new_callable=AsyncMock)
+@patch("src.security.tokens.generate_review_token")
+async def test_notify_reviewers_sends_block_kit_card(
+    mock_token, mock_slack, mock_get
+):
+    """Test notify_reviewers sends Block Kit card with blocks parameter."""
+    mock_token.return_value = "test_token"
+    mock_get.return_value = [
+        {
+            "id": "rev1",
+            "name": "Test Reviewer",
+            "notify_slack": True,
+            "notify_discord": False,
+            "notify_email": False,
+            "slack_user_id": "U123",
+        }
+    ]
+    mock_slack.return_value = {"ok": True}
+
+    state = {
+        "org_id": "org1",
+        "draft_title": "Test Doc",
+        "draft_content": "# Test\n\nThis is test content.",
+        "confidence_score": 0.85,
+        "source_type": "github",
+    }
+
+    await notify_reviewers(state, "review123")
+
+    mock_slack.assert_called_once()
+    call_args, call_kwargs = mock_slack.call_args
+    assert call_args[0] == "U123"
+    assert call_args[1].startswith("Documentation Review Required:")
+    assert call_kwargs["blocks"] is not None
+    assert len(call_kwargs["blocks"]) > 0
