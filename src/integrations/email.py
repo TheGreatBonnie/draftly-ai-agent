@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+from string import Template
+
 import structlog
-from jinja2 import Template
 
 from src.config import settings
 
 logger = structlog.get_logger()
 
-REVIEW_NOTIFICATION_TEMPLATE = """
+REVIEW_NOTIFICATION_TEMPLATE = Template("""\
 <!DOCTYPE html>
 <html>
 <head>
@@ -30,27 +31,27 @@ REVIEW_NOTIFICATION_TEMPLATE = """
 <body>
     <div class="container">
         <div class="header">
-            <h1>📝 Documentation Review Required</h1>
+            <h1>Documentation Review Required</h1>
         </div>
         <div class="content">
-            <h2>{{ title }}</h2>
-            <p><strong>Source:</strong> {{ source }}</p>
-            <p><strong>Confidence:</strong> <span class="confidence">{{ confidence }}%</span></p>
+            <h2>${title}</h2>
+            <p><strong>Source:</strong> ${source}</p>
+            <p><strong>Confidence:</strong> <span class="confidence">${confidence}%</span></p>
             <p><strong>Original Question:</strong></p>
-            <blockquote>{{ question }}</blockquote>
+            <blockquote>${question}</blockquote>
             <div class="actions">
-                <a href="{{ app_url }}/review/{{ token }}/approve" class="btn btn-approve">
-                    ✓ Approve
+                <a href="${app_url}/review/${token}/approve" class="btn btn-approve">
+                    Approve
                 </a>
-                <a href="{{ app_url }}/review/{{ token }}/reject" class="btn btn-reject">
-                    ✗ Reject
+                <a href="${app_url}/review/${token}/reject" class="btn btn-reject">
+                    Reject
                 </a>
-                <a href="{{ app_url }}/review/{{ token }}/revise" class="btn btn-revise">
-                    ✎ Request Changes
+                <a href="${app_url}/review/${token}/revise" class="btn btn-revise">
+                    Request Changes
                 </a>
             </div>
             <p>
-                Or <a href="{{ dashboard_url }}/review/{{ review_id }}">
+                Or <a href="${dashboard_url}/review/${review_id}">
                     review in dashboard
                 </a> for detailed editing.
             </p>
@@ -61,7 +62,7 @@ REVIEW_NOTIFICATION_TEMPLATE = """
     </div>
 </body>
 </html>
-"""
+""")
 
 
 async def send_email(to: str, subject: str, html_content: str) -> dict:
@@ -113,8 +114,7 @@ async def send_review_notification(
     source = state.get("source_type", "unknown")
     question = state["question"]
 
-    template = Template(REVIEW_NOTIFICATION_TEMPLATE)
-    html_content = template.render(
+    html_content = REVIEW_NOTIFICATION_TEMPLATE.substitute(
         title=title,
         source=source,
         confidence=f"{confidence:.0%}",

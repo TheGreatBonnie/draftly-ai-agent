@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.api.routes import docs, github, memory, review, reviewers, reviews, slack
 from src.database import close_pool, get_pool
-
-templates = Jinja2Templates(directory="src/api/templates")
 
 
 @asynccontextmanager
@@ -28,25 +28,14 @@ app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 app.include_router(github.router, prefix="/api/github", tags=["github"])
 app.include_router(slack.router, prefix="/api/slack", tags=["slack"])
 
+DIST_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
 
-@app.get("/")
-async def dashboard(request: Request):
-    from src.memory.organizations import get_or_create_default_org
-    from src.memory.reviewer import get_pending_reviews
+if DIST_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="static-assets")
 
-    org_id = await get_or_create_default_org()
-    reviews = await get_pending_reviews(org_id=org_id)
-    return templates.TemplateResponse(request, "dashboard.html", {"reviews": reviews})
-
-
-@app.get("/review/{review_id}")
-async def review_page(request: Request, review_id: str):
-    from src.database import fetch_one
-
-    review = await fetch_one(
-        "SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score "
-        "FROM review_sessions rs JOIN documentation d ON d.id = rs.doc_id WHERE rs.id = $1",
-        review_id,
-    )
-    review_data = dict(review) if review else None
-    return templates.TemplateResponse(request, "review.html", {"review": review_data})
+    @app.get("/{full_path:path}")
+    async def serve_spa(request: Request, full_path: str):
+        file_path = DIST_DIR / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(DIST_DIR / "index.html")
