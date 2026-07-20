@@ -37,10 +37,21 @@ async def research_node_hybrid(state: DocumentationState) -> dict:
             logger.warning("search_failed", query=query, error=str(e))
 
     # Synthesize findings via LLM
-    research_context = "\n\n---\n\n".join(web_results) if web_results else "No web results found."
+    def _extract_result_text(r: dict) -> str:
+        if isinstance(r, dict) and "results" in r:
+            items = r["results"]
+            if items and isinstance(items[0], dict):
+                title = items[0].get("title", "")
+                url = items[0].get("url", "")
+                content = items[0].get("content", "")
+                return f"[{title}]({url})\n{content}"
+        return str(r)
 
-    skill_strategy = research_skill.get("strategy", {})
-    research_focus = skill_strategy.get("focus", "general research")
+    research_context = "\n\n---\n\n".join(
+        [_extract_result_text(r) for r in web_results]
+    ) if web_results else "No web results found."
+
+    research_focus = research_skill.get("name", "general")
 
     synthesis_prompt = (
         f"Research the following question and return a comprehensive summary.\n\n"

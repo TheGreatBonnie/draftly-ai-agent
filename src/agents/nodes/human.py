@@ -28,7 +28,7 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
 
     for reviewer in reviewers:
         token = generate_review_token(reviewer["id"], review_id)
-        dashboard_url = f"{settings.review_dashboard_url}/review/{token}"
+        dashboard_url = f"{settings.review_dashboard_url}/{token}"
 
         message = (
             f"📝 *Documentation Review Required*\n\n"
