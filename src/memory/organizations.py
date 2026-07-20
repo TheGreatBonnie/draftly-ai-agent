@@ -8,62 +8,61 @@ logger = structlog.get_logger()
 
 
 async def get_or_create_default_org(name: str = "default") -> str:
-    """Get or create an org by name. Used by API routes and CLI."""
+    """Get or create an org by name. Returns clerk_org_id."""
     existing = await fetch_one(
-        "SELECT id::text FROM organizations WHERE name = $1",
+        "SELECT clerk_org_id FROM organizations WHERE name = $1",
         name,
     )
     if existing:
-        return existing["id"]
+        return existing["clerk_org_id"]
 
     row = await fetch_one(
-        "INSERT INTO organizations (name) VALUES ($1) RETURNING id::text",
+        "INSERT INTO organizations (name, clerk_org_id) VALUES ($1, $2) RETURNING clerk_org_id",
         name,
+        f"org_{name}",
     )
-    logger.info("org_created", name=name, id=row["id"])
-    return row["id"]
+    logger.info("org_created", name=name, clerk_org_id=row["clerk_org_id"])
+    return row["clerk_org_id"]
 
 
 async def get_or_create_org(github_org: str, name: str | None = None) -> str:
-    """Get or create organization for GitHub repo."""
+    """Get or create organization for GitHub repo. Returns clerk_org_id."""
     org_name = name or github_org
 
-    # Try to find existing org by github_org
     existing = await fetch_one(
-        "SELECT id::text FROM organizations WHERE github_org = $1",
+        "SELECT clerk_org_id FROM organizations WHERE github_org = $1",
         github_org,
     )
     if existing:
-        return existing["id"]
+        return existing["clerk_org_id"]
 
-    # Try to find by name
     existing = await fetch_one(
-        "SELECT id::text FROM organizations WHERE name = $1",
+        "SELECT clerk_org_id FROM organizations WHERE name = $1",
         org_name,
     )
     if existing:
-        # Update with github_org if not set
         await fetch_one(
-            "UPDATE organizations SET github_org = $1 WHERE id = $2::uuid",
+            "UPDATE organizations SET github_org = $1 WHERE clerk_org_id = $2",
             github_org,
-            existing["id"],
+            existing["clerk_org_id"],
         )
-        return existing["id"]
+        return existing["clerk_org_id"]
 
-    # Create new org
     row = await fetch_one(
-        "INSERT INTO organizations (name, github_org) VALUES ($1, $2) RETURNING id::text",
+        "INSERT INTO organizations (name, github_org, clerk_org_id) "
+        "VALUES ($1, $2, $3) RETURNING clerk_org_id",
         org_name,
         github_org,
+        f"org_github_{org_name}",
     )
-    logger.info("org_created", name=org_name, github_org=github_org, id=row["id"])
-    return row["id"]
+    logger.info("org_created", name=org_name, github_org=github_org, clerk_org_id=row["clerk_org_id"])
+    return row["clerk_org_id"]
 
 
 async def get_org_by_github(github_org: str) -> dict | None:
     """Find organization by GitHub org name."""
     row = await fetch_one(
-        "SELECT id::text, name, github_org, created_at FROM organizations WHERE github_org = $1",
+        "SELECT clerk_org_id as id, name, github_org, created_at FROM organizations WHERE github_org = $1",
         github_org,
     )
     return dict(row) if row else None
@@ -122,33 +121,33 @@ async def remove_github_installation(installation_id: int) -> None:
 
 
 async def get_or_create_org_by_clerk(clerk_org_id: str, name: str) -> str:
-    """Get or create an organization from a Clerk organization webhook."""
+    """Get or create an organization from a Clerk webhook. Returns clerk_org_id."""
     existing = await fetch_one(
-        "SELECT id::text FROM organizations WHERE clerk_org_id = $1",
+        "SELECT clerk_org_id FROM organizations WHERE clerk_org_id = $1",
         clerk_org_id,
     )
     if existing:
-        return existing["id"]
+        return existing["clerk_org_id"]
 
     existing = await fetch_one(
-        "SELECT id::text FROM organizations WHERE name = $1",
+        "SELECT clerk_org_id FROM organizations WHERE name = $1",
         name,
     )
     if existing:
         await fetch_one(
-            "UPDATE organizations SET clerk_org_id = $1 WHERE id = $2::uuid",
+            "UPDATE organizations SET clerk_org_id = $1 WHERE clerk_org_id = $2",
             clerk_org_id,
-            existing["id"],
+            existing["clerk_org_id"],
         )
-        return existing["id"]
+        return clerk_org_id
 
     row = await fetch_one(
-        "INSERT INTO organizations (name, clerk_org_id) VALUES ($1, $2) RETURNING id::text",
+        "INSERT INTO organizations (name, clerk_org_id) VALUES ($1, $2) RETURNING clerk_org_id",
         name,
         clerk_org_id,
     )
-    logger.info("org_created_from_clerk", name=name, clerk_org_id=clerk_org_id, id=row["id"])
-    return row["id"]
+    logger.info("org_created_from_clerk", name=name, clerk_org_id=clerk_org_id)
+    return row["clerk_org_id"]
 
 
 async def list_github_installations() -> list[dict]:
@@ -160,7 +159,7 @@ async def list_github_installations() -> list[dict]:
         """SELECT gi.id::text, gi.installation_id, gi.github_org, gi.repositories,
                   gi.created_at, gi.updated_at, o.name as org_name
            FROM github_installations gi
-           JOIN organizations o ON o.id = gi.org_id::uuid
+           JOIN organizations o ON o.clerk_org_id = gi.org_id
            ORDER BY gi.created_at DESC"""
     )
     result = []
