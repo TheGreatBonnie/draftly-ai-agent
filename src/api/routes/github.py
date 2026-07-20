@@ -29,15 +29,12 @@ async def github_install_url():
 @router.post("/webhook")
 async def github_webhook(request: Request, background_tasks: BackgroundTasks) -> WebhookResponse:
     """Receive and process GitHub webhook events."""
-    # 1. Read raw body for signature verification
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature-256")
 
-    # 2. Verify webhook signature
     if signature is None or not verify_webhook_signature(body, signature):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
-    # 3. Parse payload
     try:
         payload = json.loads(body)
     except json.JSONDecodeError:
@@ -45,18 +42,59 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
 
     event_type = request.headers.get("X-GitHub-Event")
 
-    # 4. Handle issue events
+    # Handle installation events (created/deleted)
+    if event_type == "installation":
+        from src.memory.organizations import (
+            get_or_create_org,
+            remove_github_installation,
+            store_github_installation,
+        )
+
+        action = payload.get("action")
+        installation = payload["installation"]
+        installation_id = installation["id"]
+        account = installation["account"]
+        github_org = account["login"]
+
+        if action == "created":
+            repositories = [
+                {"full_name": repo["full_name"], "id": repo["id"]}
+                for repo in payload.get("repositories", [])
+            ]
+            org_id = await get_or_create_org(github_org=github_org)
+            await store_github_installation(
+                org_id=org_id,
+                installation_id=installation_id,
+                github_org=github_org,
+                repositories=repositories,
+            )
+            logger.info(
+                "github_app_installed",
+                installation_id=installation_id,
+                org=github_org,
+                repo_count=len(repositories),
+            )
+
+        elif action == "deleted":
+            await remove_github_installation(installation_id)
+            logger.info(
+                "github_app_uninstalled",
+                installation_id=installation_id,
+                org=github_org,
+            )
+
+        return WebhookResponse(status=f"Installation {action}")
+
+    # Handle issue events
     if event_type == "issues" and payload.get("action") == "opened":
         installation_id = payload["installation"]["id"]
 
-        # Get installation token
         try:
             token = await get_installation_token(installation_id)
         except Exception as e:
             logger.error("failed_to_get_installation_token", error=str(e))
             raise HTTPException(status_code=500, detail="Failed to get installation token")
 
-        # Offload to background task (GitHub timeout is 10s)
         background_tasks.add_task(run_github_pipeline, payload=payload, installation_token=token)
 
         logger.info(
@@ -69,6 +107,6 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
 
         return WebhookResponse(status="Processing issue event")
 
-    # 5. Ignore other events
+    # Ignore other events
     logger.info("github_event_ignored", event_type=event_type)
     return WebhookResponse(status="Event ignored")
