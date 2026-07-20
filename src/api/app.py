@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.api.routes import docs, github, memory, review, reviewers, reviews, slack
+from src.api.routes import clerk, docs, github, memory, review, reviewers, reviews, slack
 from src.database import close_pool, get_pool
 
 
@@ -26,6 +26,7 @@ app.include_router(review.router, prefix="/api/review", tags=["review"])
 app.include_router(docs.router, prefix="/api/docs", tags=["docs"])
 app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 app.include_router(github.router, prefix="/api/github", tags=["github"])
+app.include_router(clerk.router, prefix="/api/clerk", tags=["clerk"])
 app.include_router(slack.router, prefix="/api/slack", tags=["slack"])
 
 DIST_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
