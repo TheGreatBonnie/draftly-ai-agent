@@ -14,7 +14,6 @@ from src.memory.users import (
     add_user_to_org,
     create_clerk_user,
     delete_clerk_user,
-    get_org_by_clerk_id,
     remove_user_from_org,
 )
 
@@ -36,9 +35,10 @@ def verify_svix_signature(payload: bytes, headers: dict[str, str]) -> bool:
     if not all([svix_id, svix_timestamp, svix_signature]):
         return False
 
-    secret = settings.clerk_signing_secret.get_secret_value()
+    raw_secret = settings.clerk_signing_secret.get_secret_value()
+    signing_key = base64.b64decode(raw_secret.removeprefix("whsec_"))
     to_sign = f"{svix_id}.{svix_timestamp}.{payload.decode()}"
-    expected = hmac.new(secret.encode(), to_sign.encode(), hashlib.sha256).digest()
+    expected = hmac.new(signing_key, to_sign.encode(), hashlib.sha256).digest()
     expected_b64 = base64.b64encode(expected).decode()
 
     for sig in svix_signature.split(" "):
@@ -94,23 +94,19 @@ async def clerk_webhook(request: Request) -> WebhookResponse:
         )
 
     elif event_type == "organization.deleted":
-        org = await get_org_by_clerk_id(data["id"])
-        if org:
-            from src.database import execute as db_execute
+        from src.database import execute as db_execute
 
-            await db_execute("DELETE FROM organizations WHERE id = $1::uuid", org["id"])
-            logger.info("org_deleted_from_clerk", org_id=org["id"])
+        await db_execute("DELETE FROM organizations WHERE clerk_org_id = $1", data["id"])
+        logger.info("org_deleted_from_clerk", clerk_org_id=data["id"])
 
     elif event_type == "organization.updated":
-        org = await get_org_by_clerk_id(data["id"])
-        if org:
-            from src.database import execute as db_execute
+        from src.database import execute as db_execute
 
-            await db_execute(
-                "UPDATE organizations SET name = $1 WHERE id = $2::uuid",
-                data.get("name", org["name"]),
-                org["id"],
-            )
+        await db_execute(
+            "UPDATE organizations SET clerk_org_name = $1 WHERE clerk_org_id = $2",
+            data.get("name", ""),
+            data["id"],
+        )
 
     # ── Membership events ──
     elif event_type == "organizationMembership.created":
