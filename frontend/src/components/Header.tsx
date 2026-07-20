@@ -1,10 +1,11 @@
-import { useLocation } from "react-router";
+import { useLocation, Link } from "react-router";
 
 const routeLabels: Record<string, string> = {
   "/": "Dashboard",
   "/reviewers": "Reviewers",
   "/docs": "Documentation",
   "/memory": "Memory",
+  "/settings": "Settings",
 };
 
 function getBreadcrumb(pathname: string): { label: string; path: string }[] {
@@ -64,7 +65,8 @@ export function Header() {
         <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
           default
         </span>
-        <button
+        <Link
+          to="/settings"
           className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           title="Settings"
         >
@@ -82,7 +84,7 @@ export function Header() {
               d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
-        </button>
+        </Link>
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
           U
         </div>

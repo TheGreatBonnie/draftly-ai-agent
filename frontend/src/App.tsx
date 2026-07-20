@@ -5,6 +5,7 @@ import { ReviewDetail } from "./pages/ReviewDetail";
 import { Reviewers } from "./pages/Reviewers";
 import { Docs } from "./pages/Docs";
 import { Memory } from "./pages/Memory";
+import { Settings } from "./pages/Settings";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="reviewers" element={<Reviewers />} />
           <Route path="docs" element={<Docs />} />
           <Route path="memory" element={<Memory />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>
