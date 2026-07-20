@@ -40,15 +40,18 @@ REVIEW_NOTIFICATION_TEMPLATE = Template("""\
             <p><strong>Original Question:</strong></p>
             <blockquote>${question}</blockquote>
             <div class="actions">
-                <a href="${app_url}/review/${token}/approve" class="btn btn-approve">
-                    Approve
-                </a>
-                <a href="${app_url}/review/${token}/reject" class="btn btn-reject">
-                    Reject
-                </a>
-                <a href="${app_url}/review/${token}/revise" class="btn btn-revise">
-                    Request Changes
-                </a>
+                <form method="POST" action="${app_url}/api/review/${token}/action" target="_blank">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn btn-approve">Approve</button>
+                </form>
+                <form method="POST" action="${app_url}/api/review/${token}/action" target="_blank">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn btn-reject">Reject</button>
+                </form>
+                <form method="POST" action="${app_url}/api/review/${token}/action" target="_blank">
+                    <input type="hidden" name="action" value="revise">
+                    <button type="submit" class="btn btn-revise">Request Changes</button>
+                </form>
             </div>
             <p>
                 Or <a href="${dashboard_url}/review/${review_id}">

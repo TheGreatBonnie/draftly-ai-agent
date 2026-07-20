@@ -45,8 +45,8 @@ class Settings(BaseSettings):
     rubric_max_iterations: int = 3
 
     # App
-    app_url: str = " https://grit-flagstone-recreate.ngrok-free.dev"
-    review_dashboard_url: str = " https://grit-flagstone-recreate.ngrok-free.dev/review"
+    app_url: str = "http://localhost:5173"
+    review_dashboard_url: str = "http://localhost:5173"
     uvicorn_host: str = "0.0.0.0"
     uvicorn_port: int = 8000
     environment: Literal["development", "staging", "production"] = "development"

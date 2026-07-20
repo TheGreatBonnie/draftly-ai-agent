@@ -30,14 +30,14 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
 
     for reviewer in reviewers:
         token = generate_review_token(reviewer["id"], review_id)
-        dashboard_url = f"{settings.review_dashboard_url}/{token}"
+        review_page_url = f"{settings.app_url}/review/{review_id}"
 
         plain_message = (
             f"📝 *Documentation Review Required*\n\n"
             f"*Title:* {title}\n"
             f"*Source:* {source}\n"
             f"*Confidence:* {confidence:.0%}\n\n"
-            f"[Review Documentation]({dashboard_url})\n"
+            f"[Review Documentation]({review_page_url})\n"
             f"Or use: `/approve {token}` | `/reject {token}` | `/revise {token}`"
         )
 
@@ -45,7 +45,7 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
             title=title,
             source=source,
             confidence=confidence,
-            dashboard_url=dashboard_url,
+            dashboard_url=review_page_url,
             review_token=token,
             draft_content=draft_content,
         )

@@ -36,6 +36,7 @@ dependencies = [
     "langchain-cockroachdb>=0.3.0",
     "langchain-community>=0.3.0",
     "python-multipart>=0.0.32",
+    "cryptography>=49.0.0",
 ]
 
 [project.optional-dependencies]
