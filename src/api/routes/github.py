@@ -7,6 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel
 
 from src.agents.runners.github_runner import run_github_pipeline
+from src.config import settings
 from src.integrations.github_app import get_installation_token, verify_webhook_signature
 
 logger = structlog.get_logger()
@@ -16,6 +17,13 @@ router = APIRouter()
 
 class WebhookResponse(BaseModel):
     status: str
+
+
+@router.get("/install-url")
+async def github_install_url():
+    if not settings.github_app_slug:
+        raise HTTPException(status_code=500, detail="GitHub App slug not configured")
+    return {"install_url": f"https://github.com/apps/{settings.github_app_slug}/installations/new"}
 
 
 @router.post("/webhook")
