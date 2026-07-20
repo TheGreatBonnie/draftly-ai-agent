@@ -43,10 +43,9 @@ async def delete_clerk_user(clerk_user_id: str) -> None:
 async def add_user_to_org(clerk_user_id: str, clerk_org_id: str, role: str = "org:member") -> str:
     """Link a user to an organization with a role."""
     row = await fetch_one(
-        "INSERT INTO user_organizations (user_id, org_id, role) "
-        "VALUES ("
+        "INSERT INTO user_organizations (user_id, org_id, role) VALUES ("
         "  (SELECT id FROM clerk_users WHERE clerk_user_id = $1),"
-        "  (SELECT id FROM organizations WHERE clerk_org_id = $2),"
+        "  $2,"
         "  $3"
         ") ON CONFLICT (user_id, org_id) DO UPDATE SET role = $3 "
         "RETURNING id::text",
@@ -61,16 +60,8 @@ async def remove_user_from_org(clerk_user_id: str, clerk_org_id: str) -> None:
     await execute(
         "DELETE FROM user_organizations "
         "WHERE user_id = (SELECT id FROM clerk_users WHERE clerk_user_id = $1) "
-        "AND org_id = (SELECT id FROM organizations WHERE clerk_org_id = $2)",
+        "AND org_id = $2",
         clerk_user_id, clerk_org_id,
     )
     logger.info("user_removed_from_org", user=clerk_user_id, org=clerk_org_id)
 
-
-async def get_org_by_clerk_id(clerk_org_id: str) -> dict | None:
-    """Look up an organization by its Clerk ID."""
-    row = await fetch_one(
-        "SELECT id::text, name, clerk_org_id FROM organizations WHERE clerk_org_id = $1",
-        clerk_org_id,
-    )
-    return dict(row) if row else None
