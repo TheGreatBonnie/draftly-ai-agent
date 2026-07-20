@@ -80,7 +80,7 @@ export function Settings() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    {inst.repositories.length} repository{inst.repositories.length !== 1 ? "ies" : "y"} accessible
+                    {inst.repositories.length} {inst.repositories.length === 1 ? "repository" : "repositories"} accessible
                   </p>
                   {inst.repositories.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
