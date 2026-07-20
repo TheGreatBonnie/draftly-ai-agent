@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+
+from src.api.auth import get_verified_token
 
 logger = structlog.get_logger()
 
@@ -22,16 +24,19 @@ DECISION_TO_STATUS = {
 
 
 @router.get("/pending")
-async def get_pending():
-    from src.memory.organizations import get_or_create_default_org
+async def get_pending(token: dict = Depends(get_verified_token)):
     from src.memory.reviewer import get_pending_reviews
 
-    org_id = await get_or_create_default_org()
+    org_id = token.get("org_id") or "default"
     return await get_pending_reviews(org_id=org_id)
 
 
 @router.post("/{review_id}/decide")
-async def decide_review(review_id: str, body: ReviewDecision):
+async def decide_review(
+    review_id: str,
+    body: ReviewDecision,
+    token: dict = Depends(get_verified_token),
+):
     from src.memory.reviewer import complete_review
 
     await complete_review(
@@ -55,11 +60,11 @@ async def decide_review(review_id: str, body: ReviewDecision):
             error=str(e),
         )
 
-    return {"status": "ok", "decision": body.decision}
+    return {"status": "ok", "decision": body.decision, "user_id": token["user_id"]}
 
 
 @router.get("/{review_id}")
-async def get_review(review_id: str):
+async def get_review(review_id: str, token: dict = Depends(get_verified_token)):
     from src.database import fetch_one
 
     row = await fetch_one(

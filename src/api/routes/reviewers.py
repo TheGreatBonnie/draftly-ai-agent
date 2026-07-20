@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from src.api.auth import get_verified_token
 from src.memory.reviewers import (
     create_reviewer,
     delete_reviewer,
@@ -37,13 +38,9 @@ class UpdateReviewerRequest(BaseModel):
 
 
 @router.post("")
-async def create(request: CreateReviewerRequest):
+async def create(request: CreateReviewerRequest, token: dict = Depends(get_verified_token)):
     """Create a new reviewer."""
-    org_id = request.org_id
-    if org_id is None:
-        from src.memory.organizations import get_or_create_default_org
-
-        org_id = await get_or_create_default_org()
+    org_id = token.get("org_id") or request.org_id or "default"
     reviewer = await create_reviewer(
         org_id=org_id,
         name=request.name,
@@ -58,7 +55,7 @@ async def create(request: CreateReviewerRequest):
 
 
 @router.get("")
-async def list_reviewers(org_id: str | None = None, active_only: bool = True):
+async def list_reviewers(token: dict = Depends(get_verified_token), org_id: str | None = None, active_only: bool = True):
     """List reviewers. If org_id is provided, filter by org. Otherwise, return all."""
     from src.database import fetch_all
 
@@ -81,7 +78,7 @@ async def list_reviewers(org_id: str | None = None, active_only: bool = True):
 
 
 @router.get("/{reviewer_id}")
-async def get_reviewer(reviewer_id: str):
+async def get_reviewer(reviewer_id: str, token: dict = Depends(get_verified_token)):
     """Get a reviewer by ID."""
     reviewer = await get_reviewer_by_id(reviewer_id)
     if not reviewer:
@@ -90,7 +87,7 @@ async def get_reviewer(reviewer_id: str):
 
 
 @router.put("/{reviewer_id}")
-async def update(reviewer_id: str, request: UpdateReviewerRequest):
+async def update(reviewer_id: str, request: UpdateReviewerRequest, token: dict = Depends(get_verified_token)):
     """Update a reviewer."""
     existing = await get_reviewer_by_id(reviewer_id)
     if not existing:
@@ -105,7 +102,7 @@ async def update(reviewer_id: str, request: UpdateReviewerRequest):
 
 
 @router.delete("/{reviewer_id}")
-async def delete(reviewer_id: str):
+async def delete(reviewer_id: str, token: dict = Depends(get_verified_token)):
     """Delete a reviewer."""
     existing = await get_reviewer_by_id(reviewer_id)
     if not existing:

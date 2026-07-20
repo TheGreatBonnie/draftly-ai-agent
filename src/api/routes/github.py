@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 
 import structlog
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from src.agents.runners.github_runner import run_github_pipeline
+from src.api.auth import get_verified_token
 from src.config import settings
 from src.integrations.github_app import get_installation_token, verify_webhook_signature
 
@@ -21,14 +22,14 @@ class WebhookResponse(BaseModel):
 
 
 @router.get("/install-url")
-async def github_install_url():
+async def github_install_url(token: dict = Depends(get_verified_token)):
     if not settings.github_app_slug:
         raise HTTPException(status_code=500, detail="GitHub App slug not configured")
     return {"install_url": f"https://github.com/apps/{settings.github_app_slug}/installations/new"}
 
 
 @router.get("/installations")
-async def github_installations():
+async def github_installations(token: dict = Depends(get_verified_token)):
     from src.memory.organizations import list_github_installations
 
     return await list_github_installations()

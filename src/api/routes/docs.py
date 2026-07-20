@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+from src.api.auth import get_verified_token
 
 router = APIRouter()
 
 
 @router.get("/")
-async def list_docs():
+async def list_docs(token: dict = Depends(get_verified_token)):
     from src.database import fetch_all
-    from src.memory.organizations import get_or_create_default_org
 
-    org_id = await get_or_create_default_org()
+    org_id = token.get("org_id") or "default"
     rows = await fetch_all(
         "SELECT *, id::text as id FROM documentation "
         "WHERE org_id = $1 ORDER BY created_at DESC LIMIT 50",
@@ -20,7 +21,7 @@ async def list_docs():
 
 
 @router.get("/{doc_id}")
-async def get_doc(doc_id: str):
+async def get_doc(doc_id: str, token: dict = Depends(get_verified_token)):
     from src.database import fetch_one
 
     row = await fetch_one("SELECT *, id::text as id FROM documentation WHERE id = $1", doc_id)
