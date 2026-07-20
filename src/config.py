@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     github_private_key_path: str = "./private-key.pem"
     github_app_slug: str = ""
 
+    # Clerk (auth + organizations)
+    clerk_publishable_key: str = ""
+    clerk_secret_key: SecretStr = SecretStr("")
+    clerk_signing_secret: SecretStr = SecretStr("")
+
     # Email (SendGrid)
     sendgrid_api_key: SecretStr = SecretStr("")
     sendgrid_from_email: str = "noreply@draftly.app"
