@@ -29,6 +29,13 @@ export function Settings() {
     fetchData();
   }, []);
 
+  // Re-fetch when page gains focus (e.g., returning from GitHub install)
+  useEffect(() => {
+    const onFocus = () => fetchData();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
   if (loading) {
     return <p className="text-gray-500">Loading settings...</p>;
   }
@@ -84,7 +91,7 @@ export function Settings() {
                   </p>
                   {inst.repositories.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {inst.repositories.map((repo: { full_name: string }) => (
+                      {inst.repositories.map((repo) => (
                         <span
                           key={repo.full_name}
                           className="inline-block rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600"
