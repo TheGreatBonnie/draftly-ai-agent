@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+
 import jwt
 import structlog
 from fastapi import Depends, HTTPException, Request
@@ -14,7 +16,11 @@ _jwks_client: jwt.PyJWKClient | None = None
 def _get_jwks_client() -> jwt.PyJWKClient:
     global _jwks_client
     if _jwks_client is None:
-        domain = settings.clerk_publishable_key.split("_")[-1]
+        encoded = settings.clerk_publishable_key.split("_")[-1]
+        # URL-safe base64 → standard base64 + padding
+        padded = encoded.replace("-", "+").replace("_", "/")
+        padded += "=" * (4 - len(padded) % 4) if len(padded) % 4 else ""
+        domain = base64.b64decode(padded).decode().split("$")[0]
         jwks_url = f"https://{domain}/.well-known/jwks.json"
         _jwks_client = jwt.PyJWKClient(jwks_url, cache_keys=True, lifespan=3600)
     return _jwks_client

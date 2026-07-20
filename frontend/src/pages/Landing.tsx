@@ -1,3 +1,4 @@
+import { Show } from "@clerk/react";
 import { Link } from "react-router";
 
 export function Landing() {
@@ -5,12 +6,22 @@ export function Landing() {
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between px-6 py-4">
         <span className="text-xl font-bold">Draftly</span>
-        <Link
-          to="/sign-in"
-          className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium hover:bg-gray-200"
-        >
-          Sign In
-        </Link>
+        <Show when="signed-out">
+          <Link
+            to="/sign-in"
+            className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium hover:bg-gray-200"
+          >
+            Sign In
+          </Link>
+        </Show>
+        <Show when="signed-in">
+          <Link
+            to="/dashboard"
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Dashboard
+          </Link>
+        </Show>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
         <h1 className="mb-4 text-5xl font-bold tracking-tight">
@@ -20,12 +31,22 @@ export function Landing() {
           Draftly integrates with GitHub to automate code review workflows,
           catch issues before they ship, and help your team move faster.
         </p>
-        <Link
-          to="/sign-up"
-          className="rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
-        >
-          Get Started
-        </Link>
+        <Show when="signed-out">
+          <Link
+            to="/sign-up"
+            className="rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
+          >
+            Get Started
+          </Link>
+        </Show>
+        <Show when="signed-in">
+          <Link
+            to="/dashboard"
+            className="rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </Link>
+        </Show>
       </main>
     </div>
   );

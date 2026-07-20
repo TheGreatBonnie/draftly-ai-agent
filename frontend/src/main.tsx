@@ -6,7 +6,12 @@ import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ClerkProvider afterSignInUrl="/dashboard" afterSignOutUrl="/">
+    <ClerkProvider
+      publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+      afterSignInUrl="/dashboard"
+      afterSignUpUrl="/dashboard"
+      afterSignOutUrl="/"
+    >
       <App />
     </ClerkProvider>
   </StrictMode>,
