@@ -1,3 +1,4 @@
+import { Show, SignInButton, UserButton } from "@clerk/react";
 import { useLocation, Link } from "react-router";
 
 const routeLabels: Record<string, string> = {
@@ -85,9 +86,16 @@ export function Header() {
             />
           </svg>
         </Link>
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
-          U
-        </div>
+        <Show when="signed-out">
+          <SignInButton mode="modal">
+            <button className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+              Sign In
+            </button>
+          </SignInButton>
+        </Show>
+        <Show when="signed-in">
+          <UserButton afterSignOutUrl="/" />
+        </Show>
       </div>
     </header>
   );
