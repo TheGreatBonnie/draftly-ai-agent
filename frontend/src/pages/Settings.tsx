@@ -110,9 +110,9 @@ export function Settings() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    {inst.repositories.length} {inst.repositories.length === 1 ? "repository" : "repositories"} accessible
+                    {Array.isArray(inst.repositories) ? inst.repositories.length : 0} {Array.isArray(inst.repositories) && inst.repositories.length === 1 ? "repository" : "repositories"} accessible
                   </p>
-                  {inst.repositories.length > 0 && (
+                  {Array.isArray(inst.repositories) && inst.repositories.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {inst.repositories.map((repo) => (
                         <span

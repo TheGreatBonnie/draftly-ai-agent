@@ -11,7 +11,7 @@ export function AuthTokenSetter() {
       setApiToken(null);
       return;
     }
-    getToken().then((token) => setApiToken(token));
+    getToken({ skipCache: true }).then((token) => setApiToken(token));
   }, [getToken, isLoaded, isSignedIn]);
 
   return null;

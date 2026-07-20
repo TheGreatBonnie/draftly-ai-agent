@@ -153,6 +153,7 @@ async def get_or_create_org_by_clerk(clerk_org_id: str, name: str) -> str:
 
 async def list_github_installations() -> list[dict]:
     """List all GitHub App installations with org names."""
+    import json
     from src.database import fetch_all
 
     rows = await fetch_all(
@@ -162,7 +163,13 @@ async def list_github_installations() -> list[dict]:
            JOIN organizations o ON o.id = gi.org_id::uuid
            ORDER BY gi.created_at DESC"""
     )
-    return [dict(row) for row in rows]
+    result = []
+    for row in rows:
+        d = dict(row)
+        if isinstance(d.get("repositories"), str):
+            d["repositories"] = json.loads(d["repositories"])
+        result.append(d)
+    return result
 
 
 async def store_github_workflow(

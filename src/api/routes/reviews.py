@@ -27,7 +27,9 @@ DECISION_TO_STATUS = {
 async def get_pending(token: dict = Depends(get_verified_token)):
     from src.memory.reviewer import get_pending_reviews
 
-    org_id = token.get("org_id") or "default"
+    org_id = token.get("org_id")
+    if not org_id:
+        return []
     return await get_pending_reviews(org_id=org_id)
 
 

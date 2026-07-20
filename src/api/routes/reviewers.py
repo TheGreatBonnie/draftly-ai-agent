@@ -40,7 +40,9 @@ class UpdateReviewerRequest(BaseModel):
 @router.post("")
 async def create(request: CreateReviewerRequest, token: dict = Depends(require_admin_role)):
     """Create a new reviewer."""
-    org_id = token.get("org_id") or request.org_id or "default"
+    org_id = token.get("org_id") or request.org_id
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
     reviewer = await create_reviewer(
         org_id=org_id,
         name=request.name,

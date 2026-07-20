@@ -11,7 +11,9 @@ router = APIRouter()
 async def list_docs(token: dict = Depends(get_verified_token)):
     from src.database import fetch_all
 
-    org_id = token.get("org_id") or "default"
+    org_id = token.get("org_id")
+    if not org_id:
+        return []
     rows = await fetch_all(
         "SELECT *, id::text as id FROM documentation "
         "WHERE org_id = $1 ORDER BY created_at DESC LIMIT 50",
