@@ -40,6 +40,7 @@ class DocumentationState(TypedDict):
 
     # Final
     published_urls: list[dict]
+    reply_errors: list[dict]
 
     # Tracking
     support_thread_id: str

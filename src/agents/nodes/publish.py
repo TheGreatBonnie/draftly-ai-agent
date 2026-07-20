@@ -170,6 +170,7 @@ async def publish_node(state: DocumentationState) -> dict:
     source = state.get("source", "cli")
     metadata = state.get("source_metadata", {})
     published_urls = [{"platform": "draftly", "doc_id": doc_id}]
+    reply_errors = []
 
     try:
         if source == "github" and metadata:
@@ -182,12 +183,14 @@ async def publish_node(state: DocumentationState) -> dict:
             await _reply_to_discord(state, metadata)
             published_urls.append({"platform": "discord", "thread": metadata.get("thread_id")})
     except Exception as e:
+        reply_errors.append({"platform": source, "error": str(e)})
         logger.error("reply_failed", source=source, error=str(e))
 
     logger.info("publish_completed", doc_id=doc_id, title=title, source=source)
 
     return {
         "published_urls": published_urls,
+        "reply_errors": reply_errors,
         "human_decision": "",
         "human_feedback": "",
     }

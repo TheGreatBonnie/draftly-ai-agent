@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import structlog
 from fastapi import APIRouter
 from pydantic import BaseModel
+
+logger = structlog.get_logger()
 
 router = APIRouter()
 
@@ -9,6 +12,13 @@ router = APIRouter()
 class ReviewDecision(BaseModel):
     decision: str  # approve, reject, revise
     feedback: str = ""
+
+
+DECISION_TO_STATUS = {
+    "approve": "approved",
+    "reject": "rejected",
+    "revise": "needs_changes",
+}
 
 
 @router.get("/pending")
@@ -26,9 +36,24 @@ async def decide_review(review_id: str, body: ReviewDecision):
 
     await complete_review(
         review_id=review_id,
-        status=body.decision,
+        status=DECISION_TO_STATUS.get(body.decision, body.decision),
         feedback=body.feedback,
     )
+
+    try:
+        from src.agents.runners.resume import resume_review
+
+        await resume_review(
+            review_id=review_id,
+            decision=body.decision,
+            feedback=body.feedback or "",
+        )
+    except Exception as e:
+        logger.error(
+            "graph_resume_failed",
+            review_id=review_id,
+            error=str(e),
+        )
 
     return {"status": "ok", "decision": body.decision}
 
