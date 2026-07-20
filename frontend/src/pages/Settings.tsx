@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+import { OrganizationSwitcher, useOrganization } from "@clerk/react";
 import { getInstallUrl, listInstallations } from "../api/github";
 import type { GitHubInstallation, GitHubInstallUrl } from "../api/types";
 
 export function Settings() {
+  const { organization, membership } = useOrganization();
   const [installUrl, setInstallUrl] = useState<GitHubInstallUrl | null>(null);
   const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +49,27 @@ export function Settings() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+
+      {/* Organization section */}
+      <section className="rounded-lg border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900">Organization</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Manage your team and organization settings.
+        </p>
+        <div className="mt-4">
+          <OrganizationSwitcher />
+        </div>
+        {organization && (
+          <div className="mt-4 text-sm text-gray-600">
+            <p>
+              Active: <strong>{organization.name}</strong>
+              {membership && (
+                <span> — Role: <strong>{membership.role}</strong></span>
+              )}
+            </p>
+          </div>
+        )}
+      </section>
 
       {/* GitHub Integration section */}
       <section className="rounded-lg border border-gray-200 p-6">

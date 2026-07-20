@@ -1,4 +1,4 @@
-import { Show, SignInButton, UserButton } from "@clerk/react";
+import { Show, SignInButton, UserButton, useAuth, useOrganization } from "@clerk/react";
 import { useLocation, Link } from "react-router";
 
 const routeLabels: Record<string, string> = {
@@ -36,6 +36,8 @@ function getBreadcrumb(pathname: string): { label: string; path: string }[] {
 export function Header() {
   const location = useLocation();
   const crumbs = getBreadcrumb(location.pathname);
+  const { organization } = useOrganization();
+  const { isSignedIn } = useAuth();
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4">
@@ -63,9 +65,11 @@ export function Header() {
 
       {/* Right: Org name + actions */}
       <div className="flex items-center gap-3">
-        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-          default
-        </span>
+        {isSignedIn && (
+          <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            {organization?.name || "No Org"}
+          </span>
+        )}
         <Link
           to="/settings"
           className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
