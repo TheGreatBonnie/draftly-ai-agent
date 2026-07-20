@@ -110,6 +110,31 @@ async def store_github_installation(
     return row["id"]
 
 
+async def remove_github_installation(installation_id: int) -> None:
+    """Delete a GitHub App installation record."""
+    from src.database import execute
+
+    await execute(
+        "DELETE FROM github_installations WHERE installation_id = $1",
+        installation_id,
+    )
+    logger.info("github_installation_removed", installation_id=installation_id)
+
+
+async def list_github_installations() -> list[dict]:
+    """List all GitHub App installations with org names."""
+    from src.database import fetch_all
+
+    rows = await fetch_all(
+        """SELECT gi.id::text, gi.installation_id, gi.github_org, gi.repositories,
+                  gi.created_at, gi.updated_at, o.name as org_name
+           FROM github_installations gi
+           JOIN organizations o ON o.id = gi.org_id::uuid
+           ORDER BY gi.created_at DESC"""
+    )
+    return [dict(row) for row in rows]
+
+
 async def store_github_workflow(
     org_id: str,
     workflow_id: str,
