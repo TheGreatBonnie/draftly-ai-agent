@@ -1,7 +1,7 @@
 import { useLocation, Link } from "react-router";
 
 const routeLabels: Record<string, string> = {
-  "/": "Dashboard",
+  "/dashboard": "Dashboard",
   "/reviewers": "Reviewers",
   "/docs": "Documentation",
   "/memory": "Memory",
@@ -11,12 +11,12 @@ const routeLabels: Record<string, string> = {
 function getBreadcrumb(pathname: string): { label: string; path: string }[] {
   const crumbs: { label: string; path: string }[] = [];
 
-  if (pathname === "/") {
-    crumbs.push({ label: "Dashboard", path: "/" });
+  if (pathname === "/dashboard") {
+    crumbs.push({ label: "Dashboard", path: "/dashboard" });
     return crumbs;
   }
 
-  crumbs.push({ label: "Dashboard", path: "/" });
+  crumbs.push({ label: "Dashboard", path: "/dashboard" });
 
   const segments = pathname.split("/").filter(Boolean);
   let accumulated = "";
