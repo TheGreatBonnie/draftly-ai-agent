@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import structlog
 
-from src.database import fetch_one
+from src.database import fetch_all, fetch_one
 
 logger = structlog.get_logger()
 
@@ -119,6 +119,36 @@ async def remove_github_installation(installation_id: int) -> None:
         installation_id,
     )
     logger.info("github_installation_removed", installation_id=installation_id)
+
+
+async def get_or_create_org_by_clerk(clerk_org_id: str, name: str) -> str:
+    """Get or create an organization from a Clerk organization webhook."""
+    existing = await fetch_one(
+        "SELECT id::text FROM organizations WHERE clerk_org_id = $1",
+        clerk_org_id,
+    )
+    if existing:
+        return existing["id"]
+
+    existing = await fetch_one(
+        "SELECT id::text FROM organizations WHERE name = $1",
+        name,
+    )
+    if existing:
+        await fetch_one(
+            "UPDATE organizations SET clerk_org_id = $1 WHERE id = $2::uuid",
+            clerk_org_id,
+            existing["id"],
+        )
+        return existing["id"]
+
+    row = await fetch_one(
+        "INSERT INTO organizations (name, clerk_org_id) VALUES ($1, $2) RETURNING id::text",
+        name,
+        clerk_org_id,
+    )
+    logger.info("org_created_from_clerk", name=name, clerk_org_id=clerk_org_id, id=row["id"])
+    return row["id"]
 
 
 async def list_github_installations() -> list[dict]:
