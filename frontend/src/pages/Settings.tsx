@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { OrganizationSwitcher, useOrganization } from "@clerk/react";
-import { getInstallUrl, listInstallations } from "../api/github";
+import {
+  getInstallUrl,
+  linkGitHubInstallation,
+  listInstallations,
+} from "../api/github";
 import type { GitHubInstallation, GitHubInstallUrl } from "../api/types";
 
 export function Settings() {
@@ -26,6 +30,23 @@ export function Settings() {
       setLoading(false);
     }
   }, []);
+
+  // Link GitHub installation when returning from GitHub redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const installationId = params.get("installation_id");
+    if (installationId) {
+      linkGitHubInstallation(Number(installationId))
+        .then(() => {
+          // Clean URL and refresh data
+          window.history.replaceState({}, "", "/settings");
+          fetchData();
+        })
+        .catch((e) => {
+          setError(e instanceof Error ? e.message : "Failed to link GitHub");
+        });
+    }
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();

@@ -110,6 +110,10 @@ async def clerk_webhook(request: Request) -> WebhookResponse:
 
     # ── Membership events ──
     elif event_type == "organizationMembership.created":
+        await get_or_create_org_by_clerk(
+            clerk_org_id=data["organization"]["id"],
+            name=data["organization"].get("name", "Unnamed Organization"),
+        )
         await add_user_to_org(
             clerk_user_id=data["public_user_data"]["user_id"],
             clerk_org_id=data["organization"]["id"],
@@ -123,6 +127,10 @@ async def clerk_webhook(request: Request) -> WebhookResponse:
         )
 
     elif event_type == "organizationMembership.updated":
+        await get_or_create_org_by_clerk(
+            clerk_org_id=data["organization"]["id"],
+            name=data["organization"].get("name", "Unnamed Organization"),
+        )
         await add_user_to_org(
             clerk_user_id=data["public_user_data"]["user_id"],
             clerk_org_id=data["organization"]["id"],

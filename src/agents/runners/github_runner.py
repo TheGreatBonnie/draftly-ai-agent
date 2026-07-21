@@ -8,7 +8,7 @@ from src.agents.state import DocumentationState
 from src.config import settings
 from src.integrations.github_app import post_issue_comment
 from src.memory.organizations import (
-    get_or_create_org,
+    get_org_by_github,
     store_github_installation,
     store_github_workflow,
     update_github_workflow_status,
@@ -95,10 +95,19 @@ async def run_github_pipeline(payload: dict, installation_token: str) -> None:
         repo_name = repo["name"]
         installation_id = payload["installation"]["id"]
 
-        org_id = await get_or_create_org(
-            github_org=repo["owner"]["login"],
-            name=repo["owner"]["login"],
-        )
+        org = await get_org_by_github(repo["owner"]["login"])
+        if not org:
+            github_org = repo["owner"]["login"]
+            error_msg = (
+                f"Organization '{github_org}' not found. "
+                "Create it via Clerk first."
+            )
+            logger.error("github_pipeline_org_not_found", github_org=github_org)
+            await post_error_comment(
+                owner, repo_name, issue["number"], installation_token, error_msg
+            )
+            return
+        org_id = org["id"]
 
         await store_github_installation(
             org_id=org_id,

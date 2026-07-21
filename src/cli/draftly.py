@@ -7,10 +7,9 @@ from uuid import uuid4
 import structlog
 from langchain_cockroachdb import AsyncCockroachDBSaver
 
-from src.agents.graph import build_graph
+from src.agents.graph import build_hybrid_graph
 from src.config import settings
 from src.database import close_pool, get_pool
-from src.memory.organizations import get_or_create_default_org
 
 logger = structlog.get_logger()
 
@@ -19,7 +18,9 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
     await get_pool()
 
     if org_id is None:
-        org_id = await get_or_create_default_org()
+        print("Error: --org-id is required. Create an org via Clerk first.")
+        await close_pool()
+        sys.exit(1)
 
     graph_thread_id = f"cli-{hash(question)}"
 
@@ -57,7 +58,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
 
     async with AsyncCockroachDBSaver.from_conn_string(settings.cockroachdb_url) as checkpointer:
         await checkpointer.setup()
-        graph = build_graph().compile(checkpointer=checkpointer)
+        graph = build_hybrid_graph().compile(checkpointer=checkpointer)
 
         print(f"\n🔄 Processing: {question}\n")
 
@@ -79,11 +80,17 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python -m src.cli.draftly 'your question here'")
+        print("Usage: python -m src.cli.draftly 'your question here' --org-id <clerk_org_id>")
         sys.exit(1)
 
     question = sys.argv[1]
-    asyncio.run(run_workflow(question))
+    org_id = None
+    if "--org-id" in sys.argv:
+        idx = sys.argv.index("--org-id")
+        if idx + 1 < len(sys.argv):
+            org_id = sys.argv[idx + 1]
+
+    asyncio.run(run_workflow(question, org_id=org_id))
 
 
 if __name__ == "__main__":

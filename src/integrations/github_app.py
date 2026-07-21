@@ -61,6 +61,21 @@ def verify_webhook_signature(payload: bytes, signature: str) -> bool:
         return False
 
 
+async def get_installation_info(installation_id: int) -> dict:
+    """Look up installation details (account/org name) from GitHub API."""
+    jwt_token = generate_jwt()
+    url = f"https://api.github.com/app/installations/{installation_id}"
+    headers = {
+        "Authorization": f"Bearer {jwt_token}",
+        "Accept": "application/vnd.github+json",
+    }
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url, headers=headers, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+
+
 async def get_installation_repositories(token: str) -> list[dict]:
     """List repositories accessible by the installation."""
     headers = {

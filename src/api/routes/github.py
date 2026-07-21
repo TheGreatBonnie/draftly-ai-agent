@@ -21,11 +21,88 @@ class WebhookResponse(BaseModel):
     status: str
 
 
+class LinkGitHubRequest(BaseModel):
+    installation_id: int
+
+
 @router.get("/install-url")
 async def github_install_url(token: dict = Depends(get_verified_token)):
     if not settings.github_app_slug:
         raise HTTPException(status_code=500, detail="GitHub App slug not configured")
     return {"install_url": f"https://github.com/apps/{settings.github_app_slug}/installations/new"}
+
+
+@router.post("/link")
+async def link_github(
+    request: LinkGitHubRequest,
+    token: dict = Depends(get_verified_token),
+):
+    """Link a GitHub App installation to the current Clerk organization."""
+    from src.integrations.github_app import (
+        get_installation_info,
+        get_installation_repositories,
+        get_installation_token,
+    )
+    from src.memory.organizations import get_org_by_github, store_github_installation
+
+    org_id = token.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    # Look up installation details from GitHub API
+    try:
+        info = await get_installation_info(request.installation_id)
+    except Exception as e:
+        logger.error("github_installation_lookup_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to look up GitHub installation")
+
+    account = info.get("account") or {}
+    github_org = account.get("login")
+    if not github_org:
+        raise HTTPException(status_code=400, detail="Invalid installation: no account found")
+
+    # Check if this GitHub org is already linked to a different Clerk org
+    existing = await get_org_by_github(github_org)
+    if existing and existing["id"] != org_id:
+        raise HTTPException(
+            status_code=409,
+            detail=f"GitHub org '{github_org}' is already linked to another organization",
+        )
+
+    # Link: update org's github_org column
+    from src.database import fetch_one
+
+    await fetch_one(
+        "UPDATE organizations SET github_org = $1 WHERE clerk_org_id = $2",
+        github_org,
+        org_id,
+    )
+
+    # Store the installation record
+    try:
+        install_token = await get_installation_token(request.installation_id)
+        repos = await get_installation_repositories(install_token)
+        repositories = [
+            {"full_name": repo["full_name"], "id": repo["id"]}
+            for repo in repos
+        ]
+    except Exception as e:
+        logger.warning("github_repos_fetch_failed", error=str(e))
+        repositories = []
+    await store_github_installation(
+        org_id=org_id,
+        installation_id=request.installation_id,
+        github_org=github_org,
+        repositories=repositories,
+    )
+
+    logger.info(
+        "github_linked",
+        org_id=org_id,
+        github_org=github_org,
+        installation_id=request.installation_id,
+    )
+    return {"status": "linked", "github_org": github_org}
 
 
 @router.get("/installations")
@@ -41,7 +118,11 @@ async def github_setup_callback(
     setup_action: str | None = None,
 ):
     if setup_action:
-        logger.info("github_setup_callback", installation_id=installation_id, setup_action=setup_action)
+        logger.info(
+            "github_setup_callback",
+            installation_id=installation_id,
+            setup_action=setup_action,
+        )
     frontend_url = f"{settings.app_url}/settings"
     if installation_id:
         frontend_url += f"?github=connected&installation_id={installation_id}"
@@ -67,7 +148,7 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
     # Handle installation events (created/deleted)
     if event_type == "installation":
         from src.memory.organizations import (
-            get_or_create_org,
+            get_org_by_github,
             remove_github_installation,
             store_github_installation,
         )
@@ -87,7 +168,13 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks) ->
                 {"full_name": repo["full_name"], "id": repo["id"]}
                 for repo in payload.get("repositories", [])
             ]
-            org_id = await get_or_create_org(github_org=github_org)
+            org = await get_org_by_github(github_org)
+            if not org:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Organization '{github_org}' not found. Create it via Clerk first.",
+                )
+            org_id = org["id"]
             await store_github_installation(
                 org_id=org_id,
                 installation_id=installation_id,

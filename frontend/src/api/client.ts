@@ -40,6 +40,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     headers: { ...headers, ...options?.headers as Record<string, string> },
     ...options,
   });
+  if (res.status === 401) {
+    setApiToken(null);
+    window.location.href = "/sign-in";
+    throw new ApiError(401, "Session expired");
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
     throw new ApiError(res.status, body.detail ?? body.error ?? "Request failed");
