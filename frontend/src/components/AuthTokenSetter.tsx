@@ -11,7 +11,7 @@ export function AuthTokenSetter() {
       setApiToken(null);
       return;
     }
-    const promise = getToken({ skipCache: true, template: 'draftly' }).then((token) => {
+    const promise = getToken({ skipCache: true, template: 'Draftly' }).then((token) => {
       setApiToken(token);
       return token;
     });

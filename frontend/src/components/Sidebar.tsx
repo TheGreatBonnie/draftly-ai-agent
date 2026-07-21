@@ -4,6 +4,7 @@ const links = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/reviewers", label: "Reviewers" },
   { to: "/docs", label: "Documentation" },
+  { to: "/knowledge", label: "Knowledge Base" },
   { to: "/memory", label: "Memory" },
 ];
 

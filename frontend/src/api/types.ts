@@ -91,6 +91,24 @@ export interface SearchResult {
   metadata: unknown;
 }
 
+export interface KnowledgeDoc {
+  id: string;
+  title: string;
+  content: string;
+  doc_type: string;
+  version: number;
+  status: string;
+  confidence_score: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IngestKnowledgePayload {
+  title: string;
+  content: string;
+  doc_type: string;
+}
+
 export interface GitHubInstallation {
   id: string;
   installation_id: number;
