@@ -6,7 +6,8 @@ from pydantic import BaseModel, HttpUrl
 from src.api.auth import get_verified_token
 from src.database import execute, fetch_all, fetch_one
 from src.knowledge.url_fetcher import fetch_url_content
-from src.memory.vector_store import store_embedding
+from src.memory.chunking import store_document_chunks
+from src.memory.vector_store import delete_embeddings_for_content
 
 router = APIRouter()
 
@@ -101,11 +102,12 @@ async def ingest_knowledge(
     if request.source_url:
         metadata["source_url"] = request.source_url
 
-    await store_embedding(
+    await delete_embeddings_for_content(doc_id)
+    await store_document_chunks(
         org_id=org_id,
-        content_type="documentation",
         content_id=doc_id,
-        content_text=f"{request.title}\n\n{request.content}",
+        title=request.title,
+        content=request.content,
         metadata=metadata,
     )
 
