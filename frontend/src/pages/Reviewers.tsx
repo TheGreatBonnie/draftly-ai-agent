@@ -58,6 +58,7 @@ export function Reviewers() {
   const [selfRegistering, setSelfRegistering] = useState(false);
   const [editForm, setEditForm] = useState<UpdateReviewerPayload>({});
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   const isRegisteredAsReviewer = reviewers.some(
     (r) => r.clerk_user_id === userId,
@@ -109,7 +110,8 @@ export function Reviewers() {
   }
 
   async function handleUpdate() {
-    if (!editingId) return;
+    if (!editingId || updating) return;
+    setUpdating(true);
     try {
       await updateReviewer(editingId, editForm);
       setEditingId(null);
@@ -117,6 +119,8 @@ export function Reviewers() {
       load();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setUpdating(false);
     }
   }
 
@@ -455,10 +459,10 @@ export function Reviewers() {
             </button>
             <button
               onClick={handleUpdate}
-              disabled={isAdmin && !editForm.name?.trim()}
+              disabled={updating || (isAdmin && !editForm.name?.trim())}
               className="rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
             >
-              Save Changes
+              {updating ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
@@ -514,6 +518,8 @@ export function Reviewers() {
                 {isAdmin && (
                   <button
                     onClick={() => {
+                      setShowAdminForm(false);
+                      setShowSelfForm(false);
                       setEditingId(r.id);
                       setEditForm({
                         name: r.name,
@@ -533,6 +539,7 @@ export function Reviewers() {
                 {isReviewerRole && r.clerk_user_id === userId && (
                   <button
                     onClick={() => {
+                      setShowSelfForm(false);
                       setEditingId(r.id);
                       setEditForm({
                         slack_user_id: r.slack_user_id ?? "",
