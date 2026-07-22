@@ -22,9 +22,17 @@ async def test_ingest_knowledge_stores_chunks():
 
     mock_token = {"org_id": "org-test-123"}
 
+    delete_patch = patch(
+        "src.api.routes.knowledge.delete_embeddings_for_content",
+        new_callable=AsyncMock,
+    )
+    chunks_patch = patch(
+        "src.api.routes.knowledge.store_document_chunks",
+        new_callable=AsyncMock,
+    )
     with patch("src.api.routes.knowledge.fetch_one", new_callable=AsyncMock) as mock_fetch_one, \
-         patch("src.api.routes.knowledge.delete_embeddings_for_content", new_callable=AsyncMock) as mock_delete, \
-         patch("src.api.routes.knowledge.store_document_chunks", new_callable=AsyncMock) as mock_chunks:
+         delete_patch as mock_delete, \
+         chunks_patch as mock_chunks:
         mock_fetch_one.return_value = {"id": "doc-uuid-456"}
         mock_chunks.return_value = 5
 
@@ -63,13 +71,17 @@ async def test_publish_node_stores_chunks():
         "source_metadata": {},
     }
 
+    chunks_patch = patch(
+        "src.agents.nodes.publish.store_document_chunks",
+        new_callable=AsyncMock,
+    )
     with patch("src.agents.nodes.publish.execute", new_callable=AsyncMock), \
-         patch("src.agents.nodes.publish.store_document_chunks", new_callable=AsyncMock) as mock_chunks, \
+         chunks_patch as mock_chunks, \
          patch("src.agents.nodes.publish.store_memory", new_callable=AsyncMock), \
          patch("src.agents.nodes.publish.store_audit_log", new_callable=AsyncMock):
         mock_chunks.return_value = 5
 
-        result = await publish_node(state)
+        await publish_node(state)
 
         mock_chunks.assert_called_once()
         call_kwargs = mock_chunks.call_args[1]
@@ -87,8 +99,12 @@ async def test_delete_knowledge_removes_all_chunks():
 
     mock_token = {"org_id": "org-test-123"}
 
+    delete_patch = patch(
+        "src.api.routes.knowledge.delete_embeddings_for_content",
+        new_callable=AsyncMock,
+    )
     with patch("src.api.routes.knowledge.fetch_one", new_callable=AsyncMock) as mock_fetch, \
-         patch("src.api.routes.knowledge.delete_embeddings_for_content", new_callable=AsyncMock) as mock_del, \
+         delete_patch as mock_del, \
          patch("src.api.routes.knowledge.execute", new_callable=AsyncMock):
         mock_fetch.return_value = {"id": "doc-uuid-456"}
 
@@ -131,7 +147,10 @@ def test_chunk_text_preserves_code_blocks():
     """Code blocks are not split mid-line."""
     from src.memory.chunking import chunk_text
 
-    text = "# Title\n\nSome intro text.\n\n```python\ndef hello():\n    print('hello')\n```\n\nConclusion."
+    text = (
+        "# Title\n\nSome intro text.\n\n```python\n"
+        "def hello():\n    print('hello')\n```\n\nConclusion."
+    )
     chunks = chunk_text(text)
     combined = " ".join(chunks)
     assert "def hello():" in combined

@@ -4,8 +4,8 @@ import structlog
 
 from src.agents.state import DocumentationState
 from src.database import execute
-from src.memory.organizational import store_audit_log, store_memory
 from src.memory.chunking import store_document_chunks
+from src.memory.organizational import store_audit_log, store_memory
 
 logger = structlog.get_logger()
 
