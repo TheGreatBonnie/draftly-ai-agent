@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 from src.api.auth import get_verified_token
 from src.database import execute, fetch_all, fetch_one
+from src.knowledge.url_fetcher import fetch_url_content
 from src.memory.vector_store import store_embedding
 
 router = APIRouter()
@@ -14,6 +15,55 @@ class IngestKnowledgeRequest(BaseModel):
     title: str
     content: str
     doc_type: str = "reference"
+    source_url: str | None = None
+
+
+class FetchUrlRequest(BaseModel):
+    url: HttpUrl
+
+
+class FetchUrlResponse(BaseModel):
+    url: str
+    title: str
+    content: str
+    source_type: str
+
+
+_fetch_timestamps: dict[str, list[float]] = {}
+_FETCH_RATE_LIMIT = 10
+_FETCH_RATE_WINDOW = 60.0
+
+
+@router.post("/fetch-url", response_model=FetchUrlResponse)
+async def fetch_url(
+    request: FetchUrlRequest,
+    token: dict = Depends(get_verified_token),
+):
+    """Fetch and extract content from a URL for knowledge base import."""
+    import time
+
+    org_id = token.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    now = time.time()
+    org_timestamps = _fetch_timestamps.setdefault(org_id, [])
+    org_timestamps[:] = [t for t in org_timestamps if now - t < _FETCH_RATE_WINDOW]
+    if len(org_timestamps) >= _FETCH_RATE_LIMIT:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again in a minute.")
+    org_timestamps.append(now)
+
+    try:
+        result = await fetch_url_content(str(request.url))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    return FetchUrlResponse(
+        url=result.url,
+        title=result.title,
+        content=result.content,
+        source_type=result.source_type,
+    )
 
 
 @router.post("")
@@ -47,12 +97,16 @@ async def ingest_knowledge(
     assert row is not None
     doc_id = row["id"]
 
+    metadata = {"source": "knowledge_upload", "doc_type": request.doc_type}
+    if request.source_url:
+        metadata["source_url"] = request.source_url
+
     await store_embedding(
         org_id=org_id,
         content_type="documentation",
         content_id=doc_id,
         content_text=f"{request.title}\n\n{request.content}",
-        metadata={"source": "knowledge_upload", "doc_type": request.doc_type},
+        metadata=metadata,
     )
 
     return {"id": doc_id, "title": request.title, "status": "approved"}
@@ -90,7 +144,10 @@ async def delete_knowledge(doc_id: str, token: dict = Depends(get_verified_token
     if not existing:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    await execute("DELETE FROM embeddings WHERE content_id = $1 AND content_type = 'documentation'", doc_id)
+    await execute(
+        "DELETE FROM embeddings WHERE content_id = $1 AND content_type = 'documentation'",
+        doc_id,
+    )
     await execute("DELETE FROM documentation WHERE id = $1", doc_id)
 
     return {"status": "deleted"}
