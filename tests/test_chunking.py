@@ -96,3 +96,43 @@ async def test_delete_knowledge_removes_all_chunks():
 
         assert result["status"] == "deleted"
         mock_del.assert_called_once_with("doc-uuid-456")
+
+
+def test_chunk_text_short_document():
+    """Short documents produce a single chunk."""
+    from src.memory.chunking import chunk_text
+
+    text = "Hello world. This is a short document."
+    chunks = chunk_text(text)
+    assert len(chunks) == 1
+    assert chunks[0] == text
+
+
+def test_chunk_text_long_document():
+    """Long documents produce multiple overlapping chunks."""
+    from src.memory.chunking import chunk_text
+
+    text = "This is a sentence about topic A. " * 100
+    chunks = chunk_text(text)
+    assert len(chunks) >= 2
+    combined = " ".join(chunks)
+    assert "topic A" in combined
+
+
+def test_chunk_text_empty():
+    """Empty text returns empty list."""
+    from src.memory.chunking import chunk_text
+
+    assert chunk_text("") == []
+    assert chunk_text("   ") == []
+
+
+def test_chunk_text_preserves_code_blocks():
+    """Code blocks are not split mid-line."""
+    from src.memory.chunking import chunk_text
+
+    text = "# Title\n\nSome intro text.\n\n```python\ndef hello():\n    print('hello')\n```\n\nConclusion."
+    chunks = chunk_text(text)
+    combined = " ".join(chunks)
+    assert "def hello():" in combined
+    assert "Conclusion." in combined
