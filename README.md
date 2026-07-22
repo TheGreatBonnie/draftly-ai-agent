@@ -91,6 +91,28 @@ uv run ruff check src/
 uv run mypy src/
 ```
 
+## Tunneling for Webhooks
+
+Use **ngrok** and **serveo** to expose local services for webhook integrations (Slack, Discord, GitHub, Clerk).
+
+### Backend (ngrok → port 8000)
+
+```bash
+ngrok http 8000
+```
+
+Copy the `https://...ngrok.io` URL and update:
+- `.env` → `NGROK_URL`
+- Slack, Discord, GitHub App, and Clerk webhook endpoints
+
+### Frontend (serveo → port 5173)
+
+```bash
+ssh -R 80:localhost:5173 serveo.net
+```
+
+This gives you a public `https://*.serveo.net` URL for the Vite dev server.
+
 ## Project Structure
 
 ```
