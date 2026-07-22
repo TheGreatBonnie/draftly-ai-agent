@@ -108,6 +108,25 @@ export function Reviewers() {
     }
   }
 
+  async function handleUpdate() {
+    if (!editingId) return;
+    try {
+      await updateReviewer(editingId, editForm);
+      setEditingId(null);
+      setEditForm({});
+      load();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Update failed");
+    }
+  }
+
+  function updateEditField<K extends keyof UpdateReviewerPayload>(
+    key: K,
+    value: UpdateReviewerPayload[K],
+  ) {
+    setEditForm((prev) => ({ ...prev, [key]: value }));
+  }
+
   function updateAdminField<K extends keyof CreateReviewerPayload>(
     key: K,
     value: CreateReviewerPayload[K],
