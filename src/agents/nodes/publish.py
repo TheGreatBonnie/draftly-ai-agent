@@ -5,7 +5,7 @@ import structlog
 from src.agents.state import DocumentationState
 from src.database import execute
 from src.memory.organizational import store_audit_log, store_memory
-from src.memory.vector_store import store_embedding
+from src.memory.chunking import store_document_chunks
 
 logger = structlog.get_logger()
 
@@ -106,12 +106,12 @@ async def publish_node(state: DocumentationState) -> dict:
         doc_id,
     )
 
-    # 2. Store embedding for future semantic search
-    await store_embedding(
+    # 2. Store chunked embeddings for future semantic search
+    await store_document_chunks(
         org_id=org_id,
-        content_type="documentation",
         content_id=doc_id,
-        content_text=f"{title}\n\n{content}",
+        title=title,
+        content=content,
         metadata={"doc_type": state.get("doc_type"), "confidence": state.get("confidence_score")},
     )
 

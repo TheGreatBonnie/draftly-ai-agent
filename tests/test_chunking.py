@@ -45,3 +45,36 @@ async def test_ingest_knowledge_stores_chunks():
         assert call_kwargs["content_id"] == "doc-uuid-456"
         assert call_kwargs["title"] == "Test Doc"
         assert call_kwargs["content"] == "A" * 5000
+
+
+@pytest.mark.asyncio
+async def test_publish_node_stores_chunks():
+    """Verify that publish_node creates multiple embeddings (chunks)."""
+    from src.agents.nodes.publish import publish_node
+
+    state = {
+        "org_id": "org-test-123",
+        "doc_id": "doc-uuid-789",
+        "draft_title": "How to Deploy",
+        "draft_content": "A" * 5000,
+        "doc_type": "howto",
+        "confidence_score": 0.9,
+        "source": "cli",
+        "source_metadata": {},
+    }
+
+    with patch("src.agents.nodes.publish.execute", new_callable=AsyncMock), \
+         patch("src.agents.nodes.publish.store_document_chunks", new_callable=AsyncMock) as mock_chunks, \
+         patch("src.agents.nodes.publish.store_memory", new_callable=AsyncMock), \
+         patch("src.agents.nodes.publish.store_audit_log", new_callable=AsyncMock):
+        mock_chunks.return_value = 5
+
+        result = await publish_node(state)
+
+        mock_chunks.assert_called_once()
+        call_kwargs = mock_chunks.call_args[1]
+        assert call_kwargs["org_id"] == "org-test-123"
+        assert call_kwargs["content_id"] == "doc-uuid-789"
+        assert "How to Deploy" in call_kwargs["title"]
+        assert call_kwargs["metadata"]["doc_type"] == "howto"
+        assert call_kwargs["metadata"]["confidence"] == 0.9
