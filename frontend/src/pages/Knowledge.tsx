@@ -6,6 +6,7 @@ import {
 } from "../api/knowledge";
 import type { KnowledgeDoc, IngestKnowledgePayload } from "../api/types";
 import { Badge } from "../components/Badge";
+import { URLImportForm } from "../components/URLImportForm";
 
 const DOC_TYPES = ["howto", "faq", "tutorial", "troubleshooting", "reference"] as const;
 
@@ -70,8 +71,10 @@ export function Knowledge() {
         Add company documentation so the AI uses it as context when generating solutions.
       </p>
 
+      <URLImportForm onIngested={loadDocs} />
+
       <form onSubmit={handleIngest} className="mb-8 rounded-lg border border-gray-200 p-4">
-        <h2 className="mb-3 text-lg font-semibold">Add Document</h2>
+        <h2 className="mb-3 text-lg font-semibold">Add Manually</h2>
         <div className="mb-3">
           <label className="mb-1 block text-sm font-medium text-gray-700">Title</label>
           <input
