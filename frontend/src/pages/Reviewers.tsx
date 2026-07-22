@@ -394,6 +394,42 @@ export function Reviewers() {
                 )}
                 {isAdmin && (
                   <button
+                    onClick={() => {
+                      setEditingId(r.id);
+                      setEditForm({
+                        name: r.name,
+                        email: r.email ?? "",
+                        slack_user_id: r.slack_user_id ?? "",
+                        discord_user_id: r.discord_user_id ?? "",
+                        notify_slack: r.notify_slack,
+                        notify_discord: r.notify_discord,
+                        notify_email: r.notify_email,
+                      });
+                    }}
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    Edit
+                  </button>
+                )}
+                {isReviewerRole && r.clerk_user_id === userId && (
+                  <button
+                    onClick={() => {
+                      setEditingId(r.id);
+                      setEditForm({
+                        slack_user_id: r.slack_user_id ?? "",
+                        discord_user_id: r.discord_user_id ?? "",
+                        notify_slack: r.notify_slack,
+                        notify_discord: r.notify_discord,
+                        notify_email: r.notify_email,
+                      });
+                    }}
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    Edit Profile
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
                     onClick={() => handleDelete(r.id)}
                     className="text-red-500 hover:text-red-700"
                   >
