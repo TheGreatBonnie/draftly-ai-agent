@@ -112,3 +112,12 @@ async def search_similar(
 async def delete_embedding(embedding_id: str) -> None:
     await execute("DELETE FROM embeddings WHERE id = $1", embedding_id)
     logger.info("embedding_deleted", id=embedding_id)
+
+
+async def delete_embeddings_for_content(content_id: str) -> None:
+    """Delete all embeddings for a given content_id (e.g., all chunks of a document)."""
+    await execute(
+        "DELETE FROM embeddings WHERE content_id = $1 AND content_type = 'documentation'",
+        content_id,
+    )
+    logger.info("embeddings_deleted_for_content", content_id=content_id)
