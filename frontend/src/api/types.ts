@@ -129,6 +129,14 @@ export interface IngestKnowledgePayload {
   title: string;
   content: string;
   doc_type: string;
+  source_url?: string;
+}
+
+export interface FetchUrlResponse {
+  url: string;
+  title: string;
+  content: string;
+  source_type: string;
 }
 
 export interface GitHubInstallation {
