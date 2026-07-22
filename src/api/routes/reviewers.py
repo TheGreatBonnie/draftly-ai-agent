@@ -166,16 +166,37 @@ async def get_reviewer(reviewer_id: str, token: dict = Depends(get_verified_toke
 async def update(
     reviewer_id: str,
     request: UpdateReviewerRequest,
-    token: dict = Depends(require_admin_role),
+    token: dict = Depends(get_verified_token),
 ):
-    """Update a reviewer (admin only)."""
+    """Update a reviewer (admin: any reviewer; reviewer: own profile only)."""
     existing = await get_reviewer_by_id(reviewer_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Reviewer not found")
 
+    is_admin = token.get("org_role") == "admin"
+    is_self = existing.get("clerk_user_id") == token.get("user_id")
+
+    if not is_admin and not is_self:
+        raise HTTPException(status_code=403, detail="Can only edit your own profile")
+
     updates = request.model_dump(exclude_unset=True)
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
+
+    if not is_admin:
+        allowed_for_reviewer = {
+            "slack_user_id",
+            "discord_user_id",
+            "notify_slack",
+            "notify_discord",
+            "notify_email",
+        }
+        updates = {k: v for k, v in updates.items() if k in allowed_for_reviewer}
+        if not updates:
+            raise HTTPException(
+                status_code=400,
+                detail="Reviewers can only update notification preferences and platform IDs",
+            )
 
     updated = await update_reviewer(reviewer_id, **updates)
     return updated
