@@ -78,3 +78,21 @@ async def test_publish_node_stores_chunks():
         assert "How to Deploy" in call_kwargs["title"]
         assert call_kwargs["metadata"]["doc_type"] == "howto"
         assert call_kwargs["metadata"]["confidence"] == 0.9
+
+
+@pytest.mark.asyncio
+async def test_delete_knowledge_removes_all_chunks():
+    """Verify that DELETE /api/knowledge/{doc_id} removes all chunk embeddings."""
+    from src.api.routes.knowledge import delete_knowledge
+
+    mock_token = {"org_id": "org-test-123"}
+
+    with patch("src.api.routes.knowledge.fetch_one", new_callable=AsyncMock) as mock_fetch, \
+         patch("src.api.routes.knowledge.delete_embeddings_for_content", new_callable=AsyncMock) as mock_del, \
+         patch("src.api.routes.knowledge.execute", new_callable=AsyncMock):
+        mock_fetch.return_value = {"id": "doc-uuid-456"}
+
+        result = await delete_knowledge("doc-uuid-456", token=mock_token)
+
+        assert result["status"] == "deleted"
+        mock_del.assert_called_once_with("doc-uuid-456")

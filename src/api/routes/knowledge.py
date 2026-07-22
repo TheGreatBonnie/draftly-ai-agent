@@ -146,10 +146,7 @@ async def delete_knowledge(doc_id: str, token: dict = Depends(get_verified_token
     if not existing:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    await execute(
-        "DELETE FROM embeddings WHERE content_id = $1 AND content_type = 'documentation'",
-        doc_id,
-    )
+    await delete_embeddings_for_content(doc_id)
     await execute("DELETE FROM documentation WHERE id = $1", doc_id)
 
     return {"status": "deleted"}
