@@ -153,7 +153,7 @@ async def publish_node(state: DocumentationState) -> dict:
         WHERE id = $2
         """,
         content[:2000],
-        state.get("thread_id"),
+        state.get("support_thread_id"),
     )
 
     # 6. Audit log

@@ -17,7 +17,7 @@ def test_rubric_structure():
     ### Format (Required)
     - Correct doc_type selected
     """
-    
+
     assert "Accuracy" in documentation_rubric
     assert "Completeness" in documentation_rubric
     assert "Clarity" in documentation_rubric
@@ -62,7 +62,7 @@ def test_investigation_plan_structure():
             "expected_output": "Direct answer",
         }
     ]
-    
+
     assert len(simple_plan) == 1
     assert simple_plan[0]["priority"] == "high"
     assert "search_query" in simple_plan[0]

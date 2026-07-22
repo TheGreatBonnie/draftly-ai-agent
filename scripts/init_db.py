@@ -29,10 +29,26 @@ async def init_db() -> None:
 
     schema_sql = SCHEMA_PATH.read_text()
 
+    # Split out SET CLUSTER SETTING statements (can't run inside a transaction)
+    cluster_settings = []
+    schema_lines = []
+    for line in schema_sql.splitlines():
+        if line.strip().upper().startswith("SET CLUSTER SETTING"):
+            cluster_settings.append(line.strip())
+        else:
+            schema_lines.append(line)
+    schema_body = "\n".join(schema_lines)
+
     conn = await asyncpg.connect(url)
     try:
+        # Apply cluster settings first (outside transaction)
+        for setting in cluster_settings:
+            print(f"Applying: {setting}")
+            await conn.execute(setting)
+
+        # Apply schema
         print("Applying schema...")
-        await conn.execute(schema_sql)
+        await conn.execute(schema_body)
         print("Schema applied successfully.")
 
         setting = await conn.fetchrow(

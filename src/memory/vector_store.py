@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 
 import structlog
@@ -10,6 +11,7 @@ from langchain_cockroachdb import (
     DistanceStrategy,
 )
 from langchain_openai import OpenAIEmbeddings
+from sqlalchemy import text
 
 from src.config import settings
 
@@ -89,11 +91,24 @@ async def store_embedding(
     }
 
     doc_id = str(uuid.uuid4())
-    await store.aadd_texts(
-        texts=[content_text],
-        metadatas=[full_metadata],
-        ids=[doc_id],
-    )
+    embedding = await store.embeddings.aembed_query(content_text)
+
+    # Use parameterized INSERT via engine directly — the library's
+    # _insert_batch uses text() with string interpolation which breaks
+    # when content contains %(name)s patterns (SQLAlchemy bind params).
+    async with _engine.engine.begin() as conn:
+        await conn.execute(
+            text(
+                "INSERT INTO public.embeddings (id, content, embedding, metadata) "
+                "VALUES (:id, :content, :embedding, CAST(:metadata AS jsonb))"
+            ),
+            {
+                "id": doc_id,
+                "content": content_text,
+                "embedding": json.dumps(embedding),
+                "metadata": json.dumps(full_metadata),
+            },
+        )
 
     logger.info("embedding_stored", id=doc_id, content_type=content_type)
     return doc_id

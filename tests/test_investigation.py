@@ -1,11 +1,12 @@
 import pytest
+
 from src.agents.planners.investigation import (
+    _classify_complexity,
+    _create_complex_plan,
+    _create_moderate_plan,
+    _create_simple_plan,
     create_investigation_plan,
     format_plan_for_display,
-    _create_simple_plan,
-    _create_moderate_plan,
-    _create_complex_plan,
-    _classify_complexity,
 )
 
 

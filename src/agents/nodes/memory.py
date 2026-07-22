@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import structlog
 
 from src.agents.state import DocumentationState
@@ -21,7 +23,9 @@ async def memory_retrieve_node(state: DocumentationState) -> dict:
     semantic_results = await search_similar(org_id, question, k=10)
 
     # 2. Episodic search — similar support threads
-    episodic_results = await search_threads(org_id, question, limit=5)
+    sanitized = re.sub(r'[^\w\s]', ' ', question)
+    sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+    episodic_results = await search_threads(org_id, sanitized, limit=5)
 
     # 3. Organizational memory — best practices, known solutions
     pattern = question.split()[0] if question else ""

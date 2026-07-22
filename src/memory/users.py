@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import structlog
 
-from src.database import execute, fetch_all, fetch_one
+from src.database import execute, fetch_one
 
 logger = structlog.get_logger()
 
