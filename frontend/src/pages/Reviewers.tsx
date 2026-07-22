@@ -3,12 +3,14 @@ import { useAuth, useOrganization } from "@clerk/react";
 import {
   listReviewers,
   createReviewer,
+  updateReviewer,
   deleteReviewer,
   registerSelf,
 } from "../api/reviewers";
 import type {
   Reviewer,
   CreateReviewerPayload,
+  UpdateReviewerPayload,
   SelfRegisterPayload,
 } from "../api/types";
 
@@ -54,6 +56,8 @@ export function Reviewers() {
   });
   const [showSelfForm, setShowSelfForm] = useState(false);
   const [selfRegistering, setSelfRegistering] = useState(false);
+  const [editForm, setEditForm] = useState<UpdateReviewerPayload>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const isRegisteredAsReviewer = reviewers.some(
     (r) => r.clerk_user_id === userId,
