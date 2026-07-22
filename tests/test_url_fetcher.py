@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.knowledge.url_fetcher import fetch_url_content
+from src.knowledge.url_fetcher import _find_markdown_alternate, fetch_url_content
 
 HTML_PAGE = (
     b"<html><head><title>Test Page</title></head>"
@@ -98,3 +98,56 @@ async def test_no_content_extracted():
         ):
             with pytest.raises(ValueError, match="No readable content"):
                 await fetch_url_content("https://example.com/empty")
+
+
+def test_find_markdown_alternate():
+    html = (
+        b'<html><head>'
+        b'<link rel="alternate" type="text/markdown" href="/docs/page.md"/>'
+        b"</head></html>"
+    )
+    assert _find_markdown_alternate(html) == "/docs/page.md"
+
+
+def test_find_markdown_alternate_reversed_attrs():
+    html = (
+        b'<html><head>'
+        b'<link type="text/markdown" rel="alternate" href="/docs/page.md"/>'
+        b"</head></html>"
+    )
+    assert _find_markdown_alternate(html) == "/docs/page.md"
+
+
+def test_find_markdown_alternate_missing():
+    html = b'<html><head><link rel="stylesheet" href="style.css"/></head></html>'
+    assert _find_markdown_alternate(html) is None
+
+
+@pytest.mark.asyncio
+async def test_webpage_prefers_markdown_alternate():
+    html_with_md_link = (
+        b"<html><head>"
+        b'<title>SPA Page</title>'
+        b'<link rel="alternate" type="text/markdown" href="/docs/page.md"/>'
+        b"</head><body></body></html>"
+    )
+    markdown_content = "# SPA Page\n\nSome content\n\n```python\nprint('hello')\n```"
+
+    with patch(
+        "src.knowledge.url_fetcher._fetch_bytes", new_callable=AsyncMock
+    ) as mock_fetch:
+        # First call: fetch the HTML page
+        # Second call: fetch the markdown alternate
+        mock_fetch.side_effect = [
+            (html_with_md_link, "text/html"),
+            (markdown_content.encode(), "text/markdown"),
+        ]
+        result = await fetch_url_content("https://docs.example.com/page")
+        assert result.title == "SPA Page"
+        assert "print('hello')" in result.content
+        assert result.source_type == "webpage"
+        # Verify the markdown URL was fetched (relative resolved to absolute)
+        assert mock_fetch.call_count == 2
+        md_url = mock_fetch.call_args_list[1][0][0]
+        assert "docs.example.com" in md_url
+        assert md_url.endswith("/docs/page.md")

@@ -46,6 +46,26 @@ async def _fetch_bytes(url: str) -> tuple[bytes, str]:
         return resp.content, content_type
 
 
+def _find_markdown_alternate(html: bytes) -> str | None:
+    """Check for a <link rel="alternate" type="text/markdown" href="..."> tag."""
+    decoded = html.decode(errors="replace")
+    match = re.search(
+        r'<link[^>]+rel=["\']alternate["\'][^>]+type=["\']text/markdown["\'][^>]+href=["\']([^"\']+)["\']',
+        decoded,
+        re.IGNORECASE,
+    )
+    if match:
+        return match.group(1)
+    match = re.search(
+        r'<link[^>]+type=["\']text/markdown["\'][^>]+rel=["\']alternate["\'][^>]+href=["\']([^"\']+)["\']',
+        decoded,
+        re.IGNORECASE,
+    )
+    if match:
+        return match.group(1)
+    return None
+
+
 def _extract_webpage(html: bytes) -> tuple[str, str]:
     text = trafilatura.extract(
         html, include_comments=False, include_tables=True, include_formatting=True
@@ -62,6 +82,15 @@ def _extract_webpage(html: bytes) -> tuple[str, str]:
         )
         title = title_match.group(1).strip() if title_match else ""
     return title, text.strip()
+
+
+def _title_from_markdown(text: str) -> str:
+    """Extract title from the first heading in markdown content."""
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return stripped[2:].strip()
+    return ""
 
 
 def _extract_pdf(pdf_bytes: bytes) -> tuple[str, str]:
@@ -100,7 +129,26 @@ async def fetch_url_content(url: str) -> FetchUrlResult:
             title, content = _extract_pdf(content_bytes)
             source_type = "pdf"
         else:
-            title, content = _extract_webpage(content_bytes)
+            # Check for a markdown alternate link (common in Mintlify/Next.js doc sites)
+            # This preserves code blocks that SPA HTML rendering strips from raw HTML
+            md_path = _find_markdown_alternate(content_bytes)
+            if md_path:
+                from urllib.parse import urljoin
+
+                md_url = urljoin(url, md_path)
+                md_bytes, _ = await _fetch_bytes(md_url)
+                content = md_bytes.decode(errors="replace").strip()
+                title = _title_from_markdown(content)
+                if not title:
+                    # Fallback: extract from <title> tag
+                    title_match = re.search(
+                        r"<title[^>]*>([^<]+)</title>",
+                        content_bytes.decode(errors="replace"),
+                        re.IGNORECASE,
+                    )
+                    title = title_match.group(1).strip() if title_match else ""
+            else:
+                title, content = _extract_webpage(content_bytes)
 
         if not content:
             raise ValueError("No readable content found at URL")
