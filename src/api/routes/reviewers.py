@@ -173,6 +173,9 @@ async def update(
     if not existing:
         raise HTTPException(status_code=404, detail="Reviewer not found")
 
+    if existing.get("org_id") != token.get("org_id"):
+        raise HTTPException(status_code=403, detail="Reviewer not found in your organization")
+
     is_admin = token.get("org_role") == "admin"
     is_self = existing.get("clerk_user_id") == token.get("user_id")
 
@@ -208,6 +211,9 @@ async def delete(reviewer_id: str, token: dict = Depends(require_admin_role)):
     existing = await get_reviewer_by_id(reviewer_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Reviewer not found")
+
+    if existing.get("org_id") != token.get("org_id"):
+        raise HTTPException(status_code=403, detail="Reviewer not found in your organization")
 
     await delete_reviewer(reviewer_id)
     return {"status": "deleted"}
