@@ -39,6 +39,9 @@ async def test_ingest_knowledge_stores_chunks():
         assert result["id"] == "doc-uuid-456"
         assert result["status"] == "approved"
         mock_chunks.assert_called_once()
+        mock_delete.assert_called_once_with("doc-uuid-456")
         call_kwargs = mock_chunks.call_args[1]
         assert call_kwargs["org_id"] == "org-test-123"
         assert call_kwargs["content_id"] == "doc-uuid-456"
+        assert call_kwargs["title"] == "Test Doc"
+        assert call_kwargs["content"] == "A" * 5000
