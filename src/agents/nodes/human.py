@@ -5,7 +5,7 @@ from langgraph.types import interrupt
 
 from src.agents.state import DocumentationState
 from src.memory.organizational import store_audit_log
-from src.memory.reviewer import create_review_session
+from src.memory.reviewer import create_review_session, get_pending_review_by_doc
 
 logger = structlog.get_logger()
 
@@ -90,26 +90,34 @@ async def human_review_node(state: DocumentationState) -> dict:
     org_id = state["org_id"]
     doc_id = state.get("doc_id", "")
 
-    logger.info("human_review_started", org_id=org_id, doc_id=doc_id)
+    existing = await get_pending_review_by_doc(doc_id) if doc_id else None
 
-    review_id = await create_review_session(
-        doc_id=doc_id,
-        confidence_before=state.get("confidence_score", 0),
-        graph_thread_id=state.get("graph_thread_id", ""),
-    )
+    if existing:
+        review_id = existing["id"]
+        logger.info("human_review_resumed", review_id=review_id, doc_id=doc_id)
+    else:
+        logger.info("human_review_started", org_id=org_id, doc_id=doc_id)
 
-    # Notify reviewers
-    notification_results = await notify_reviewers(state, review_id)
-    logger.info("notifications_sent", results=notification_results)
+        review_id = await create_review_session(
+            doc_id=doc_id,
+            confidence_before=state.get("confidence_score", 0),
+            graph_thread_id=state.get("graph_thread_id", ""),
+        )
 
-    await store_audit_log(
-        org_id=org_id,
-        actor="system",
-        action="request_human_review",
-        resource_type="documentation",
-        resource_id=doc_id,
-        details={"review_id": review_id, "confidence": state.get("confidence_score", 0)},
-    )
+        notification_results = await notify_reviewers(state, review_id)
+        logger.info("notifications_sent", results=notification_results)
+
+        await store_audit_log(
+            org_id=org_id,
+            actor="system",
+            action="request_human_review",
+            resource_type="documentation",
+            resource_id=doc_id,
+            details={
+                "review_id": review_id,
+                "confidence": state.get("confidence_score", 0),
+            },
+        )
 
     decision = interrupt(
         {

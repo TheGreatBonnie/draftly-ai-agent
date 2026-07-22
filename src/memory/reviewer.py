@@ -106,6 +106,15 @@ async def get_reviewer_memory(org_id: str, limit: int = 10) -> list[dict]:
     return [_serialize_row(r) for r in rows]
 
 
+async def get_pending_review_by_doc(doc_id: str) -> dict | None:
+    """Check if a pending review session already exists for a document."""
+    row = await fetch_one(
+        "SELECT id::text, status FROM review_sessions WHERE doc_id = $1 LIMIT 1",
+        doc_id,
+    )
+    return _serialize_row(row) if row else None
+
+
 async def get_review_thread_id(review_id: str) -> str | None:
     """Look up the graph thread_id from a review session for HITL resume."""
     row = await fetch_one(
