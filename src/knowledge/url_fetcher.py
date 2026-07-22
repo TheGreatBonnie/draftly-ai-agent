@@ -47,7 +47,9 @@ async def _fetch_bytes(url: str) -> tuple[bytes, str]:
 
 
 def _extract_webpage(html: bytes) -> tuple[str, str]:
-    text = trafilatura.extract(html, include_comments=False, include_tables=True) or ""
+    text = trafilatura.extract(
+        html, include_comments=False, include_tables=True, include_formatting=True
+    ) or ""
     metadata = trafilatura.extract(html, include_comments=False, output_format="json") or "{}"
     try:
         meta = json.loads(metadata)
