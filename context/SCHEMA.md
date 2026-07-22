@@ -2,33 +2,43 @@
 
 ## Overview
 
-Draftly uses CockroachDB with distributed vector index for semantic search. The schema supports multi-tenant architecture with 8 core tables.
+Draftly uses CockroachDB with distributed vector index for semantic search. The schema supports multi-tenant architecture with **13 tables**. All foreign key references to the parent `organizations` table use the Clerk org ID (`clerk_org_id`) as the linkage column rather than the internal UUID primary key.
 
 ## Entity Relationship Diagram
 
 ```
-┌─────────────────┐
-│  organizations  │
-│  (multi-tenant) │
+                            ┌─────────────────┐
+                            │  clerk_users     │
+                            └────────┬────────┘
+                                     │
+                                     ▼
+┌─────────────────┐        ┌──────────────────┐
+│  organizations  │◀───────│user_organizations │
+│  (multi-tenant) │        └──────────────────┘
 └────────┬────────┘
          │
          ├──┬─────────────────┬─────────────────┬─────────────────┬─────────────────┐
          │  │                 │                 │                 │                 │
          ▼  ▼                 ▼                 ▼                 ▼                 ▼
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│   support    │  │ documentation│  │  embeddings  │  │agent_workflow│  │ agent_memory │
-│   _threads   │  │              │  │  (vectors)   │  │     s        │  │              │
-└──────┬───────┘  └──────┬───────┘  └──────────────┘  └──────────────┘  └──────────────┘
-       │                 │
-       │                 ▼
-       │         ┌──────────────┐
-       └────────▶│   review     │
-                 │  _sessions   │
-                 └──────────────┘
+│   support    │  │ documentation│  │   reviewers  │  │github_       │  │ agent_memory │
+│   _threads   │  │              │  │              │  │installations │  │              │
+└──────┬───────┘  └──────┬───────┘  └──────────────┘  └──────┬───────┘  └──────────────┘
+       │                 │                                   │
+       │                 ▼                                   ▼
+       │         ┌──────────────┐                   ┌──────────────┐
+       └────────▶│   review     │                   │github_       │
+                 │  _sessions   │                   │workflows     │
+                 └──────────────┘                   └──────────────┘
 
 ┌──────────────┐
 │  audit_logs  │
 └──────────────┘
+
+┌──────────────┐  ┌──────────────┐
+│  embeddings  │  │agent_workflow│
+│  (vectors)   │  │     s        │
+└──────────────┘  └──────────────┘
 ```
 
 ## Tables
@@ -37,8 +47,9 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 
 | Column | Type | Constraints |
 |--------|------|-------------|
-| id | UUID | PRIMARY KEY |
-| name | STRING | NOT NULL |
+| id | UUID | PRIMARY KEY DEFAULT gen_random_uuid() |
+| clerk_org_id | STRING | NOT NULL UNIQUE |
+| clerk_org_name | STRING | NOT NULL |
 | slack_workspace_id | STRING | |
 | discord_guild_id | STRING | |
 | github_org | STRING | |
@@ -49,8 +60,8 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| org_id | UUID | FK → organizations, ON DELETE CASCADE |
-| source | STRING | CHECK (source IN ('slack', 'discord', 'github', 'cli')) |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| source | STRING | NOT NULL CHECK (source IN ('slack', 'discord', 'github', 'cli')) |
 | channel_id | STRING | NOT NULL |
 | thread_id | STRING | NOT NULL |
 | title | STRING | |
@@ -72,10 +83,10 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| org_id | UUID | FK → organizations, ON DELETE CASCADE |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
 | title | STRING | NOT NULL |
 | content | TEXT | NOT NULL |
-| doc_type | STRING | CHECK (doc_type IN ('howto', 'faq', 'tutorial', 'troubleshooting', 'reference')) |
+| doc_type | STRING | NOT NULL, CHECK (doc_type IN ('howto', 'faq', 'tutorial', 'troubleshooting', 'reference')) |
 | version | INT | DEFAULT 1 |
 | status | STRING | DEFAULT 'draft', CHECK (status IN ('draft', 'in_review', 'approved', 'published')) |
 | source_thread_id | UUID | FK → support_threads, ON DELETE SET NULL |
@@ -93,44 +104,43 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| org_id | UUID | FK → organizations, ON DELETE CASCADE |
-| content_type | STRING | CHECK (content_type IN ('documentation', 'support_thread', 'review_feedback')) |
-| content_id | UUID | NOT NULL |
-| content_text | TEXT | NOT NULL |
-| embedding | VECTOR(3072) | NOT NULL |
+| content | TEXT | |
+| embedding | VECTOR(3072) | |
 | metadata | JSONB | DEFAULT '{}' |
 | created_at | TIMESTAMPTZ | DEFAULT now() |
 
-**Indexes:**
-- `idx_embeddings_org` ON (org_id)
-- `idx_embeddings_type` ON (content_type)
-- `idx_embeddings_vector` ON (embedding vector_cosine_ops) -- Distributed Vector Index
+Org ID, content type, and content ID are stored inside the `metadata` JSONB column rather than as top-level columns. This matches the `AsyncCockroachDBVectorStore` expectations.
+
+**Vector Index:**
+- Created dynamically via `AsyncCockroachDBVectorStore.aapply_vector_index()`: `CREATE VECTOR INDEX ON embeddings (embedding vector_cosine_ops)`
 
 ### 5. review_sessions (Reviewer Memory)
 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| doc_id | UUID | FK → documentation, ON DELETE CASCADE |
+| doc_id | UUID | NOT NULL FK → documentation, ON DELETE CASCADE |
 | reviewer_id | UUID | |
 | status | STRING | DEFAULT 'pending', CHECK (status IN ('pending', 'approved', 'rejected', 'needs_changes')) |
 | reviewer_feedback | TEXT | |
 | edits_made | JSONB | |
 | confidence_before | FLOAT | CHECK (confidence_before >= 0 AND confidence_before <= 1) |
 | confidence_after | FLOAT | CHECK (confidence_after >= 0 AND confidence_after <= 1) |
+| thread_id | STRING | |
 | created_at | TIMESTAMPTZ | DEFAULT now() |
 | completed_at | TIMESTAMPTZ | |
 
 **Indexes:**
 - `idx_review_doc` ON (doc_id)
 - `idx_review_status` ON (status)
+- `idx_review_thread` ON (thread_id)
 
 ### 6. agent_workflows (Procedural Memory)
 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| org_id | UUID | FK → organizations, ON DELETE CASCADE |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
 | thread_id | UUID | FK → support_threads, ON DELETE SET NULL |
 | doc_id | UUID | FK → documentation, ON DELETE SET NULL |
 | graph_state | JSONB | NOT NULL |
@@ -149,8 +159,8 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| org_id | UUID | FK → organizations, ON DELETE CASCADE |
-| memory_type | STRING | CHECK (memory_type IN ('episodic', 'procedural', 'organizational', 'reviewer')) |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| memory_type | STRING | NOT NULL, CHECK (memory_type IN ('episodic', 'procedural', 'organizational', 'reviewer')) |
 | key | STRING | NOT NULL |
 | value | JSONB | NOT NULL |
 | source | TEXT | |
@@ -169,8 +179,8 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| org_id | UUID | FK → organizations, ON DELETE CASCADE |
-| actor | STRING | CHECK (actor IN ('agent', 'human', 'system')) |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| actor | STRING | NOT NULL, CHECK (actor IN ('agent', 'human', 'system')) |
 | actor_id | STRING | |
 | action | STRING | NOT NULL |
 | resource_type | STRING | |
@@ -183,9 +193,105 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 - `idx_audit_action` ON (action)
 - `idx_audit_created` ON (created_at)
 
+### 9. reviewers (Notification Recipients)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| name | STRING | NOT NULL |
+| email | STRING | |
+| slack_user_id | STRING | |
+| discord_user_id | STRING | |
+| clerk_user_id | STRING | |
+| notify_slack | BOOL | DEFAULT true |
+| notify_discord | BOOL | DEFAULT false |
+| notify_email | BOOL | DEFAULT false |
+| is_active | BOOLEAN | DEFAULT true |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| updated_at | TIMESTAMPTZ | DEFAULT now() ON UPDATE now() |
+
+**Indexes:**
+- `idx_reviewers_org` ON (org_id)
+- `idx_reviewers_active` ON (is_active)
+- `idx_reviewers_clerk_user` ON (clerk_user_id)
+- `idx_reviewers_email_org` UNIQUE ON (org_id, email) WHERE email IS NOT NULL
+- `idx_reviewers_slack_org` UNIQUE ON (org_id, slack_user_id) WHERE slack_user_id IS NOT NULL
+- `idx_reviewers_discord_org` UNIQUE ON (org_id, discord_user_id) WHERE discord_user_id IS NOT NULL
+- `idx_reviewers_clerk_user_org` UNIQUE ON (org_id, clerk_user_id) WHERE clerk_user_id IS NOT NULL
+
+### 10. github_installations (App Installation Data)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| installation_id | INT | NOT NULL UNIQUE |
+| github_org | STRING | NOT NULL |
+| repositories | JSONB | DEFAULT '[]' |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| updated_at | TIMESTAMPTZ | DEFAULT now() ON UPDATE now() |
+
+**Indexes:**
+- `idx_installations_org` ON (org_id)
+- `idx_installations_github_org` ON (github_org)
+
+### 11. github_workflows (Pipeline Runs)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| workflow_id | UUID | NOT NULL |
+| installation_id | INT | NOT NULL |
+| owner | STRING | NOT NULL |
+| repo | STRING | NOT NULL |
+| issue_number | INT | NOT NULL |
+| status | STRING | DEFAULT 'pending', CHECK (status IN ('pending', 'running', 'completed', 'failed')) |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| completed_at | TIMESTAMPTZ | |
+
+**Indexes:**
+- `idx_github_workflows_status` ON (status)
+- `idx_github_workflows_issue` ON (owner, repo, issue_number)
+
+### 12. clerk_users (Authentication)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| clerk_user_id | STRING | NOT NULL UNIQUE |
+| email | STRING | NOT NULL DEFAULT '' |
+| name | STRING | NOT NULL DEFAULT 'Unknown' |
+| avatar_url | STRING | NOT NULL DEFAULT '' |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| updated_at | TIMESTAMPTZ | DEFAULT now() ON UPDATE now() |
+
+### 13. user_organizations (Membership)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| user_id | UUID | NOT NULL FK → clerk_users(id), ON DELETE CASCADE |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| role | STRING | NOT NULL DEFAULT 'org:member' |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| | | UNIQUE (user_id, org_id) |
+
+**Indexes:**
+- `idx_user_org_user` ON (user_id)
+- `idx_user_org_org` ON (org_id)
+
 ## Migrations
 
-- Schema versioning tracked via `version` column in documentation
-- Use `ALTER TABLE` for schema changes
-- Always add indexes for new query patterns
-- Test migrations on staging before production
+Applied migrations in order:
+
+| Migration | Description |
+|-----------|-------------|
+| 002_add_reviewers | Creates `reviewers` table with notification channels |
+| 003_add_github_tables | Creates `github_installations` and `github_workflows` tables |
+| 004_add_thread_id_to_reviews | Adds `thread_id` column and index to `review_sessions` for LangGraph checkpointer HITL resume |
+| 005_add_notification_toggles | Replaces single `notification_channel` with per-platform booleans (`notify_slack`, `notify_discord`, `notify_email`) on `reviewers` |
+| 006_add_clerk_tables | Creates `clerk_users` and `user_organizations` tables; adds `clerk_org_id` column to `organizations` |
+| 007_use_clerk_org_id_as_pk | Converts all `org_id` FK references from `organizations(id)` to `organizations(clerk_org_id)` across all 10 child tables |
+| 008_add_reviewer_clerk_user | Adds `clerk_user_id` column and unique index to `reviewers` for Clerk user linking |
