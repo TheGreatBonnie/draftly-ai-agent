@@ -1,14 +1,23 @@
 import { NavLink } from "react-router";
+import { useOrganization } from "@clerk/react";
 
-const links = [
+const baseLinks = [
   { to: "/dashboard", label: "Dashboard" },
-  { to: "/reviewers", label: "Reviewers" },
   { to: "/docs", label: "Documentation" },
   { to: "/knowledge", label: "Knowledge Base" },
   { to: "/memory", label: "Memory" },
+  { to: "/settings", label: "Settings" },
 ];
 
+const reviewerLinks = [{ to: "/reviewers", label: "Reviewers" }];
+
 export function Sidebar() {
+  const { membership } = useOrganization();
+  const role = membership?.role;
+  const showReviewers = role === "org:admin" || role === "org:reviewer";
+
+  const links = [...baseLinks, ...(showReviewers ? reviewerLinks : [])];
+
   return (
     <aside className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 p-4">
       <nav className="flex flex-col gap-1">

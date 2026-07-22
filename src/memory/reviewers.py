@@ -28,13 +28,15 @@ async def create_reviewer(
     notify_slack: bool = True,
     notify_discord: bool = False,
     notify_email: bool = False,
+    clerk_user_id: str | None = None,
 ) -> dict:
     """Create a new reviewer."""
     row = await fetch_one(
         """
         INSERT INTO reviewers (org_id, name, email, slack_user_id,
-                               discord_user_id, notify_slack, notify_discord, notify_email)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                               discord_user_id, notify_slack, notify_discord, notify_email,
+                               clerk_user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
         """,
         org_id,
@@ -45,6 +47,7 @@ async def create_reviewer(
         notify_slack,
         notify_discord,
         notify_email,
+        clerk_user_id,
     )
     logger.info("reviewer_created", id=row["id"], org_id=org_id, name=name)
     return _serialize_row(row)
@@ -129,3 +132,13 @@ async def get_active_reviewer_ids(org_id: str) -> list[str]:
         org_id,
     )
     return [str(row["id"]) for row in rows]
+
+
+async def get_reviewer_by_clerk_user(org_id: str, clerk_user_id: str) -> dict | None:
+    """Get a reviewer by their Clerk user ID within an org."""
+    row = await fetch_one(
+        "SELECT * FROM reviewers WHERE org_id = $1 AND clerk_user_id = $2",
+        org_id,
+        clerk_user_id,
+    )
+    return _serialize_row(row) if row else None

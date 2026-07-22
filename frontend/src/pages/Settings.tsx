@@ -5,40 +5,57 @@ import {
   linkGitHubInstallation,
   listInstallations,
 } from "../api/github";
-import type { GitHubInstallation, GitHubInstallUrl } from "../api/types";
+import { listOrgMembers, assignRole } from "../api/reviewers";
+import type {
+  GitHubInstallation,
+  GitHubInstallUrl,
+  OrgMember,
+} from "../api/types";
+
+const ROLE_OPTIONS = [
+  { value: "member", label: "Member" },
+  { value: "reviewer", label: "Reviewer" },
+  { value: "admin", label: "Admin" },
+];
 
 export function Settings() {
   const { organization, membership } = useOrganization();
+  const isAdmin = membership?.role === "org:admin";
+
   const [installUrl, setInstallUrl] = useState<GitHubInstallUrl | null>(null);
   const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
+  const [members, setMembers] = useState<OrgMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [urlResult, installs] = await Promise.all([
+      const results = await Promise.all([
         getInstallUrl(),
         listInstallations(),
+        ...(isAdmin ? [listOrgMembers()] : [Promise.resolve({ members: [] })]),
       ]);
-      setInstallUrl(urlResult);
-      setInstallations(installs);
+      setInstallUrl(results[0]);
+      setInstallations(results[1]);
+      if (isAdmin && "members" in results[2]) {
+        setMembers((results[2] as { members: OrgMember[] }).members);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
-  // Link GitHub installation when returning from GitHub redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const installationId = params.get("installation_id");
     if (installationId) {
       linkGitHubInstallation(Number(installationId))
         .then(() => {
-          // Clean URL and refresh data
           window.history.replaceState({}, "", "/settings");
           fetchData();
         })
@@ -52,12 +69,30 @@ export function Settings() {
     fetchData();
   }, [fetchData]);
 
-  // Re-fetch when page gains focus (e.g., returning from GitHub install)
   useEffect(() => {
     const onFocus = () => fetchData();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [fetchData]);
+
+  async function handleRoleChange(userId: string, newRole: string) {
+    setRoleLoading(userId);
+    setError(null);
+    try {
+      await assignRole({ user_id: userId, role: newRole });
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.user_id === userId
+            ? { ...m, role: newRole, role_name: ROLE_OPTIONS.find((r) => r.value === newRole)?.label ?? newRole }
+            : m,
+        ),
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to update role");
+    } finally {
+      setRoleLoading(null);
+    }
+  }
 
   if (loading) {
     return <p className="text-gray-500">Loading settings...</p>;
@@ -92,7 +127,54 @@ export function Settings() {
         )}
       </section>
 
+      {/* Team Roles section (admin only) */}
+      {isAdmin && (
+        <section className="rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900">Team Roles</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Assign roles to organization members. Members with the <strong>Reviewer</strong> role
+            can register themselves as reviewers for documentation.
+          </p>
 
+          {members.length > 0 ? (
+            <div className="mt-4 divide-y divide-gray-100">
+              {members.map((member) => (
+                <div
+                  key={member.user_id}
+                  className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {member.email}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      ID: {member.user_id}
+                    </p>
+                  </div>
+                  <select
+                    value={member.role}
+                    onChange={(e) =>
+                      handleRoleChange(member.user_id, e.target.value)
+                    }
+                    disabled={roleLoading === member.user_id}
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {ROLE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-gray-400">
+              No organization members found.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* GitHub Integration section */}
       <section className="rounded-lg border border-gray-200 p-6">

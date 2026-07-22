@@ -3,6 +3,8 @@ import type {
   Reviewer,
   CreateReviewerPayload,
   UpdateReviewerPayload,
+  OrgMember,
+  AssignRolePayload,
 } from "./types";
 
 export async function listReviewers(): Promise<{ reviewers: Reviewer[] }> {
@@ -32,4 +34,23 @@ export async function updateReviewer(
 
 export async function deleteReviewer(id: string): Promise<{ status: string }> {
   return request(`/reviewers/${id}`, { method: "DELETE" });
+}
+
+export async function registerSelf(): Promise<Reviewer> {
+  return request("/reviewers/self", { method: "POST" });
+}
+
+export async function listOrgMembers(): Promise<{ members: OrgMember[] }> {
+  return request("/reviewers/org-members");
+}
+
+export async function assignRole(payload: AssignRolePayload): Promise<{
+  membership_id: string;
+  role: string;
+  role_name: string;
+}> {
+  return request("/reviewers/assign-role", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

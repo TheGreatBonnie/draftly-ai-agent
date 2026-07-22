@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useAuth, useOrganization } from "@clerk/react";
 import {
   listReviewers,
   createReviewer,
   deleteReviewer,
+  registerSelf,
 } from "../api/reviewers";
 import type { Reviewer, CreateReviewerPayload } from "../api/types";
 
@@ -17,11 +19,22 @@ const emptyForm: CreateReviewerPayload = {
 };
 
 export function Reviewers() {
+  const { userId } = useAuth();
+  const { membership } = useOrganization();
+  const role = membership?.role;
+  const isReviewerRole = role === "org:reviewer";
+  const isAdmin = role === "org:admin";
+
   const [reviewers, setReviewers] = useState<Reviewer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CreateReviewerPayload>({ ...emptyForm });
   const [showForm, setShowForm] = useState(false);
+  const [selfRegistering, setSelfRegistering] = useState(false);
+
+  const isRegisteredAsReviewer = reviewers.some(
+    (r) => r.clerk_user_id === userId,
+  );
 
   function load() {
     setLoading(true);
@@ -32,6 +45,19 @@ export function Reviewers() {
   }
 
   useEffect(load, []);
+
+  async function handleSelfRegister() {
+    setSelfRegistering(true);
+    setError(null);
+    try {
+      await registerSelf();
+      load();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setSelfRegistering(false);
+    }
+  }
 
   async function handleCreate() {
     if (!form.name.trim()) return;
@@ -69,17 +95,37 @@ export function Reviewers() {
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Reviewers</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          {showForm ? "Cancel" : "Add Reviewer"}
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            {showForm ? "Cancel" : "Add Reviewer"}
+          </button>
+        )}
       </div>
 
       {error && <p className="mb-3 text-red-600">{error}</p>}
 
-      {showForm && (
+      {isReviewerRole && !isRegisteredAsReviewer && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div>
+            <p className="font-medium text-blue-900">Register as a reviewer</p>
+            <p className="text-sm text-blue-700">
+              Add yourself as a reviewer for this organization.
+            </p>
+          </div>
+          <button
+            onClick={handleSelfRegister}
+            disabled={selfRegistering}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {selfRegistering ? "Registering..." : "Register"}
+          </button>
+        </div>
+      )}
+
+      {showForm && isAdmin && (
         <div className="mb-6 rounded-lg border border-gray-200 p-4">
           <h2 className="mb-3 font-semibold text-gray-900">New Reviewer</h2>
 
@@ -163,6 +209,11 @@ export function Reviewers() {
             >
               <div>
                 <span className="font-medium">{r.name}</span>
+                {r.clerk_user_id === userId && (
+                  <span className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700">
+                    You
+                  </span>
+                )}
                 {r.org_name && (
                   <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
                     {r.org_name}
@@ -194,12 +245,14 @@ export function Reviewers() {
                     Email
                   </span>
                 )}
-                <button
-                  onClick={() => handleDelete(r.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Delete
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleDelete(r.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}

@@ -33,6 +33,7 @@ export interface Reviewer {
   notify_discord: boolean;
   notify_email: boolean;
   is_active: boolean;
+  clerk_user_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -57,6 +58,19 @@ export interface UpdateReviewerPayload {
   notify_discord?: boolean;
   notify_email?: boolean;
   is_active?: boolean;
+}
+
+export interface OrgMember {
+  membership_id: string;
+  user_id: string;
+  email: string;
+  role: string;
+  role_name: string;
+}
+
+export interface AssignRolePayload {
+  user_id: string;
+  role: string;
 }
 
 export interface Doc {

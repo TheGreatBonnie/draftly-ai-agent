@@ -55,11 +55,23 @@ async def get_verified_token(request: Request) -> dict:
         raise ClerkAuthError("Invalid or expired token")
 
     user_id = payload.get("sub")
-    org_id = payload.get("org_id")
-    org_role = payload.get("org_role")
 
     if not user_id:
         raise ClerkAuthError("Token missing user identifier")
+
+    # JWT v2: org claim is nested at payload["o"] with role at "rol"
+    # JWT v1 (deprecated): flat payload["org_role"] with "org:" prefix
+    org_claim = payload.get("o", {})
+    if isinstance(org_claim, dict) and org_claim:
+        org_id = org_claim.get("id", "")
+        org_role = org_claim.get("rol", "")
+    else:
+        org_id = payload.get("org_id", "")
+        org_role = payload.get("org_role", "")
+
+    # Normalize: strip "org:" prefix if present (v1 format)
+    if org_role.startswith("org:"):
+        org_role = org_role[4:]
 
     return {
         "user_id": user_id,
@@ -71,9 +83,19 @@ async def get_verified_token(request: Request) -> dict:
 
 async def require_admin_role(token: dict = Depends(get_verified_token)) -> dict:
     """Require the user to have admin role in the current organization."""
-    if token.get("org_role") not in ("org:admin",):
+    if token.get("org_role") not in ("admin",):
         raise HTTPException(
             status_code=403,
             detail="Admin role required for this action",
+        )
+    return token
+
+
+async def require_reviewer_role(token: dict = Depends(get_verified_token)) -> dict:
+    """Require the user to have reviewer or admin role."""
+    if token.get("org_role") not in ("reviewer", "admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Reviewer role required for this action",
         )
     return token
