@@ -62,44 +62,73 @@ def test_build_review_card_components():
     )
 
     components = card["components"]
-    assert len(components) == 2
+    assert len(components) == 3
 
-    buttons = components[0]["components"]
+    link_button = components[0]["components"]
+    assert len(link_button) == 1
+    assert link_button[0]["label"] == "Read Full Draft"
+    assert link_button[0]["style"] == 5
+    assert link_button[0]["url"] == "https://example.com/review/123"
+
+    buttons = components[1]["components"]
     assert len(buttons) == 3
     assert buttons[0]["label"] == "Approve"
     assert buttons[0]["style"] == 3
-    assert buttons[0]["custom_id"] == "discord_approve:tok_xyz"
+    assert buttons[0]["custom_id"].startswith("discord_approve:")
     assert buttons[1]["label"] == "Reject"
     assert buttons[1]["style"] == 4
-    assert buttons[1]["custom_id"] == "discord_reject:tok_xyz"
+    assert buttons[1]["custom_id"].startswith("discord_reject:")
     assert buttons[2]["label"] == "Revise"
     assert buttons[2]["style"] == 2
-    assert buttons[2]["custom_id"] == "discord_revise:tok_xyz"
+    assert buttons[2]["custom_id"].startswith("discord_revise:")
 
-    select = components[1]["components"]
+    select = components[2]["components"]
     assert len(select) == 1
     assert select[0]["type"] == 3
-    assert select[0]["custom_id"] == "discord_feedback:tok_xyz"
+    assert select[0]["custom_id"].startswith("discord_feedback:")
     assert len(select[0]["options"]) == 5
 
 
-def test_build_review_card_token_in_custom_id():
-    token = "my_special_token_123"
+def test_build_review_card_custom_id_uses_short_key():
     card = build_discord_review_card(
         title="Doc",
         source="github",
         confidence=0.5,
         dashboard_url="https://example.com",
-        review_token=token,
+        review_token="my_special_token_123",
         draft_content="content",
     )
 
-    buttons = card["components"][0]["components"]
+    buttons = card["components"][1]["components"]
     for btn in buttons:
-        assert token in btn["custom_id"]
+        parts = btn["custom_id"].split(":")
+        assert len(parts) == 2
+        short_key = parts[1]
+        assert len(short_key) <= 100
+        assert short_key != "my_special_token_123"
 
-    select = card["components"][1]["components"][0]
-    assert token in select["custom_id"]
+    select = card["components"][2]["components"][0]
+    parts = select["custom_id"].split(":")
+    assert len(parts) == 2
+    assert parts[1] != "my_special_token_123"
+
+
+def test_build_review_card_short_key_stored_in_map():
+    from src.integrations.discord_interactions import resolve_interaction_token
+
+    review_token = "test_full_token_abc"
+    card = build_discord_review_card(
+        title="Doc",
+        source="github",
+        confidence=0.5,
+        dashboard_url="https://example.com",
+        review_token=review_token,
+        draft_content="content",
+    )
+
+    buttons = card["components"][1]["components"]
+    short_key = buttons[0]["custom_id"].split(":")[1]
+    assert resolve_interaction_token(short_key) == review_token
 
 
 def test_build_review_card_empty_content():

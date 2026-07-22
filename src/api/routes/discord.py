@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from src.agents.runners.resume import resume_review
 from src.config import settings
+from src.integrations.discord_interactions import resolve_interaction_token
 from src.memory.reviewer import complete_review
 from src.security.tokens import verify_review_token
 
@@ -102,12 +103,27 @@ async def handle_interactions(request: Request) -> JSONResponse:
         if len(parts) != 2:
             return JSONResponse(status_code=400, content={"error": "Invalid custom_id"})
 
-        action_prefix, token = parts
+        action_prefix, short_key = parts
         action = ACTION_MAP.get(action_prefix)
         if not action:
             return JSONResponse(status_code=400, content={"error": "Unknown action"})
 
-        token_data = verify_review_token(token)
+        full_token = resolve_interaction_token(short_key)
+        if not full_token:
+            return JSONResponse(
+                content={
+                    "type": 4,
+                    "data": {
+                        "content": (
+                            "This review link has expired or is invalid. "
+                            "Please use the dashboard instead."
+                        ),
+                        "flags": 64,
+                    },
+                },
+            )
+
+        token_data = verify_review_token(full_token)
         if not token_data:
             return JSONResponse(
                 content={

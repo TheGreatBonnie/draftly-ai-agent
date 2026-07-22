@@ -13,7 +13,7 @@ logger = structlog.get_logger()
 async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
     """Notify all active org reviewers based on their preferences."""
     from src.config import settings
-    from src.integrations.discord import send_discord_message
+    from src.integrations.discord import get_or_create_dm_channel, send_discord_message
     from src.integrations.email import send_review_notification
     from src.integrations.slack import send_slack_message
     from src.integrations.slack_blocks import build_review_notification_card
@@ -61,8 +61,9 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
                     review_token=token,
                     draft_content=draft_content,
                 )
+                dm_channel_id = await get_or_create_dm_channel(reviewer["discord_user_id"])
                 await send_discord_message(
-                    reviewer["discord_user_id"],
+                    dm_channel_id,
                     embed=embed_payload["embeds"][0],
                     components=embed_payload["components"],
                 )

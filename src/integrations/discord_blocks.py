@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import secrets
+
+from src.integrations.discord_interactions import store_interaction_token
+
 
 def _truncate_draft(content: str, max_chars: int = 500) -> str:
     """Truncate draft content to max_chars at a word boundary."""
@@ -44,7 +48,21 @@ def build_discord_review_card(
     if len(embed["fields"][0]["value"]) > 1024:
         embed["fields"][0]["value"] = embed["fields"][0]["value"][:1021] + "..."
 
+    short_key = secrets.token_urlsafe(6)
+    store_interaction_token(short_key, review_token)
+
     components = [
+        {
+            "type": 1,
+            "components": [
+                {
+                    "type": 2,
+                    "style": 5,
+                    "label": "Read Full Draft",
+                    "url": dashboard_url,
+                }
+            ],
+        },
         {
             "type": 1,
             "components": [
@@ -52,19 +70,19 @@ def build_discord_review_card(
                     "type": 2,
                     "style": 3,
                     "label": "Approve",
-                    "custom_id": f"discord_approve:{review_token}",
+                    "custom_id": f"discord_approve:{short_key}",
                 },
                 {
                     "type": 2,
                     "style": 4,
                     "label": "Reject",
-                    "custom_id": f"discord_reject:{review_token}",
+                    "custom_id": f"discord_reject:{short_key}",
                 },
                 {
                     "type": 2,
                     "style": 2,
                     "label": "Revise",
-                    "custom_id": f"discord_revise:{review_token}",
+                    "custom_id": f"discord_revise:{short_key}",
                 },
             ],
         },
@@ -73,7 +91,7 @@ def build_discord_review_card(
             "components": [
                 {
                     "type": 3,
-                    "custom_id": f"discord_feedback:{review_token}",
+                    "custom_id": f"discord_feedback:{short_key}",
                     "placeholder": "Quick feedback",
                     "options": [
                         {"label": "Needs more context", "value": "needs_context"},

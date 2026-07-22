@@ -1,9 +1,11 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from src.integrations.discord import (
     edit_discord_message,
+    get_or_create_dm_channel,
     send_discord_message,
     send_discord_thread_reply,
 )
@@ -116,3 +118,37 @@ async def test_send_message_logs_error_on_failure(mock_client_cls):
 
     result = await send_discord_message("123", content="test")
     assert result == {"message": "Forbidden"}
+
+
+@pytest.mark.asyncio
+@patch("src.integrations.discord.httpx.AsyncClient")
+async def test_get_or_create_dm_channel(mock_client_cls):
+    mock_client = AsyncMock()
+    mock_client.post.return_value = _mock_response(200, {"id": "dm_channel_123"})
+    mock_client_cls.return_value.__aenter__.return_value = mock_client
+    mock_client_cls.return_value.__aexit__.return_value = False
+
+    result = await get_or_create_dm_channel("user_456")
+
+    mock_client.post.assert_called_once()
+    url = mock_client.post.call_args[0][0]
+    assert url == "https://discord.com/api/v10/users/@me/channels"
+    payload = mock_client.post.call_args[1]["json"]
+    assert payload == {"recipient_id": "user_456"}
+    assert result == "dm_channel_123"
+
+
+@pytest.mark.asyncio
+@patch("src.integrations.discord.httpx.AsyncClient")
+async def test_get_or_create_dm_channel_raises_on_failure(mock_client_cls):
+    mock_resp = _mock_response(400, {"message": "Bad Request"})
+    mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "Bad Request", request=MagicMock(), response=mock_resp
+    )
+    mock_client = AsyncMock()
+    mock_client.post.return_value = mock_resp
+    mock_client_cls.return_value.__aenter__.return_value = mock_client
+    mock_client_cls.return_value.__aexit__.return_value = False
+
+    with pytest.raises(httpx.HTTPStatusError):
+        await get_or_create_dm_channel("user_456")

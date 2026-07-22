@@ -158,10 +158,14 @@ async def test_notify_reviewers_sends_block_kit_card(
 @pytest.mark.asyncio
 @patch(f"{_REVIEWERS_MOD}.get_reviewers_by_org", new_callable=AsyncMock)
 @patch(f"{_DISCORD_MOD}.send_discord_message", new_callable=AsyncMock)
+@patch(f"{_DISCORD_MOD}.get_or_create_dm_channel", new_callable=AsyncMock)
 @patch("src.security.tokens.generate_review_token")
-async def test_notify_reviewers_sends_discord_embed(mock_token, mock_discord, mock_get):
+async def test_notify_reviewers_sends_discord_embed(
+    mock_token, mock_dm, mock_discord, mock_get
+):
     """Test notify_reviewers sends Discord embed with components."""
     mock_token.return_value = "discord_token_abc"
+    mock_dm.return_value = "dm_channel_999"
     mock_get.return_value = [
         {
             "id": "rev1",
@@ -184,23 +188,28 @@ async def test_notify_reviewers_sends_discord_embed(mock_token, mock_discord, mo
 
     await notify_reviewers(state, "review456")
 
+    mock_dm.assert_called_once_with("987654321")
     mock_discord.assert_called_once()
     call_args, call_kwargs = mock_discord.call_args
-    assert call_args[0] == "987654321"
+    assert call_args[0] == "dm_channel_999"
     assert call_kwargs["embed"] is not None
     assert call_kwargs["embed"]["title"] == "Documentation Review Required"
     assert call_kwargs["embed"]["color"] == 49407
     assert call_kwargs["components"] is not None
-    assert len(call_kwargs["components"]) == 2
+    assert len(call_kwargs["components"]) == 3
 
 
 @pytest.mark.asyncio
 @patch(f"{_REVIEWERS_MOD}.get_reviewers_by_org", new_callable=AsyncMock)
 @patch(f"{_DISCORD_MOD}.send_discord_message", new_callable=AsyncMock)
+@patch(f"{_DISCORD_MOD}.get_or_create_dm_channel", new_callable=AsyncMock)
 @patch("src.security.tokens.generate_review_token")
-async def test_notify_reviewers_discord_token_in_custom_id(mock_token, mock_discord, mock_get):
-    """Test Discord embed components contain the review token."""
+async def test_notify_reviewers_discord_token_in_custom_id(
+    mock_token, mock_dm, mock_discord, mock_get
+):
+    """Test Discord embed components contain a short key that maps to the review token."""
     mock_token.return_value = "verify_token_xyz"
+    mock_dm.return_value = "dm_channel_888"
     mock_get.return_value = [
         {
             "id": "rev2",
@@ -224,8 +233,14 @@ async def test_notify_reviewers_discord_token_in_custom_id(mock_token, mock_disc
 
     _, call_kwargs = mock_discord.call_args
     components = call_kwargs["components"]
-    buttons = components[0]["components"]
+    buttons = components[1]["components"]
     for btn in buttons:
-        assert "verify_token_xyz" in btn["custom_id"]
-    select = components[1]["components"][0]
-    assert "verify_token_xyz" in select["custom_id"]
+        parts = btn["custom_id"].split(":")
+        assert len(parts) == 2
+        short_key = parts[1]
+        assert short_key != "verify_token_xyz"
+        assert len(short_key) <= 100
+    select = components[2]["components"][0]
+    parts = select["custom_id"].split(":")
+    assert len(parts) == 2
+    assert parts[1] != "verify_token_xyz"

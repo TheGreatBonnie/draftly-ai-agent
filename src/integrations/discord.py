@@ -24,6 +24,22 @@ def _build_payload(
     return payload
 
 
+async def get_or_create_dm_channel(user_id: str) -> str:
+    """Open a DM channel with a user and return the channel ID."""
+    token = settings.discord_bot_token.get_secret_value()
+    headers = {"Authorization": f"Bot {token}", "Content-Type": "application/json"}
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "https://discord.com/api/v10/users/@me/channels",
+            headers=headers,
+            json={"recipient_id": user_id},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json()["id"]
+
+
 async def send_discord_message(
     channel_id: str,
     content: str | None = None,
