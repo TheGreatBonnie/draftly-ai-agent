@@ -32,15 +32,6 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
         token = generate_review_token(reviewer["id"], review_id)
         review_page_url = f"{settings.app_url}/review/{review_id}"
 
-        plain_message = (
-            f"📝 *Documentation Review Required*\n\n"
-            f"*Title:* {title}\n"
-            f"*Source:* {source}\n"
-            f"*Confidence:* {confidence:.0%}\n\n"
-            f"[Review Documentation]({review_page_url})\n"
-            f"Or use: `/approve {token}` | `/reject {token}` | `/revise {token}`"
-        )
-
         card = build_review_notification_card(
             title=title,
             source=source,
@@ -60,7 +51,21 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
                 results.setdefault(reviewer["id"], {})["slack"] = "sent"
 
             if reviewer.get("notify_discord") and reviewer.get("discord_user_id"):
-                await send_discord_message(reviewer["discord_user_id"], plain_message)
+                from src.integrations.discord_blocks import build_discord_review_card
+
+                embed_payload = build_discord_review_card(
+                    title=title,
+                    source=source,
+                    confidence=confidence,
+                    dashboard_url=review_page_url,
+                    review_token=token,
+                    draft_content=draft_content,
+                )
+                await send_discord_message(
+                    reviewer["discord_user_id"],
+                    embed=embed_payload["embeds"][0],
+                    components=embed_payload["components"],
+                )
                 results.setdefault(reviewer["id"], {})["discord"] = "sent"
 
             if reviewer.get("notify_email") and reviewer.get("email"):
