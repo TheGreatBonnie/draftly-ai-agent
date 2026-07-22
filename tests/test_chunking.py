@@ -7,12 +7,22 @@ import pytest
 async def test_delete_embeddings_for_content():
     from src.memory.vector_store import delete_embeddings_for_content
 
-    with patch("src.memory.vector_store.execute", new_callable=AsyncMock) as mock_exec:
+    mock_store = AsyncMock()
+    mock_store.asimilarity_search_with_score = AsyncMock(
+        return_value=[
+            (MagicMock(id="emb-1"), 0.1),
+            (MagicMock(id="emb-2"), 0.2),
+        ]
+    )
+    mock_store.adelete = AsyncMock()
+
+    with patch(
+        "src.memory.vector_store.get_vector_store",
+        new_callable=AsyncMock,
+        return_value=mock_store,
+    ):
         await delete_embeddings_for_content("doc-uuid-123")
-        mock_exec.assert_called_once_with(
-            "DELETE FROM embeddings WHERE content_id = $1 AND content_type = 'documentation'",
-            "doc-uuid-123",
-        )
+        mock_store.adelete.assert_called_once_with(["emb-1", "emb-2"])
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,9 @@
 -- Draftly AI Database Schema
 -- CockroachDB with Distributed Vector Index
 
+-- Enable vector indexes (required for CREATE VECTOR INDEX to work)
+SET CLUSTER SETTING feature.vector_index.enabled = true;
+
 -- 1. Organizations (multi-tenant)
 CREATE TABLE IF NOT EXISTS organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -53,22 +56,18 @@ CREATE INDEX IF NOT EXISTS idx_doc_org ON documentation(org_id);
 CREATE INDEX IF NOT EXISTS idx_doc_status ON documentation(status);
 
 -- 4. Embeddings (semantic memory with vector index)
+-- Schema matches AsyncCockroachDBVectorStore expectations.
+-- org_id, content_type, content_id are stored in the metadata JSONB column.
 CREATE TABLE IF NOT EXISTS embeddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id STRING NOT NULL REFERENCES organizations(clerk_org_id) ON DELETE CASCADE,
-    content_type STRING NOT NULL CHECK (content_type IN ('documentation', 'support_thread', 'review_feedback')),
-    content_id UUID NOT NULL,
-    content_text TEXT NOT NULL,
-    embedding VECTOR(3072) NOT NULL,
+    content TEXT,
+    embedding VECTOR(3072),
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_embeddings_org ON embeddings(org_id);
-CREATE INDEX IF NOT EXISTS idx_embeddings_type ON embeddings(content_type);
-
--- Distributed Vector Index for semantic search
-CREATE VECTOR INDEX idx_embeddings_vector ON embeddings (embedding vector_cosine_ops);
+-- C-SPANN index created by AsyncCockroachDBVectorStore.aapply_vector_index()
+-- To create manually: CREATE VECTOR INDEX ON embeddings (embedding vector_cosine_ops);
 
 -- 5. Review Sessions (reviewer memory)
 CREATE TABLE IF NOT EXISTS review_sessions (

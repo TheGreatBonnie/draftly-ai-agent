@@ -1,33 +1,75 @@
 from __future__ import annotations
 
-import json
+import uuid
 
 import structlog
+from langchain_cockroachdb import (
+    AsyncCockroachDBVectorStore,
+    CockroachDBEngine,
+    CSPANNIndex,
+    DistanceStrategy,
+)
 from langchain_openai import OpenAIEmbeddings
 
 from src.config import settings
-from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
 
-_embeddings_model: OpenAIEmbeddings | None = None
+_engine: CockroachDBEngine | None = None
+_vector_store: AsyncCockroachDBVectorStore | None = None
 
 
-def get_embeddings_model() -> OpenAIEmbeddings:
-    global _embeddings_model
-    if _embeddings_model is None:
-        _embeddings_model = OpenAIEmbeddings(
-            openai_api_key=settings.requesty_api_key,
-            openai_api_base=settings.requesty_base_url,
-            model=settings.embedding_model,
+def _normalize_url(url: str) -> str:
+    """Rewrite postgresql:// to cockroachdb:// for the library."""
+    if url.startswith("postgresql://"):
+        return "cockroachdb://" + url[len("postgresql://"):]
+    if url.startswith("postgres://"):
+        return "cockroachdb://" + url[len("postgres://"):]
+    return url
+
+
+async def get_vector_store() -> AsyncCockroachDBVectorStore:
+    global _engine, _vector_store
+    if _vector_store is not None:
+        return _vector_store
+
+    url = _normalize_url(settings.cockroachdb_url)
+
+    _engine = CockroachDBEngine.from_connection_string(url)
+
+    await _engine.ainit_vectorstore_table(
+        table_name="embeddings",
+        vector_dimension=3072,
+    )
+
+    embeddings = OpenAIEmbeddings(
+        openai_api_key=settings.requesty_api_key,
+        openai_api_base=settings.requesty_base_url,
+        model=settings.embedding_model,
+    )
+
+    _vector_store = AsyncCockroachDBVectorStore(
+        engine=_engine,
+        embeddings=embeddings,
+        collection_name="embeddings",
+        distance_strategy=DistanceStrategy.COSINE,
+        namespace_column=None,
+    )
+
+    try:
+        await _vector_store.aapply_vector_index(
+            CSPANNIndex(distance_strategy=DistanceStrategy.COSINE),
         )
-    return _embeddings_model
+        logger.info("cspann_index_created")
+    except Exception:
+        logger.debug("cspann_index_already_exists")
+
+    return _vector_store
 
 
 async def embed_text(text: str) -> list[float]:
-    model = get_embeddings_model()
-    embedding = await model.aembed_query(text)
-    return embedding
+    store = await get_vector_store()
+    return await store.embeddings.aembed_query(text)
 
 
 async def store_embedding(
@@ -37,24 +79,24 @@ async def store_embedding(
     content_text: str,
     metadata: dict | None = None,
 ) -> str:
-    embedding = await embed_text(content_text)
-    embedding_str = json.dumps(embedding)
+    store = await get_vector_store()
 
-    row = await fetch_one(
-        """
-        INSERT INTO embeddings (org_id, content_type, content_id, content_text, embedding, metadata)
-        VALUES ($1, $2, $3, $4, $5::vector, $6::jsonb)
-        RETURNING id::text
-        """,
-        org_id,
-        content_type,
-        content_id,
-        content_text,
-        embedding_str,
-        json.dumps(metadata or {}),
+    full_metadata = {
+        "org_id": org_id,
+        "content_type": content_type,
+        "content_id": content_id,
+        **(metadata or {}),
+    }
+
+    doc_id = str(uuid.uuid4())
+    await store.aadd_texts(
+        texts=[content_text],
+        metadatas=[full_metadata],
+        ids=[doc_id],
     )
-    logger.info("embedding_stored", id=row["id"], content_type=content_type)
-    return row["id"]
+
+    logger.info("embedding_stored", id=doc_id, content_type=content_type)
+    return doc_id
 
 
 async def search_similar(
@@ -63,61 +105,48 @@ async def search_similar(
     content_type: str | None = None,
     k: int = 10,
 ) -> list[dict]:
-    query_embedding = await embed_text(query_text)
-    embedding_str = json.dumps(query_embedding)
+    store = await get_vector_store()
 
+    filter_dict: dict = {"org_id": org_id}
     if content_type:
-        rows = await fetch_all(
-            """
-            SELECT id::text, content_type, content_id, content_text, metadata,
-                   1 - (embedding <=> $1::vector) AS similarity
-            FROM embeddings
-            WHERE org_id = $2 AND content_type = $3
-            ORDER BY embedding <=> $1::vector
-            LIMIT $4
-            """,
-            embedding_str,
-            org_id,
-            content_type,
-            k,
-        )
-    else:
-        rows = await fetch_all(
-            """
-            SELECT id::text, content_type, content_id, content_text, metadata,
-                   1 - (embedding <=> $1::vector) AS similarity
-            FROM embeddings
-            WHERE org_id = $2
-            ORDER BY embedding <=> $1::vector
-            LIMIT $3
-            """,
-            embedding_str,
-            org_id,
-            k,
-        )
+        filter_dict["content_type"] = content_type
+
+    results = await store.asimilarity_search_with_score(
+        query_text,
+        k=k,
+        filter=filter_dict,
+    )
 
     return [
         {
-            "id": r["id"],
-            "content_type": r["content_type"],
-            "content_id": r["content_id"],
-            "content_text": r["content_text"],
-            "metadata": json.loads(r["metadata"]) if r["metadata"] else {},
-            "similarity": float(r["similarity"]),
+            "id": doc.id or "",
+            "content_type": doc.metadata.get("content_type", ""),
+            "content_id": doc.metadata.get("content_id", ""),
+            "content_text": doc.page_content,
+            "metadata": doc.metadata,
+            "similarity": 1.0 - score,
         }
-        for r in rows
+        for doc, score in results
     ]
 
 
 async def delete_embedding(embedding_id: str) -> None:
-    await execute("DELETE FROM embeddings WHERE id = $1", embedding_id)
+    store = await get_vector_store()
+    await store.adelete([embedding_id])
     logger.info("embedding_deleted", id=embedding_id)
 
 
 async def delete_embeddings_for_content(content_id: str) -> None:
     """Delete all embeddings for a given content_id (e.g., all chunks of a document)."""
-    await execute(
-        "DELETE FROM embeddings WHERE content_id = $1 AND content_type = 'documentation'",
-        content_id,
+    store = await get_vector_store()
+
+    results = await store.asimilarity_search_with_score(
+        " ",
+        k=1000,
+        filter={"content_id": content_id},
     )
-    logger.info("embeddings_deleted_for_content", content_id=content_id)
+
+    ids = [doc.id for doc, _ in results if doc.id]
+    if ids:
+        await store.adelete(ids)
+    logger.info("embeddings_deleted_for_content", content_id=content_id, count=len(ids))

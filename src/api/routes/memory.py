@@ -30,7 +30,11 @@ async def search_memory(
 ):
     if not q:
         return []
-    from src.memory.vector_store import search_memory
+    from src.memory.vector_store import search_similar
 
     org_id = token.get("org_id")
-    return await search_memory(query=q, content_type=type, org_id=org_id)
+    return await search_similar(
+        org_id=org_id,
+        query_text=q,
+        content_type=type if type != "all" else None,
+    )

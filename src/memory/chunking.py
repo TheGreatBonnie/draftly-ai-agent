@@ -46,6 +46,9 @@ async def store_document_chunks(
 
     for i, chunk in enumerate(chunks):
         chunk_metadata = {
+            "org_id": org_id,
+            "content_type": "documentation",
+            "content_id": content_id,
             **base_metadata,
             "chunk_index": i,
             "total_chunks": len(chunks),
