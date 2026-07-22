@@ -345,6 +345,125 @@ export function Reviewers() {
         </div>
       )}
 
+      {editingId && (
+        <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <h2 className="mb-3 font-semibold text-yellow-900">Edit Reviewer</h2>
+
+          {/* Admin-only fields */}
+          {isAdmin && (
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                className={inputClass}
+                placeholder="Name *"
+                value={editForm.name ?? ""}
+                onChange={(e) => updateEditField("name", e.target.value)}
+              />
+              <input
+                className={inputClass}
+                placeholder="Email"
+                value={editForm.email ?? ""}
+                onChange={(e) => updateEditField("email", e.target.value)}
+              />
+            </div>
+          )}
+
+          {/* Read-only fields for reviewers editing their own profile */}
+          {isReviewerRole && !isAdmin && (
+            <div className="mb-3 grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-yellow-700">Name</label>
+                <input
+                  className={`${inputClass} bg-gray-100`}
+                  value={
+                    reviewers.find((r) => r.id === editingId)?.name ?? ""
+                  }
+                  disabled
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-yellow-700">Email</label>
+                <input
+                  className={`${inputClass} bg-gray-100`}
+                  value={
+                    reviewers.find((r) => r.id === editingId)?.email ?? ""
+                  }
+                  disabled
+                  readOnly
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Platform IDs (both admin and reviewer can edit) */}
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <input
+              className={inputClass}
+              placeholder="Slack User ID"
+              value={editForm.slack_user_id ?? ""}
+              onChange={(e) => updateEditField("slack_user_id", e.target.value)}
+            />
+            <input
+              className={inputClass}
+              placeholder="Discord User ID"
+              value={editForm.discord_user_id ?? ""}
+              onChange={(e) => updateEditField("discord_user_id", e.target.value)}
+            />
+          </div>
+
+          {/* Notification preferences */}
+          <div className="mt-3 flex gap-4">
+            <label className="flex items-center gap-2 text-sm text-yellow-800">
+              <input
+                type="checkbox"
+                checked={editForm.notify_slack ?? true}
+                onChange={(e) => updateEditField("notify_slack", e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Notify via Slack
+            </label>
+            <label className="flex items-center gap-2 text-sm text-yellow-800">
+              <input
+                type="checkbox"
+                checked={editForm.notify_discord ?? false}
+                onChange={(e) => updateEditField("notify_discord", e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Notify via Discord
+            </label>
+            <label className="flex items-center gap-2 text-sm text-yellow-800">
+              <input
+                type="checkbox"
+                checked={editForm.notify_email ?? false}
+                onChange={(e) => updateEditField("notify_email", e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Notify via Email
+            </label>
+          </div>
+
+          {/* Action buttons */}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setEditingId(null);
+                setEditForm({});
+              }}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdate}
+              disabled={isAdmin && !editForm.name?.trim()}
+              className="rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
+
       {reviewers.length === 0 ? (
         <p className="text-gray-500">No reviewers yet.</p>
       ) : (
