@@ -45,6 +45,14 @@ class AssignRoleRequest(BaseModel):
     role: str
 
 
+class SelfRegisterRequest(BaseModel):
+    slack_user_id: str | None = None
+    discord_user_id: str | None = None
+    notify_slack: bool = True
+    notify_discord: bool = False
+    notify_email: bool = False
+
+
 # ── Admin: manage org member roles ──
 
 
@@ -74,7 +82,10 @@ async def assign_role(request: AssignRoleRequest, token: dict = Depends(require_
 
 
 @router.post("/self")
-async def register_as_reviewer(token: dict = Depends(require_reviewer_role)):
+async def register_as_reviewer(
+    request: SelfRegisterRequest,
+    token: dict = Depends(require_reviewer_role),
+):
     """Register the current user as a reviewer for their org."""
     org_id = token.get("org_id")
     clerk_user_id = token.get("user_id")
@@ -97,7 +108,11 @@ async def register_as_reviewer(token: dict = Depends(require_reviewer_role)):
         name=user["name"],
         email=user["email"],
         clerk_user_id=clerk_user_id,
-        notify_slack=True,
+        slack_user_id=request.slack_user_id,
+        discord_user_id=request.discord_user_id,
+        notify_slack=request.notify_slack,
+        notify_discord=request.notify_discord,
+        notify_email=request.notify_email,
     )
     return reviewer
 

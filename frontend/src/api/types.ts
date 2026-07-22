@@ -73,6 +73,14 @@ export interface AssignRolePayload {
   role: string;
 }
 
+export interface SelfRegisterPayload {
+  slack_user_id?: string;
+  discord_user_id?: string;
+  notify_slack?: boolean;
+  notify_discord?: boolean;
+  notify_email?: boolean;
+}
+
 export interface Doc {
   id: string;
   org_id: string;

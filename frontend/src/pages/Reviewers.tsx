@@ -6,9 +6,13 @@ import {
   deleteReviewer,
   registerSelf,
 } from "../api/reviewers";
-import type { Reviewer, CreateReviewerPayload } from "../api/types";
+import type {
+  Reviewer,
+  CreateReviewerPayload,
+  SelfRegisterPayload,
+} from "../api/types";
 
-const emptyForm: CreateReviewerPayload = {
+const emptyAdminForm: CreateReviewerPayload = {
   name: "",
   email: "",
   slack_user_id: "",
@@ -17,6 +21,17 @@ const emptyForm: CreateReviewerPayload = {
   notify_discord: false,
   notify_email: false,
 };
+
+const emptySelfForm: SelfRegisterPayload = {
+  slack_user_id: "",
+  discord_user_id: "",
+  notify_slack: true,
+  notify_discord: false,
+  notify_email: false,
+};
+
+const inputClass =
+  "rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
 
 export function Reviewers() {
   const { userId } = useAuth();
@@ -28,8 +43,16 @@ export function Reviewers() {
   const [reviewers, setReviewers] = useState<Reviewer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<CreateReviewerPayload>({ ...emptyForm });
-  const [showForm, setShowForm] = useState(false);
+
+  const [adminForm, setAdminForm] = useState<CreateReviewerPayload>({
+    ...emptyAdminForm,
+  });
+  const [showAdminForm, setShowAdminForm] = useState(false);
+
+  const [selfForm, setSelfForm] = useState<SelfRegisterPayload>({
+    ...emptySelfForm,
+  });
+  const [showSelfForm, setShowSelfForm] = useState(false);
   const [selfRegistering, setSelfRegistering] = useState(false);
 
   const isRegisteredAsReviewer = reviewers.some(
@@ -50,7 +73,8 @@ export function Reviewers() {
     setSelfRegistering(true);
     setError(null);
     try {
-      await registerSelf();
+      await registerSelf(selfForm);
+      setShowSelfForm(false);
       load();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -60,11 +84,11 @@ export function Reviewers() {
   }
 
   async function handleCreate() {
-    if (!form.name.trim()) return;
+    if (!adminForm.name.trim()) return;
     try {
-      await createReviewer(form);
-      setForm({ ...emptyForm });
-      setShowForm(false);
+      await createReviewer(adminForm);
+      setAdminForm({ ...emptyAdminForm });
+      setShowAdminForm(false);
       load();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Create failed");
@@ -80,11 +104,18 @@ export function Reviewers() {
     }
   }
 
-  function updateField<K extends keyof CreateReviewerPayload>(
+  function updateAdminField<K extends keyof CreateReviewerPayload>(
     key: K,
     value: CreateReviewerPayload[K],
   ) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setAdminForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateSelfField<K extends keyof SelfRegisterPayload>(
+    key: K,
+    value: SelfRegisterPayload[K],
+  ) {
+    setSelfForm((prev) => ({ ...prev, [key]: value }));
   }
 
   if (loading && reviewers.length === 0) {
@@ -97,17 +128,20 @@ export function Reviewers() {
         <h1 className="text-2xl font-bold">Reviewers</h1>
         {isAdmin && (
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              setShowAdminForm(!showAdminForm);
+              setShowSelfForm(false);
+            }}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            {showForm ? "Cancel" : "Add Reviewer"}
+            {showAdminForm ? "Cancel" : "Add Reviewer"}
           </button>
         )}
       </div>
 
       {error && <p className="mb-3 text-red-600">{error}</p>}
 
-      {isReviewerRole && !isRegisteredAsReviewer && (
+      {isReviewerRole && !isRegisteredAsReviewer && !showSelfForm && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4">
           <div>
             <p className="font-medium text-blue-900">Register as a reviewer</p>
@@ -116,43 +150,127 @@ export function Reviewers() {
             </p>
           </div>
           <button
-            onClick={handleSelfRegister}
-            disabled={selfRegistering}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            onClick={() => {
+              setShowSelfForm(true);
+              setShowAdminForm(false);
+            }}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            {selfRegistering ? "Registering..." : "Register"}
+            Register
           </button>
         </div>
       )}
 
-      {showForm && isAdmin && (
+      {isReviewerRole && !isRegisteredAsReviewer && showSelfForm && (
+        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <h2 className="mb-3 font-semibold text-blue-900">
+            Complete Your Registration
+          </h2>
+          <p className="mb-3 text-sm text-blue-700">
+            Set your notification preferences to finish registering.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              className={inputClass}
+              placeholder="Slack User ID"
+              value={selfForm.slack_user_id ?? ""}
+              onChange={(e) => updateSelfField("slack_user_id", e.target.value)}
+            />
+            <input
+              className={inputClass}
+              placeholder="Discord User ID"
+              value={selfForm.discord_user_id ?? ""}
+              onChange={(e) =>
+                updateSelfField("discord_user_id", e.target.value)
+              }
+            />
+          </div>
+
+          <div className="mt-3 flex gap-4">
+            <label className="flex items-center gap-2 text-sm text-blue-800">
+              <input
+                type="checkbox"
+                checked={selfForm.notify_slack ?? true}
+                onChange={(e) =>
+                  updateSelfField("notify_slack", e.target.checked)
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Notify via Slack
+            </label>
+            <label className="flex items-center gap-2 text-sm text-blue-800">
+              <input
+                type="checkbox"
+                checked={selfForm.notify_discord ?? false}
+                onChange={(e) =>
+                  updateSelfField("notify_discord", e.target.checked)
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Notify via Discord
+            </label>
+            <label className="flex items-center gap-2 text-sm text-blue-800">
+              <input
+                type="checkbox"
+                checked={selfForm.notify_email ?? false}
+                onChange={(e) =>
+                  updateSelfField("notify_email", e.target.checked)
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              Notify via Email
+            </label>
+          </div>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => setShowSelfForm(false)}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSelfRegister}
+              disabled={selfRegistering}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {selfRegistering ? "Registering..." : "Complete Registration"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showAdminForm && isAdmin && (
         <div className="mb-6 rounded-lg border border-gray-200 p-4">
           <h2 className="mb-3 font-semibold text-gray-900">New Reviewer</h2>
 
           <div className="grid grid-cols-2 gap-3">
             <input
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className={inputClass}
               placeholder="Name *"
-              value={form.name}
-              onChange={(e) => updateField("name", e.target.value)}
+              value={adminForm.name}
+              onChange={(e) => updateAdminField("name", e.target.value)}
             />
             <input
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className={inputClass}
               placeholder="Email"
-              value={form.email ?? ""}
-              onChange={(e) => updateField("email", e.target.value)}
+              value={adminForm.email ?? ""}
+              onChange={(e) => updateAdminField("email", e.target.value)}
             />
             <input
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className={inputClass}
               placeholder="Slack User ID"
-              value={form.slack_user_id ?? ""}
-              onChange={(e) => updateField("slack_user_id", e.target.value)}
+              value={adminForm.slack_user_id ?? ""}
+              onChange={(e) => updateAdminField("slack_user_id", e.target.value)}
             />
             <input
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className={inputClass}
               placeholder="Discord User ID"
-              value={form.discord_user_id ?? ""}
-              onChange={(e) => updateField("discord_user_id", e.target.value)}
+              value={adminForm.discord_user_id ?? ""}
+              onChange={(e) =>
+                updateAdminField("discord_user_id", e.target.value)
+              }
             />
           </div>
 
@@ -160,8 +278,10 @@ export function Reviewers() {
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
-                checked={form.notify_slack ?? true}
-                onChange={(e) => updateField("notify_slack", e.target.checked)}
+                checked={adminForm.notify_slack ?? true}
+                onChange={(e) =>
+                  updateAdminField("notify_slack", e.target.checked)
+                }
                 className="h-4 w-4 rounded border-gray-300"
               />
               Notify via Slack
@@ -169,8 +289,10 @@ export function Reviewers() {
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
-                checked={form.notify_discord ?? false}
-                onChange={(e) => updateField("notify_discord", e.target.checked)}
+                checked={adminForm.notify_discord ?? false}
+                onChange={(e) =>
+                  updateAdminField("notify_discord", e.target.checked)
+                }
                 className="h-4 w-4 rounded border-gray-300"
               />
               Notify via Discord
@@ -178,8 +300,10 @@ export function Reviewers() {
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
-                checked={form.notify_email ?? false}
-                onChange={(e) => updateField("notify_email", e.target.checked)}
+                checked={adminForm.notify_email ?? false}
+                onChange={(e) =>
+                  updateAdminField("notify_email", e.target.checked)
+                }
                 className="h-4 w-4 rounded border-gray-300"
               />
               Notify via Email
@@ -189,7 +313,7 @@ export function Reviewers() {
           <div className="mt-4 flex justify-end">
             <button
               onClick={handleCreate}
-              disabled={!form.name.trim()}
+              disabled={!adminForm.name.trim()}
               className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
             >
               Create Reviewer

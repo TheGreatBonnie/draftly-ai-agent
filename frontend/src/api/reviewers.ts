@@ -5,6 +5,7 @@ import type {
   UpdateReviewerPayload,
   OrgMember,
   AssignRolePayload,
+  SelfRegisterPayload,
 } from "./types";
 
 export async function listReviewers(): Promise<{ reviewers: Reviewer[] }> {
@@ -36,8 +37,13 @@ export async function deleteReviewer(id: string): Promise<{ status: string }> {
   return request(`/reviewers/${id}`, { method: "DELETE" });
 }
 
-export async function registerSelf(): Promise<Reviewer> {
-  return request("/reviewers/self", { method: "POST" });
+export async function registerSelf(
+  payload: SelfRegisterPayload,
+): Promise<Reviewer> {
+  return request("/reviewers/self", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function listOrgMembers(): Promise<{ members: OrgMember[] }> {
