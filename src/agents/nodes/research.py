@@ -65,6 +65,18 @@ async def research_node_hybrid(state: DocumentationState) -> dict:
         except Exception as e:
             logger.warning("slack_search_failed", error=str(e))
 
+    # Use MCP for richer Slack search if available
+    mcp_tools = state.get("mcp_tools")
+    if mcp_tools:
+        try:
+            mcp_result = await mcp_tools.call_tool(
+                "search_messages", {"query": question, "count": 5}
+            )
+            if mcp_result:
+                slack_context.append(f"MCP search results: {mcp_result}")
+        except Exception as e:
+            logger.warning("slack_mcp_search_failed", error=str(e))
+
     research_focus = research_skill.get("name", "general")
 
     synthesis_prompt = (

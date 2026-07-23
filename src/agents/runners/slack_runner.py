@@ -75,6 +75,7 @@ async def run_slack_pipeline(
     """Orchestrate the full Draftly pipeline for a Slack support request."""
     from src.database import close_pool, get_pool
     from src.integrations.slack_conversation import conversation_store
+    from src.integrations.slack_store import installation_store
     from src.memory.organizations import (
         get_org_by_slack,
         store_slack_workflow,
@@ -110,9 +111,21 @@ async def run_slack_pipeline(
             return
         org_id = org["id"]
 
+        from src.integrations.slack_mcp import get_slack_mcp_tools
+
+        mcp_tools = None
+        if team_id:
+            installation = await installation_store.async_find_installation(
+                None, team_id
+            )
+            if installation and installation.user_token:
+                mcp_tools = await get_slack_mcp_tools(installation.user_token)
+
         state = build_slack_state(
             team_id, channel, thread_ts, ts, text, user, org_id, message_history
         )
+        if mcp_tools:
+            state["mcp_tools"] = mcp_tools
         config = {"configurable": {"thread_id": state["graph_thread_id"]}}
 
         from uuid import uuid4
