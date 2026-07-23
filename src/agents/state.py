@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Literal, TypedDict
+from typing import Annotated, Literal, TypedDict
 
 from langgraph.graph.message import add_messages
 
@@ -63,4 +63,3 @@ class DocumentationState(TypedDict):
 
     # Conversation context
     message_history: list[dict[str, str]]
-    mcp_tools: Any  # Slack MCP Server toolset, None if unavailable

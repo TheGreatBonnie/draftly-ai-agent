@@ -13,12 +13,16 @@ from src.integrations.slack import add_reaction
 from src.integrations.slack_conversation import conversation_store
 from src.integrations.slack_feedback import handle_feedback
 from src.integrations.slack_home import build_app_home
-from src.integrations.slack_store import CockroachInstallationStore
+from src.integrations.slack_store import installation_store
 
 bolt_logger = logging.getLogger("slack_bolt")
 struct_logger = structlog.get_logger()
 
-installation_store = CockroachInstallationStore()
+# Dedup guard: track recently processed message timestamps to prevent
+# duplicate pipeline runs when Slack fires both app_mention and message events.
+_processed_ts: set[str] = set()
+_MAX_PROCESSED_TS = 500
+
 
 slack_app = AsyncApp(
     signing_secret=settings.slack_signing_secret.get_secret_value(),
@@ -36,7 +40,7 @@ async def handle_app_mention(event: dict, context: dict, logger: Any) -> None:
 
 @slack_app.event("message")
 async def handle_message(event: dict, context: dict, logger: Any) -> None:
-    """Handle direct messages. Bolt filters bot messages automatically."""
+    """Handle direct messages only. Channel mentions are handled by app_mention."""
     channel = event.get("channel", "")
     if not channel.startswith("D"):
         return
@@ -70,6 +74,14 @@ async def _dispatch_message(event: dict, context: dict) -> None:
     """Common dispatch logic for mentions and DMs."""
     channel = event.get("channel", "")
     ts = event.get("ts", "")
+
+    # Dedup: Slack may fire both app_mention and message for the same event
+    if ts in _processed_ts:
+        return
+    _processed_ts.add(ts)
+    if len(_processed_ts) > _MAX_PROCESSED_TS:
+        _processed_ts.clear()
+
     thread_ts = event.get("thread_ts") or ts
     text = event.get("text", "")
     user = event.get("user", "")
@@ -80,10 +92,27 @@ async def _dispatch_message(event: dict, context: dict) -> None:
     if not clean_text:
         return
 
-    await add_reaction(channel, ts, "eyes")
+    try:
+        reaction_result = await add_reaction(channel, ts, "eyes")
+        if not reaction_result.get("ok"):
+            struct_logger.warning(
+                "slack_reaction_failed",
+                error=reaction_result.get("error"),
+                channel=channel,
+            )
+    except Exception as e:
+        struct_logger.error("slack_reaction_exception", error=str(e))
 
-    history = await conversation_store.get_history(channel, thread_ts)
-    await conversation_store.add_message(channel, thread_ts, "user", clean_text)
+    history: list[dict[str, str]] = []
+    try:
+        history = await conversation_store.get_history(channel, thread_ts)
+    except Exception as e:
+        struct_logger.warning("conversation_history_load_failed", error=str(e))
+
+    try:
+        await conversation_store.add_message(channel, thread_ts, "user", clean_text)
+    except Exception as e:
+        struct_logger.warning("conversation_store_save_failed", error=str(e))
 
     asyncio.create_task(
         _run_pipeline(team_id, channel, thread_ts, ts, clean_text, user, history)

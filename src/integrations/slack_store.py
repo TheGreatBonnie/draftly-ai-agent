@@ -212,3 +212,6 @@ class CockroachInstallationStore(AsyncInstallationStore):
             token_type=row["token_type"],
             installed_at=installed_at,
         )
+
+
+installation_store = CockroachInstallationStore()

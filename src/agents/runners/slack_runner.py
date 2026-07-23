@@ -59,7 +59,6 @@ def build_slack_state(
             "user_id": user,
         },
         "message_history": message_history or [],
-        "mcp_tools": None,
     }
 
 
@@ -73,7 +72,7 @@ async def run_slack_pipeline(
     message_history: list[dict[str, str]] | None = None,
 ) -> None:
     """Orchestrate the full Draftly pipeline for a Slack support request."""
-    from src.database import close_pool, get_pool
+    from src.database import get_pool
     from src.integrations.slack_conversation import conversation_store
     from src.integrations.slack_store import installation_store
     from src.memory.organizations import (
@@ -113,19 +112,18 @@ async def run_slack_pipeline(
 
         from src.integrations.slack_mcp import get_slack_mcp_tools
 
-        mcp_tools = None
         if team_id:
             installation = await installation_store.async_find_installation(
                 None, team_id
             )
             if installation and installation.user_token:
-                mcp_tools = await get_slack_mcp_tools(installation.user_token)
+                await get_slack_mcp_tools(installation.user_token, team_id)
 
         state = build_slack_state(
             team_id, channel, thread_ts, ts, text, user, org_id, message_history
         )
-        if mcp_tools:
-            state["mcp_tools"] = mcp_tools
+        # MCP client is cached in slack_mcp module, not stored in state
+        # (not msgpack-serializable for the LangGraph checkpointer)
         config = {"configurable": {"thread_id": state["graph_thread_id"]}}
 
         from uuid import uuid4
@@ -186,5 +184,3 @@ async def run_slack_pipeline(
             )
         except Exception:
             logger.error("failed_to_post_slack_error")
-    finally:
-        await close_pool()

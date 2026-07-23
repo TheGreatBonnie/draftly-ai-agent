@@ -17,7 +17,15 @@ def should_use_socket_mode() -> bool:
 
 async def start_socket_mode() -> None:
     """Start the Slack app in Socket Mode (WebSocket, no public URL needed)."""
-    token = settings.slack_app_token.get_secret_value()
-    handler = AsyncSocketModeHandler(slack_app, token)
+    app_token = settings.slack_app_token.get_secret_value()
+    bot_token = settings.slack_bot_token.get_secret_value()
+
+    if not bot_token:
+        logger.warning(
+            "slack_bot_token_missing",
+            message="SLACK_BOT_TOKEN is not set. Reactions and API calls will fail.",
+        )
+
+    handler = AsyncSocketModeHandler(slack_app, app_token)
     logger.info("slack_socket_mode_starting")
     await handler.start_async()

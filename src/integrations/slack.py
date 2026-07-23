@@ -54,6 +54,9 @@ async def send_dm(user_id: str, text: str) -> dict:
 
 async def add_reaction(channel: str, timestamp: str, emoji: str) -> dict:
     token = settings.slack_bot_token.get_secret_value()
+    if not token:
+        logger.error("add_reaction_no_token")
+        return {"ok": False, "error": "no_bot_token"}
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     payload = {"channel": channel, "timestamp": timestamp, "name": emoji}
 
@@ -64,4 +67,7 @@ async def add_reaction(channel: str, timestamp: str, emoji: str) -> dict:
             json=payload,
             timeout=10,
         )
-        return resp.json()
+        result = resp.json()
+        if not result.get("ok"):
+            logger.warning("slack_reaction_failed", error=result.get("error"), channel=channel)
+        return result
