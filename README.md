@@ -14,14 +14,14 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 
 ## Integrations
 
-| Platform | Direction | Usage |
-|----------|-----------|-------|
-| Slack | In + Out | Thread ingestion, Block Kit interactive review cards |
-| Discord | In + Out | Thread ingestion, reply on publish |
-| GitHub | In + Out | App webhooks (issue-triggered pipeline), issue comments on publish |
-| CLI | In | `python -m src.cli.draftly "question"` |
-| SendGrid | Out | Email review notifications with action links |
-| Clerk | Auth | JWT verification, org management, role-based access |
+| Platform | Direction | Usage                                                              |
+| -------- | --------- | ------------------------------------------------------------------ |
+| Slack    | In + Out  | Thread ingestion, Block Kit interactive review cards               |
+| Discord  | In + Out  | Thread ingestion, reply on publish                                 |
+| GitHub   | In + Out  | App webhooks (issue-triggered pipeline), issue comments on publish |
+| CLI      | In        | `python -m src.cli.draftly "question"`                             |
+| SendGrid | Out       | Email review notifications with action links                       |
+| Clerk    | Auth      | JWT verification, org management, role-based access                |
 
 ## Quick Start
 
@@ -56,16 +56,16 @@ uv run python -m src.cli.draftly "How do I configure CockroachDB MCP?"
 
 React 19 SPA served by FastAPI from `frontend/dist/`. Routes:
 
-| Route | Page |
-|-------|------|
-| `/` | Landing page |
-| `/dashboard` | Pending reviews |
+| Route         | Page                                  |
+| ------------- | ------------------------------------- |
+| `/`           | Landing page                          |
+| `/dashboard`  | Pending reviews                       |
 | `/review/:id` | Review detail + approve/reject/revise |
-| `/reviewers` | Reviewer management |
-| `/docs` | Documentation browser |
-| `/knowledge` | Knowledge base (upload, URL import) |
-| `/memory` | Memory stats + semantic search |
-| `/settings` | Org settings, GitHub App connection |
+| `/reviewers`  | Reviewer management                   |
+| `/docs`       | Documentation browser                 |
+| `/knowledge`  | Knowledge base (upload, URL import)   |
+| `/memory`     | Memory stats + semantic search        |
+| `/settings`   | Org settings, GitHub App connection   |
 
 ```bash
 # Dev mode (proxies /api to backend on :8000)
@@ -93,25 +93,42 @@ uv run mypy src/
 
 ## Tunneling for Webhooks
 
-Use **ngrok** and **serveo** to expose local services for webhook integrations (Slack, Discord, GitHub, Clerk).
+Use **Tailscale Funnel** to expose local services for webhook integrations (Slack, Discord, GitHub, Clerk). Requires a free Tailscale account.
 
-### Backend (ngrok → port 8000)
+### Install & Setup
 
 ```bash
-ngrok http 8000
+brew install tailscale
+# Open Tailscale.app and authenticate, then:
+tailscale up
 ```
 
-Copy the `https://...ngrok.io` URL and update:
+### Backend (port 8000)
+
+```bash
+tailscale funnel 8000
+```
+
+Copy the `https://*.ts.net` URL and update:
+
 - `.env` → `NGROK_URL`
 - Slack, Discord, GitHub App, and Clerk webhook endpoints
 
-### Frontend (serveo → port 5173)
+### Frontend (port 5173)
 
 ```bash
-ssh -R 80:localhost:5173 serveo.net
+tailscale funnel --bg http://localhost:5173
 ```
 
-This gives you a public `https://*.serveo.net` URL for the Vite dev server.
+This gives you a stable `https://*.ts.net` URL for the Vite dev server.
+
+### Add Vite Host
+
+Add your Tailscale hostname to `frontend/vite.config.ts`:
+
+```ts
+allowedHosts: ["your-machine-name.tailXXXXXX.ts.net"];
+```
 
 ## Project Structure
 
