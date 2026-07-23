@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph.message import add_messages
 
@@ -60,3 +60,7 @@ class DocumentationState(TypedDict):
     investigation_plan: list[dict]  # Todo-driven investigation plan
     rubric_status: dict  # Rubric evaluation results
     subagent_results: dict  # Results from subagent execution
+
+    # Conversation context
+    message_history: list[dict[str, str]]
+    mcp_tools: Any  # Slack MCP Server toolset, None if unavailable

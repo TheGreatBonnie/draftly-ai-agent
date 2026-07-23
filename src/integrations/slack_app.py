@@ -9,6 +9,7 @@ import structlog
 from slack_bolt.app.async_app import AsyncApp
 
 from src.config import settings
+from src.integrations.slack_conversation import conversation_store
 from src.integrations.slack_store import CockroachInstallationStore
 
 bolt_logger = logging.getLogger("slack_bolt")
@@ -53,8 +54,11 @@ async def _dispatch_message(event: dict, context: dict) -> None:
     if not clean_text:
         return
 
+    history = await conversation_store.get_history(channel, thread_ts)
+    await conversation_store.add_message(channel, thread_ts, "user", clean_text)
+
     asyncio.create_task(
-        _run_pipeline(team_id, channel, thread_ts, ts, clean_text, user)
+        _run_pipeline(team_id, channel, thread_ts, ts, clean_text, user, history)
     )
     struct_logger.info("slack_message_received", team_id=team_id, channel=channel)
 
@@ -66,6 +70,7 @@ async def _run_pipeline(
     ts: str,
     text: str,
     user: str,
+    message_history: list[dict[str, str]] | None = None,
 ) -> None:
     """Lazy import wrapper to avoid circular dependencies."""
     from src.agents.runners.slack_runner import run_slack_pipeline
@@ -77,6 +82,7 @@ async def _run_pipeline(
         ts=ts,
         text=text,
         user=user,
+        message_history=message_history or [],
     )
 
 

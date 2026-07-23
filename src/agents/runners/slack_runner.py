@@ -19,6 +19,7 @@ def build_slack_state(
     text: str,
     user: str,
     org_id: str,
+    message_history: list[dict[str, str]] | None = None,
 ) -> DocumentationState:
     """Build initial DocumentationState from Slack message event."""
     graph_thread_id = f"slack-{channel}-{thread_ts}"
@@ -57,6 +58,8 @@ def build_slack_state(
             "ts": ts,
             "user_id": user,
         },
+        "message_history": message_history or [],
+        "mcp_tools": None,
     }
 
 
@@ -67,9 +70,11 @@ async def run_slack_pipeline(
     ts: str,
     text: str,
     user: str,
+    message_history: list[dict[str, str]] | None = None,
 ) -> None:
     """Orchestrate the full Draftly pipeline for a Slack support request."""
     from src.database import close_pool, get_pool
+    from src.integrations.slack_conversation import conversation_store
     from src.memory.organizations import (
         get_org_by_slack,
         store_slack_workflow,
@@ -79,13 +84,35 @@ async def run_slack_pipeline(
     await get_pool()
 
     try:
+        logger.info(
+            "slack_pipeline_started",
+            team_id=team_id,
+            channel=channel,
+            thread_ts=thread_ts,
+            text_preview=text[:100],
+        )
+
         org = await get_org_by_slack(team_id)
         if not org:
             logger.error("slack_pipeline_org_not_found", team_id=team_id)
+            try:
+                from src.integrations.slack import send_slack_message
+
+                await send_slack_message(
+                    channel,
+                    "⚠️ Draftly is not linked to your organization yet. "
+                    "Please go to Draftly Settings → Slack Integration → "
+                    '"Connect Slack Workspace" to link this workspace.',
+                    thread_ts=thread_ts,
+                )
+            except Exception:
+                logger.error("failed_to_post_org_not_found_message")
             return
         org_id = org["id"]
 
-        state = build_slack_state(team_id, channel, thread_ts, ts, text, user, org_id)
+        state = build_slack_state(
+            team_id, channel, thread_ts, ts, text, user, org_id, message_history
+        )
         config = {"configurable": {"thread_id": state["graph_thread_id"]}}
 
         from uuid import uuid4
@@ -99,6 +126,13 @@ async def run_slack_pipeline(
         )
         await update_slack_workflow_status(workflow_id, "running")
 
+        logger.info(
+            "slack_pipeline_running",
+            workflow_id=workflow_id,
+            org_id=org_id,
+            graph_thread_id=state["graph_thread_id"],
+        )
+
         async with AsyncCockroachDBSaver.from_conn_string(
             settings.cockroachdb_url,
         ) as checkpointer:
@@ -106,16 +140,28 @@ async def run_slack_pipeline(
             graph = build_hybrid_graph().compile(checkpointer=checkpointer)
             result = await graph.ainvoke(state, config)
 
+        if result.get("draft_content"):
+            await conversation_store.add_message(
+                channel, thread_ts, "assistant", result["draft_content"][:2000]
+            )
+
         if result.get("human_decision") == "":
             await update_slack_workflow_status(workflow_id, "pending")
             logger.info(
                 "slack_pipeline_paused",
+                workflow_id=workflow_id,
                 team_id=team_id,
                 channel=channel,
                 thread_ts=thread_ts,
             )
         else:
             await update_slack_workflow_status(workflow_id, "completed")
+            logger.info(
+                "slack_pipeline_completed",
+                workflow_id=workflow_id,
+                team_id=team_id,
+                channel=channel,
+            )
 
     except Exception as e:
         logger.error("slack_pipeline_failed", error=str(e))
