@@ -5,7 +5,7 @@ import {
   linkGitHubInstallation,
   listInstallations,
 } from "../api/github";
-import { listSlackInstallations, linkSlackInstallation } from "../api/slack";
+import { getSlackInstallUrl, listSlackInstallations, linkSlackInstallation } from "../api/slack";
 import { listOrgMembers, assignRole } from "../api/reviewers";
 import type {
   GitHubInstallation,
@@ -26,6 +26,7 @@ export function Settings() {
 
   const [installUrl, setInstallUrl] = useState<GitHubInstallUrl | null>(null);
   const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
+  const [slackInstallUrl, setSlackInstallUrl] = useState<string | null>(null);
   const [slackInstallations, setSlackInstallations] = useState<SlackInstallation[]>([]);
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,14 +40,16 @@ export function Settings() {
       const results = await Promise.all([
         getInstallUrl(),
         listInstallations(),
+        getSlackInstallUrl(),
         listSlackInstallations(),
         ...(isAdmin ? [listOrgMembers()] : [Promise.resolve({ members: [] })]),
       ]);
       setInstallUrl(results[0]);
       setInstallations(results[1]);
-      setSlackInstallations(results[2]);
-      if (isAdmin && "members" in results[3]) {
-        setMembers((results[3] as { members: OrgMember[] }).members);
+      setSlackInstallUrl(results[2].install_url);
+      setSlackInstallations(results[3]);
+      if (isAdmin && "members" in results[4]) {
+        setMembers((results[4] as { members: OrgMember[] }).members);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
@@ -271,10 +274,10 @@ export function Settings() {
 
         <div className="mt-4">
           <a
-            href="/api/slack/install"
+            href={slackInstallUrl ?? "#"}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+            className="inline-flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
           >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.522h-6.313z" />

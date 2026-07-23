@@ -352,44 +352,17 @@ def run_slack_pipeline(*args, **kwargs):
 
 #### Step 2.3: FastAPI Route Rewrite
 
-**File:** `src/api/routes/slack.py` — Rewrite (was 104 lines, now ~20)
+**File:** `src/api/routes/slack.py` — Rewrite with custom OAuth
 
-```python
-from __future__ import annotations
+The file now contains:
+- `GET /install-url` — Returns Slack OAuth authorization URL (authenticated)
+- `GET /oauth/callback` — Custom handler: exchange code, save installation, redirect to frontend
+- `POST /events` — Bolt passthrough for Events API
+- `POST /interactivity` — Bolt passthrough for interactivity
+- `POST /link` — Authenticated endpoint to link installation to org
+- `GET /installations` — Authenticated endpoint to list installations
 
-from fastapi import APIRouter, Request
-from fastapi.responses import Response
-from slack_bolt.adapter.fastapi import SlackRequestHandler
-
-from src.integrations.slack_app import slack_app
-
-router = APIRouter()
-handler = SlackRequestHandler(slack_app)
-
-
-@router.post("/events")
-async def slack_events(request: Request) -> Response:
-    """Handle Slack Events API webhooks (message events, app_mention, etc.)."""
-    return await handler.handle(request)
-
-
-@router.post("/interactivity")
-async def slack_interactivity(request: Request) -> Response:
-    """Handle Slack interactivity webhooks (button clicks, dropdowns)."""
-    return await handler.handle(request)
-
-
-@router.get("/install")
-async def slack_install(request: Request) -> Response:
-    """Render 'Add to Slack' button page."""
-    return await handler.handle(request)
-
-
-@router.get("/oauth_redirect")
-async def slack_oauth_redirect(request: Request) -> Response:
-    """Handle OAuth callback from Slack."""
-    return await handler.handle(request)
-```
+Bolt is kept only for event/interactivity signature verification. OAuth is handled entirely by our custom code.
 
 ---
 

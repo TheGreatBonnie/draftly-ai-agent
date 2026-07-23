@@ -404,6 +404,17 @@ source = str(state.get("source", "unknown"))
 - "Connect Slack Workspace" button linking to `/api/slack/install`
 - List of connected workspaces with team name and status
 
+### 14. Custom OAuth Flow (Bolt OAuth Replaced)
+
+**Why:** Bolt's built-in OAuth flow stores state in a `FileOAuthStateStore` and validates via a browser cookie (`slack-app-oauth-state`). The cookie gets lost when the install page opens in a `target="_blank"` tab through a reverse proxy (Tailscale), causing a 400 on every callback.
+
+**Solution:** Replace Bolt's OAuth with a custom flow matching GitHub's pattern:
+1. `GET /api/slack/install-url` — Returns Slack OAuth authorization URL
+2. `GET /api/slack/oauth/callback` — Exchanges code for tokens, saves installation, redirects to frontend
+3. Frontend auto-links installation via `POST /api/slack/link`
+
+Bolt is kept only for event/interactivity signature verification (Events API, button clicks).
+
 ## Error Handling
 
 | Error | Handling |

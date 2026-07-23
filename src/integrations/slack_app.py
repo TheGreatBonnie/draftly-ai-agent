@@ -7,7 +7,6 @@ from typing import Any
 
 import structlog
 from slack_bolt.app.async_app import AsyncApp
-from slack_bolt.oauth.async_oauth_settings import AsyncOAuthSettings
 
 from src.config import settings
 from src.integrations.slack_store import CockroachInstallationStore
@@ -17,52 +16,10 @@ struct_logger = structlog.get_logger()
 
 installation_store = CockroachInstallationStore()
 
-_oauth_settings = None
-if settings.slack_client_id and settings.slack_client_secret.get_secret_value():
-    _oauth_settings = AsyncOAuthSettings(
-        client_id=settings.slack_client_id,
-        client_secret=settings.slack_client_secret.get_secret_value(),
-        scopes=[
-            "app_mentions:read",
-            "channels:history",
-            "channels:read",
-            "chat:write",
-            "groups:history",
-            "groups:read",
-            "im:history",
-            "im:read",
-            "im:write",
-            "reactions:write",
-            "reactions:read",
-            "users:read",
-            "assistant:write",
-        ],
-        user_scopes=[
-            "search:read",
-            "channels:history",
-            "channels:read",
-            "groups:history",
-            "groups:read",
-            "im:history",
-            "mpim:history",
-            "users:read",
-            "chat:write",
-            "canvases:read",
-            "canvases:write",
-            "users:read.email",
-        ],
-        installation_store=installation_store,
-        installation_store_bot_only=True,
-        install_path="/api/slack/install",
-        redirect_uri_path="/api/slack/oauth/callback",
-        success_url=f"{settings.app_url}/settings?slack=connected&team_id=" + "{team_id}",
-    )
-
 slack_app = AsyncApp(
     signing_secret=settings.slack_signing_secret.get_secret_value(),
     installation_store=installation_store,
     installation_store_bot_only=True,
-    oauth_settings=_oauth_settings,
     logger=bolt_logger,
 )
 

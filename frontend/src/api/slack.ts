@@ -1,6 +1,10 @@
 import { request } from "./client";
 import type { SlackInstallation } from "./types";
 
+export async function getSlackInstallUrl(): Promise<{ install_url: string }> {
+  return request("/slack/install-url");
+}
+
 export async function listSlackInstallations(): Promise<SlackInstallation[]> {
   return request<SlackInstallation[]>("/slack/installations");
 }
