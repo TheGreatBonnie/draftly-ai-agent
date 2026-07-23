@@ -28,28 +28,66 @@ Three methods to set up Draftly's Slack integration.
 
 | Scope | Purpose |
 |-------|---------|
+| `app_mentions:read` | Read app mentions |
 | `channels:history` | Read channel messages |
 | `channels:read` | List channels |
 | `chat:write` | Post messages |
-| `users:read` | Look up users |
-| `groups:read` | Read private channels |
+| `groups:history` | Read private channel messages |
+| `groups:read` | List private channels |
+| `im:history` | Read DM history |
 | `im:read` | Read DMs |
 | `im:write` | Send DMs |
+| `reactions:read` | Read emoji reactions |
+| `reactions:write` | Add emoji reactions |
+| `users:read` | Look up users |
+| `assistant:write` | AI assistant features |
+
+**User Token Scopes:**
+
+| Scope | Purpose |
+|-------|---------|
+| `search:read` | Search messages |
+| `channels:history` | Read channel messages |
+| `channels:read` | List channels |
+| `groups:history` | Read private channel messages |
+| `groups:read` | List private channels |
+| `im:history` | Read DM history |
+| `mpim:history` | Read group DM history |
+| `users:read` | Look up users |
+| `chat:write` | Post messages as user |
+| `canvases:read` | Read canvases |
+| `canvases:write` | Create/edit canvases |
+| `users:read.email` | Read user emails |
 
 ### Step 3: Event Subscriptions
 
 - Toggle **Enable Events** ON
 - Request URL: `https://grit-flagstone-recreate.ngrok-free.dev/api/slack/events`
 - Subscribe to bot events:
+  - `app_home_opened` — App home opened
   - `app_mention` — @mentions
-  - `message.im` — direct messages
+  - `message.channels` — Public channel messages
+  - `message.groups` — Private channel messages
+  - `message.im` — Direct messages
 
 ### Step 4: Interactivity
 
 - Toggle **Interactivity** ON
-- Request URL: `https://grit-flagstone-recreate.ngrok-free.dev/api/slack/interactivity`
+- Request URL: `https://grit-flagstone-recreate.ngrok-free.dev/api/slack/events`
 
-### Step 5: Get Credentials
+### Step 5: App Home
+
+- Enable **Home Tab**
+- Enable **Messages Tab**
+- Disable **Messages Tab Read Only**
+
+### Step 6: Features
+
+- Enable **Socket Mode**
+- Enable **Org Deploy** (optional)
+- Enable **MCP** (optional)
+
+### Step 7: Get Credentials
 
 From **Basic Information**, copy:
 - Client ID
@@ -76,42 +114,78 @@ From **Basic Information**, copy:
     "background_color": "#4A154B"
   },
   "features": {
+    "agent_view": {
+      "agent_description": "Hi, I am Draftly — an autonomous documentation agent built using Bolt for Python. I help resolve support requests and generate documentation.",
+      "suggested_prompts": [
+        "How do I configure webhooks?",
+        "Help me troubleshoot API errors"
+      ]
+    },
+    "app_home": {
+      "home_tab_enabled": true,
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": false
+    },
     "bot_user": {
       "display_name": "Draftly",
       "always_online": true
-    },
-    "app_home": {
-      "messages_tab_read_only_enabled": false
     }
   },
   "oauth_config": {
+    "redirect_urls": [
+      "https://grit-flagstone-recreate.ngrok-free.dev/api/slack/oauth/callback"
+    ],
     "scopes": {
+      "user": [
+        "search:read",
+        "channels:history",
+        "channels:read",
+        "groups:history",
+        "groups:read",
+        "im:history",
+        "mpim:history",
+        "users:read",
+        "chat:write",
+        "canvases:read",
+        "canvases:write",
+        "users:read.email"
+      ],
       "bot": [
+        "app_mentions:read",
         "channels:history",
         "channels:read",
         "chat:write",
-        "users:read",
+        "groups:history",
         "groups:read",
+        "im:history",
         "im:read",
-        "im:write"
+        "im:write",
+        "reactions:write",
+        "reactions:read",
+        "users:read",
+        "assistant:write"
       ]
-    },
-    "redirect_urls": [
-      "https://grit-flagstone-recreate.ngrok-free.dev/api/slack/oauth/callback"
-    ]
+    }
   },
   "settings": {
     "event_subscriptions": {
+      "request_url": "https://grit-flagstone-recreate.ngrok-free.dev/api/slack/events",
       "bot_events": [
+        "app_home_opened",
         "app_mention",
+        "message.channels",
+        "message.groups",
         "message.im"
       ]
     },
     "interactivity": {
-      "is_enabled": true
+      "is_enabled": true,
+      "request_url": "https://grit-flagstone-recreate.ngrok-free.dev/api/slack/events"
     },
-    "org_deploy_enabled": false,
-    "socket_mode_enabled": false
+    "is_mcp_enabled": true,
+    "org_deploy_enabled": true,
+    "socket_mode_enabled": true,
+    "token_rotation_enabled": false
   }
 }
 ```
@@ -124,32 +198,65 @@ display_information:
   description: Autonomous documentation engineering for support requests
   background_color: "#4A154B"
 features:
+  agent_view:
+    agent_description: "Hi, I am Draftly — an autonomous documentation agent built using Bolt for Python. I help resolve support requests and generate documentation."
+    suggested_prompts:
+      - "How do I configure webhooks?"
+      - "Help me troubleshoot API errors"
+  app_home:
+    home_tab_enabled: true
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
   bot_user:
     display_name: Draftly
     always_online: true
-  app_home:
-    messages_tab_read_only_enabled: false
 oauth_config:
+  redirect_urls:
+    - https://grit-flagstone-recreate.ngrok-free.dev/api/slack/oauth/callback
   scopes:
+    user:
+      - search:read
+      - channels:history
+      - channels:read
+      - groups:history
+      - groups:read
+      - im:history
+      - mpim:history
+      - users:read
+      - chat:write
+      - canvases:read
+      - canvases:write
+      - users:read.email
     bot:
+      - app_mentions:read
       - channels:history
       - channels:read
       - chat:write
-      - users:read
+      - groups:history
       - groups:read
+      - im:history
       - im:read
       - im:write
-  redirect_urls:
-    - https://grit-flagstone-recreate.ngrok-free.dev/api/slack/oauth/callback
+      - reactions:write
+      - reactions:read
+      - users:read
+      - assistant:write
 settings:
   event_subscriptions:
+    request_url: https://grit-flagstone-recreate.ngrok-free.dev/api/slack/events
     bot_events:
+      - app_home_opened
       - app_mention
+      - message.channels
+      - message.groups
       - message.im
   interactivity:
     is_enabled: true
-  org_deploy_enabled: false
-  socket_mode_enabled: false
+    request_url: https://grit-flagstone-recreate.ngrok-free.dev/api/slack/events
+  is_mcp_enabled: true
+  org_deploy_enabled: true
+  socket_mode_enabled: true
+  token_rotation_enabled: false
 ```
 
 ### Step 2: Review & Create
@@ -184,32 +291,65 @@ display_information:
   description: Autonomous documentation engineering for support requests
   background_color: "#4A154B"
 features:
+  agent_view:
+    agent_description: "Hi, I am Draftly — an autonomous documentation agent built using Bolt for Python. I help resolve support requests and generate documentation."
+    suggested_prompts:
+      - "How do I configure webhooks?"
+      - "Help me troubleshoot API errors"
+  app_home:
+    home_tab_enabled: true
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
   bot_user:
     display_name: Draftly
     always_online: true
-  app_home:
-    messages_tab_read_only_enabled: false
 oauth_config:
+  redirect_urls:
+    - https://grit-flagstone-recreate.ngrok-free.dev/api/slack/oauth/callback
   scopes:
+    user:
+      - search:read
+      - channels:history
+      - channels:read
+      - groups:history
+      - groups:read
+      - im:history
+      - mpim:history
+      - users:read
+      - chat:write
+      - canvases:read
+      - canvases:write
+      - users:read.email
     bot:
+      - app_mentions:read
       - channels:history
       - channels:read
       - chat:write
-      - users:read
+      - groups:history
       - groups:read
+      - im:history
       - im:read
       - im:write
-  redirect_urls:
-    - https://grit-flagstone-recreate.ngrok-free.dev/api/slack/oauth/callback
+      - reactions:write
+      - reactions:read
+      - users:read
+      - assistant:write
 settings:
   event_subscriptions:
+    request_url: https://grit-flagstone-recreate.ngrok-free.dev/api/slack/events
     bot_events:
+      - app_home_opened
       - app_mention
+      - message.channels
+      - message.groups
       - message.im
   interactivity:
     is_enabled: true
-  org_deploy_enabled: false
-  socket_mode_enabled: false
+    request_url: https://grit-flagstone-recreate.ngrok-free.dev/api/slack/events
+  is_mcp_enabled: true
+  org_deploy_enabled: true
+  socket_mode_enabled: true
+  token_rotation_enabled: false
 ```
 
 ```bash
@@ -269,7 +409,7 @@ SLACK_REDIRECT_URI=https://grit-flagstone-recreate.ngrok-free.dev/api/slack/oaut
 | Endpoint | URL |
 |----------|-----|
 | Events API | `POST /api/slack/events` |
-| Interactivity | `POST /api/slack/interactivity` |
+| Interactivity | `POST /api/slack/events` |
 | OAuth Install | `GET /api/slack/install` |
 | OAuth Callback | `GET /api/slack/oauth/callback` |
 | Installations API | `GET /api/slack/installations` |

@@ -63,10 +63,9 @@ class CockroachInstallationStore(AsyncInstallationStore):
         else:
             await execute(
                 """INSERT INTO slack_installations
-                   (org_id, team_id, team_name, bot_user_id, bot_token,
+                   (team_id, team_name, bot_user_id, bot_token,
                     bot_scopes, user_id, user_token, user_scopes, token_type)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
-                "",
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)""",
                 team_id,
                 installation.team_name,
                 installation.bot_user_id,

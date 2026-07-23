@@ -5,7 +5,7 @@ import {
   linkGitHubInstallation,
   listInstallations,
 } from "../api/github";
-import { listSlackInstallations } from "../api/slack";
+import { listSlackInstallations, linkSlackInstallation } from "../api/slack";
 import { listOrgMembers, assignRole } from "../api/reviewers";
 import type {
   GitHubInstallation,
@@ -66,6 +66,21 @@ export function Settings() {
         })
         .catch((e) => {
           setError(e instanceof Error ? e.message : "Failed to link GitHub");
+        });
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const teamId = params.get("team_id");
+    if (teamId) {
+      linkSlackInstallation(teamId)
+        .then(() => {
+          window.history.replaceState({}, "", "/settings");
+          fetchData();
+        })
+        .catch((e) => {
+          setError(e instanceof Error ? e.message : "Failed to link Slack");
         });
     }
   }, [fetchData]);

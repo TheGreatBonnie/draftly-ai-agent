@@ -2,7 +2,7 @@
 
 ## Overview
 
-Draftly uses CockroachDB with distributed vector index for semantic search. The schema supports multi-tenant architecture with **13 tables**. All foreign key references to the parent `organizations` table use the Clerk org ID (`clerk_org_id`) as the linkage column rather than the internal UUID primary key.
+Draftly uses CockroachDB with distributed vector index for semantic search. The schema supports multi-tenant architecture with **15 tables**. All foreign key references to the parent `organizations` table use the Clerk org ID (`clerk_org_id`) as the linkage column rather than the internal UUID primary key.
 
 ## Entity Relationship Diagram
 
@@ -17,19 +17,19 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 │  (multi-tenant) │        └──────────────────┘
 └────────┬────────┘
          │
-         ├──┬─────────────────┬─────────────────┬─────────────────┬─────────────────┐
-         │  │                 │                 │                 │                 │
-         ▼  ▼                 ▼                 ▼                 ▼                 ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│   support    │  │ documentation│  │   reviewers  │  │github_       │  │ agent_memory │
-│   _threads   │  │              │  │              │  │installations │  │              │
-└──────┬───────┘  └──────┬───────┘  └──────────────┘  └──────┬───────┘  └──────────────┘
-       │                 │                                   │
-       │                 ▼                                   ▼
-       │         ┌──────────────┐                   ┌──────────────┐
-       └────────▶│   review     │                   │github_       │
-                 │  _sessions   │                   │workflows     │
-                 └──────────────┘                   └──────────────┘
+         ├──┬─────────────────┬─────────────────┬─────────────────┬─────────────────┬─────────────────┐
+         │  │                 │                 │                 │                 │                 │
+         ▼  ▼                 ▼                 ▼                 ▼                 ▼                 ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│   support    │  │ documentation│  │   reviewers  │  │github_       │  │ agent_memory │  │slack_        │
+│   _threads   │  │              │  │              │  │installations │  │              │  │installations │
+└──────┬───────┘  └──────┬───────┘  └──────────────┘  └──────┬───────┘  └──────────────┘  └──────┬───────┘
+       │                 │                                   │                                    │
+       │                 ▼                                   ▼                                    ▼
+       │         ┌──────────────┐                   ┌──────────────┐                     ┌──────────────┐
+       └────────▶│   review     │                   │github_       │                     │slack_        │
+                 │  _sessions   │                   │workflows     │                     │workflows     │
+                 └──────────────┘                   └──────────────┘                     └──────────────┘
 
 ┌──────────────┐
 │  audit_logs  │
@@ -282,6 +282,49 @@ Org ID, content type, and content ID are stored inside the `metadata` JSONB colu
 - `idx_user_org_user` ON (user_id)
 - `idx_user_org_org` ON (org_id)
 
+### 14. slack_installations (Slack OAuth Installation Data)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| org_id | STRING | NULLABLE (set via /api/slack/link after install) |
+| team_id | STRING | NOT NULL UNIQUE |
+| team_name | STRING | |
+| bot_user_id | STRING | |
+| bot_token | STRING | NOT NULL |
+| bot_scopes | STRING | |
+| user_id | STRING | NOT NULL |
+| user_token | STRING | |
+| user_scopes | STRING | |
+| token_type | STRING | |
+| installed_at | TIMESTAMPTZ | DEFAULT now() |
+| updated_at | TIMESTAMPTZ | DEFAULT now() ON UPDATE now() |
+
+Stores Slack workspace installation data from Bolt OAuth. Used by `CockroachInstallationStore` to manage bot tokens per workspace.
+
+**Indexes:**
+- `idx_slack_installations_org` ON (org_id)
+- `idx_slack_installations_team` ON (team_id)
+
+### 15. slack_workflows (Pipeline Runs Triggered by Slack)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| workflow_id | UUID | NOT NULL |
+| channel_id | STRING | NOT NULL |
+| thread_ts | STRING | NOT NULL |
+| status | STRING | DEFAULT 'pending', CHECK (status IN ('pending', 'running', 'completed', 'failed')) |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| completed_at | TIMESTAMPTZ | |
+
+Tracks LangGraph pipeline runs triggered by Slack messages. Links to `agent_workflows` via `workflow_id`.
+
+**Indexes:**
+- `idx_slack_workflows_status` ON (status)
+- `idx_slack_workflows_thread` ON (channel_id, thread_ts)
+
 ## Migrations
 
 Applied migrations in order:
@@ -295,3 +338,4 @@ Applied migrations in order:
 | 006_add_clerk_tables | Creates `clerk_users` and `user_organizations` tables; adds `clerk_org_id` column to `organizations` |
 | 007_use_clerk_org_id_as_pk | Converts all `org_id` FK references from `organizations(id)` to `organizations(clerk_org_id)` across all 10 child tables |
 | 008_add_reviewer_clerk_user | Adds `clerk_user_id` column and unique index to `reviewers` for Clerk user linking |
+| 009_add_slack_tables | Creates `slack_installations` (Bolt OAuth data) and `slack_workflows` (pipeline runs) tables |

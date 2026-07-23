@@ -246,9 +246,23 @@ async def list_slack_installations() -> list[dict]:
     """List all Slack installations with org names."""
     rows = await fetch_all(
         """SELECT si.id::text, si.team_id, si.team_name, si.bot_user_id,
-                  si.created_at, si.updated_at, o.clerk_org_name as org_name
+                  si.org_id, si.installed_at, si.updated_at,
+                  o.clerk_org_name as org_name
            FROM slack_installations si
-           JOIN organizations o ON o.clerk_org_id = si.org_id
-           ORDER BY si.created_at DESC"""
+           LEFT JOIN organizations o ON o.clerk_org_id = si.org_id
+           ORDER BY si.installed_at DESC"""
     )
     return [dict(r) for r in rows]
+
+
+async def link_slack_installation(team_id: str, org_id: str) -> bool:
+    """Link a Slack installation to a Draftly organization."""
+    from src.database import execute
+
+    await execute(
+        "UPDATE slack_installations SET org_id = $1 WHERE team_id = $2",
+        org_id,
+        team_id,
+    )
+    logger.info("slack_installation_linked", team_id=team_id, org_id=org_id)
+    return True
