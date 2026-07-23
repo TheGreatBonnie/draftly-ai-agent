@@ -51,6 +51,20 @@ async def research_node_hybrid(state: DocumentationState) -> dict:
         [_extract_result_text(r) for r in web_results]
     ) if web_results else "No web results found."
 
+    # Source-specific research: search Slack messages for context
+    slack_context: list[str] = []
+    if state.get("source") == "slack":
+        from src.agents.tools.slack_tools import search_slack_messages
+
+        try:
+            slack_result = await search_slack_messages.ainvoke(
+                {"query": question, "limit": 3}
+            )
+            if slack_result and "No relevant" not in str(slack_result):
+                slack_context = [str(slack_result)]
+        except Exception as e:
+            logger.warning("slack_search_failed", error=str(e))
+
     research_focus = research_skill.get("name", "general")
 
     synthesis_prompt = (
@@ -79,7 +93,7 @@ async def research_node_hybrid(state: DocumentationState) -> dict:
 
     return {
         "github_context": [],
-        "slack_context": [],
+        "slack_context": slack_context,
         "research_skill": research_skill,
         "investigation_plan": investigation_plan,
         "subagent_results": {

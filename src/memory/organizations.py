@@ -189,3 +189,66 @@ async def update_github_workflow_status(workflow_id: str, status: str) -> None:
         status,
         workflow_id,
     )
+
+
+# --- Slack ---
+
+
+async def get_org_by_slack(team_id: str) -> dict | None:
+    """Find organization by Slack team_id via slack_installations."""
+    row = await fetch_one(
+        """SELECT o.clerk_org_id as id, o.clerk_org_name as name,
+                  si.team_id, si.team_name
+           FROM slack_installations si
+           JOIN organizations o ON o.clerk_org_id = si.org_id
+           WHERE si.team_id = $1""",
+        team_id,
+    )
+    return dict(row) if row else None
+
+
+async def store_slack_workflow(
+    org_id: str,
+    workflow_id: str,
+    channel_id: str,
+    thread_ts: str,
+) -> str:
+    """Store a Slack workflow for tracking."""
+    row = await fetch_one(
+        """INSERT INTO slack_workflows
+           (org_id, workflow_id, channel_id, thread_ts)
+           VALUES ($1, $2, $3, $4) RETURNING id::text""",
+        org_id,
+        workflow_id,
+        channel_id,
+        thread_ts,
+    )
+    logger.info("slack_workflow_stored", org_id=org_id, workflow_id=workflow_id)
+    return row["id"]
+
+
+async def update_slack_workflow_status(workflow_id: str, status: str) -> None:
+    """Update Slack workflow status."""
+    from src.database import execute
+
+    await execute(
+        """UPDATE slack_workflows
+           SET status = $1,
+               completed_at = CASE WHEN $1 IN ('completed', 'failed') THEN now()
+                                    ELSE completed_at END
+           WHERE workflow_id = $2""",
+        status,
+        workflow_id,
+    )
+
+
+async def list_slack_installations() -> list[dict]:
+    """List all Slack installations with org names."""
+    rows = await fetch_all(
+        """SELECT si.id::text, si.team_id, si.team_name, si.bot_user_id,
+                  si.created_at, si.updated_at, o.clerk_org_name as org_name
+           FROM slack_installations si
+           JOIN organizations o ON o.clerk_org_id = si.org_id
+           ORDER BY si.created_at DESC"""
+    )
+    return [dict(r) for r in rows]

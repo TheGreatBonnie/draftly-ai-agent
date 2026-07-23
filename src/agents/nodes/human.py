@@ -23,7 +23,7 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
     reviewers = await get_reviewers_by_org(state["org_id"])
     title = str(state.get("draft_title", "Untitled"))
     confidence = float(state.get("confidence_score", 0))
-    source = str(state.get("source_type", "unknown"))
+    source = str(state.get("source", "unknown"))
     draft_content = str(state.get("draft_content", ""))
 
     results = {}

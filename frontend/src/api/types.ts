@@ -152,3 +152,13 @@ export interface GitHubInstallation {
 export interface GitHubInstallUrl {
   install_url: string;
 }
+
+export interface SlackInstallation {
+  id: string;
+  team_id: string;
+  team_name: string;
+  bot_user_id: string;
+  created_at: string;
+  updated_at: string;
+  org_name: string;
+}

@@ -68,11 +68,22 @@ async def _reply_to_slack(state: DocumentationState, metadata: dict) -> None:
 
     channel = metadata["channel"]
     thread_ts = metadata.get("thread_ts")
+    team_id = metadata.get("team_id")
     body = _build_reply_body(state)
 
-    await send_slack_message(channel=channel, text=body, thread_ts=thread_ts)
+    token = None
+    if team_id:
+        from src.integrations.slack_store import installation_store
 
-    logger.info("reply_posted_slack", channel=channel)
+        bot = await installation_store.async_find_bot(
+            enterprise_id=None, team_id=team_id,
+        )
+        if bot:
+            token = bot.bot_token
+
+    await send_slack_message(channel=channel, text=body, thread_ts=thread_ts, token=token)
+
+    logger.info("reply_posted_slack", channel=channel, thread_ts=thread_ts)
 
 
 async def _reply_to_discord(state: DocumentationState, metadata: dict) -> None:

@@ -13,8 +13,10 @@ async def send_slack_message(
     text: str,
     thread_ts: str | None = None,
     blocks: list[dict] | None = None,
+    token: str | None = None,
 ) -> dict:
-    token = settings.slack_bot_token.get_secret_value()
+    if not token:
+        token = settings.slack_bot_token.get_secret_value()
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     payload: dict = {"channel": channel, "text": text}
     if thread_ts:

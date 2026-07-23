@@ -1,102 +1,73 @@
-import json
-from unittest.mock import patch
+"""Tests for Slack Bolt action handlers (review buttons)."""
+from __future__ import annotations
 
-from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, patch
 
-from src.api.app import app
+import pytest
 
-client = TestClient(app)
+from src.integrations.slack_app import _handle_review_action
 
 
-@patch("src.api.routes.slack.verify_review_token")
-@patch("src.api.routes.slack.complete_review")
-def test_interactivity_approve_button(mock_complete, mock_verify_token):
+@pytest.mark.asyncio
+@patch("src.memory.reviewer.complete_review", new_callable=AsyncMock)
+@patch("src.security.tokens.verify_review_token")
+async def test_handle_approve_calls_complete_review(
+    mock_verify_token: object, mock_complete: AsyncMock
+) -> None:
     mock_verify_token.return_value = {"review_id": "review123", "reviewer_id": "U123"}
-    mock_complete.return_value = None
+    action = {"value": "test_token_123"}
 
-    payload = {
-        "type": "block_actions",
-        "user": {"id": "U123"},
-        "actions": [
-            {
-                "action_id": "approve_review",
-                "value": "test_token_123",
-            }
-        ],
-        "container": {"message_ts": "1234567890"},
-    }
+    await _handle_review_action(action, "approve_review")
 
-    response = client.post(
-        "/api/slack/interactivity",
-        data={"payload": json.dumps(payload)},
-    )
-
-    assert response.status_code == 200
     mock_verify_token.assert_called_once_with("test_token_123")
-    mock_complete.assert_called_once()
+    mock_complete.assert_called_once_with(
+        review_id="review123", status="approved", feedback=None
+    )
 
 
-@patch("src.api.routes.slack.verify_review_token")
-@patch("src.api.routes.slack.complete_review")
-def test_interactivity_reject_button(mock_complete, mock_verify_token):
+@pytest.mark.asyncio
+@patch("src.memory.reviewer.complete_review", new_callable=AsyncMock)
+@patch("src.security.tokens.verify_review_token")
+async def test_handle_reject_calls_complete_review(
+    mock_verify_token: object, mock_complete: AsyncMock
+) -> None:
     mock_verify_token.return_value = {"review_id": "review456", "reviewer_id": "U456"}
-    mock_complete.return_value = None
+    action = {"value": "reject_token_456"}
 
-    payload = {
-        "type": "block_actions",
-        "user": {"id": "U456"},
-        "actions": [
-            {
-                "action_id": "reject_review",
-                "value": "reject_token_456",
-            }
-        ],
-    }
+    await _handle_review_action(action, "reject_review")
 
-    response = client.post(
-        "/api/slack/interactivity",
-        data={"payload": json.dumps(payload)},
-    )
-
-    assert response.status_code == 200
     mock_verify_token.assert_called_once_with("reject_token_456")
-    mock_complete.assert_called_once()
+    mock_complete.assert_called_once_with(
+        review_id="review456", status="rejected", feedback=None
+    )
 
 
-@patch("src.api.routes.slack.verify_review_token")
-@patch("src.api.routes.slack.complete_review")
-def test_interactivity_invalid_token(mock_complete, mock_verify_token):
+@pytest.mark.asyncio
+@patch("src.memory.reviewer.complete_review", new_callable=AsyncMock)
+@patch("src.security.tokens.verify_review_token")
+async def test_handle_revise_calls_complete_review(
+    mock_verify_token: object, mock_complete: AsyncMock
+) -> None:
+    mock_verify_token.return_value = {"review_id": "review789", "reviewer_id": "U789"}
+    action = {"value": "revise_token_789"}
+
+    await _handle_review_action(action, "revise_review")
+
+    mock_verify_token.assert_called_once_with("revise_token_789")
+    mock_complete.assert_called_once_with(
+        review_id="review789", status="needs_changes", feedback=None
+    )
+
+
+@pytest.mark.asyncio
+@patch("src.memory.reviewer.complete_review", new_callable=AsyncMock)
+@patch("src.security.tokens.verify_review_token")
+async def test_invalid_token_skips_complete_review(
+    mock_verify_token: object, mock_complete: AsyncMock
+) -> None:
     mock_verify_token.return_value = None
+    action = {"value": "invalid_token"}
 
-    payload = {
-        "type": "block_actions",
-        "user": {"id": "U123"},
-        "actions": [
-            {
-                "action_id": "approve_review",
-                "value": "invalid_token",
-            }
-        ],
-    }
+    await _handle_review_action(action, "approve_review")
 
-    response = client.post(
-        "/api/slack/interactivity",
-        data={"payload": json.dumps(payload)},
-    )
-
-    assert response.status_code == 200
     mock_complete.assert_not_called()
-
-
-def test_interactivity_unknown_action_type():
-    payload = {
-        "type": "message_action",
-        "user": {"id": "U123"},
-    }
-
-    response = client.post(
-        "/api/slack/interactivity",
-        data={"payload": json.dumps(payload)},
-    )
-
-    assert response.status_code == 200
