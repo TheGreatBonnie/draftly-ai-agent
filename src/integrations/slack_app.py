@@ -11,6 +11,7 @@ from slack_bolt.app.async_app import AsyncApp
 from src.config import settings
 from src.integrations.slack import add_reaction
 from src.integrations.slack_conversation import conversation_store
+from src.integrations.slack_feedback import handle_feedback
 from src.integrations.slack_store import CockroachInstallationStore
 
 bolt_logger = logging.getLogger("slack_bolt")
@@ -146,3 +147,8 @@ async def _handle_review_action(action: dict, action_id: str) -> None:
         )
 
     struct_logger.info(f"slack_review_{decision}", review_id=review_id)
+
+
+@slack_app.action("draftly_feedback")
+async def handle_draftly_feedback(ack: Any, action: dict, body: dict) -> None:
+    await handle_feedback(ack, action, body)
