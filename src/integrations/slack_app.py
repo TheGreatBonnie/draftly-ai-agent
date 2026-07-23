@@ -9,6 +9,7 @@ import structlog
 from slack_bolt.app.async_app import AsyncApp
 
 from src.config import settings
+from src.integrations.slack import add_reaction
 from src.integrations.slack_conversation import conversation_store
 from src.integrations.slack_store import CockroachInstallationStore
 
@@ -53,6 +54,8 @@ async def _dispatch_message(event: dict, context: dict) -> None:
     clean_text = text.replace(f"<@{bot_user_id}>", "").strip()
     if not clean_text:
         return
+
+    await add_reaction(channel, ts, "eyes")
 
     history = await conversation_store.get_history(channel, thread_ts)
     await conversation_store.add_message(channel, thread_ts, "user", clean_text)
