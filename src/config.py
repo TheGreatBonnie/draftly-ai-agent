@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # Slack
     slack_bot_token: SecretStr = SecretStr("")
     slack_signing_secret: SecretStr = SecretStr("")
+    slack_app_token: SecretStr = SecretStr("")
     slack_client_id: str = ""
     slack_client_secret: SecretStr = SecretStr("")
     slack_redirect_uri: str = "https://grit-flagstone-recreate.ngrok-free.dev/api/slack/oauth/callback"
