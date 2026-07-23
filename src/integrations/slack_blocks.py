@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from src.integrations.markdown_to_slack import markdown_to_rich_text_blocks
+
 
 def _truncate_draft(content: str, max_chars: int = 500) -> str:
     """Truncate draft content to max_chars at a word boundary."""
@@ -142,4 +144,49 @@ def build_review_notification_card(
             },
         ],
         "text": f"Documentation Review Required: {title}",
+    }
+
+
+def build_published_doc_card(
+    title: str,
+    doc_type: str,
+    confidence: float,
+    content: str,
+) -> dict:
+    """Build a Block Kit payload for a published documentation reply."""
+    rich_text_elements = markdown_to_rich_text_blocks(content)
+
+    return {
+        "text": f"Documentation Published: {title} ({doc_type}, {confidence:.0%} confidence)",
+        "blocks": [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": "\U0001f4da Documentation Published",
+                },
+            },
+            {
+                "type": "section",
+                "fields": [
+                    {"type": "mrkdwn", "text": f"*Title:* {title}"},
+                    {"type": "mrkdwn", "text": f"*Type:* {doc_type}"},
+                    {"type": "mrkdwn", "text": f"*Confidence:* {confidence:.0%}"},
+                ],
+            },
+            {
+                "type": "rich_text",
+                "elements": rich_text_elements,
+            },
+            {"type": "divider"},
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "Published by <https://draftly.ai|Draftly>",
+                    },
+                ],
+            },
+        ],
     }

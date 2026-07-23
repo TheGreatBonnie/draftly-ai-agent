@@ -1,4 +1,4 @@
-from src.integrations.slack_blocks import build_review_notification_card
+from src.integrations.slack_blocks import build_published_doc_card, build_review_notification_card
 
 
 def test_build_review_notification_card_returns_valid_structure():
@@ -138,3 +138,101 @@ def test_build_review_notification_card_includes_feedback_dropdown():
     assert section["accessory"]["type"] == "static_select"
     assert section["accessory"]["action_id"] == "feedback_select"
     assert len(section["accessory"]["options"]) == 5
+
+
+def test_build_published_doc_card_returns_valid_structure():
+    card = build_published_doc_card(
+        title="SSO Setup Guide",
+        doc_type="howto",
+        confidence=0.92,
+        content="# SSO Setup\n\nFollow these steps to configure SSO.",
+    )
+
+    assert "blocks" in card
+    assert "text" in card
+    assert card["text"].startswith("Documentation Published:")
+    assert "SSO Setup Guide" in card["text"]
+
+
+def test_build_published_doc_card_includes_header():
+    card = build_published_doc_card(
+        title="Test",
+        doc_type="guide",
+        confidence=0.8,
+        content="content",
+    )
+
+    header = card["blocks"][0]
+    assert header["type"] == "header"
+    assert "Documentation Published" in header["text"]["text"]
+
+
+def test_build_published_doc_card_includes_metadata():
+    card = build_published_doc_card(
+        title="My Doc",
+        doc_type="reference",
+        confidence=0.75,
+        content="content",
+    )
+
+    section = card["blocks"][1]
+    assert section["type"] == "section"
+    assert len(section["fields"]) == 3
+    assert "My Doc" in section["fields"][0]["text"]
+    assert "reference" in section["fields"][1]["text"]
+    assert "75%" in section["fields"][2]["text"]
+
+
+def test_build_published_doc_card_includes_rich_text_block():
+    card = build_published_doc_card(
+        title="Test",
+        doc_type="howto",
+        confidence=0.9,
+        content="# Heading\n\nParagraph text.",
+    )
+
+    rich_text_block = card["blocks"][2]
+    assert rich_text_block["type"] == "rich_text"
+    assert "elements" in rich_text_block
+    assert len(rich_text_block["elements"]) > 0
+
+
+def test_build_published_doc_card_rich_text_renders_markdown():
+    content = "# Title\n\nSome **bold** text.\n\n- item one\n- item two"
+    card = build_published_doc_card(
+        title="Test",
+        doc_type="howto",
+        confidence=0.9,
+        content=content,
+    )
+
+    rich_text_block = card["blocks"][2]
+    types = [el["type"] for el in rich_text_block["elements"]]
+    assert "rich_text_section" in types
+    assert "rich_text_list" in types
+
+
+def test_build_published_doc_card_includes_footer():
+    card = build_published_doc_card(
+        title="Test",
+        doc_type="howto",
+        confidence=0.9,
+        content="content",
+    )
+
+    footer = card["blocks"][-1]
+    assert footer["type"] == "context"
+    assert "Draftly" in footer["elements"][0]["text"]
+
+
+def test_build_published_doc_card_text_is_summary_not_content():
+    long_content = "x" * 5000
+    card = build_published_doc_card(
+        title="Test",
+        doc_type="howto",
+        confidence=0.9,
+        content=long_content,
+    )
+
+    assert len(card["text"]) < 200
+    assert card["text"].startswith("Documentation Published:")

@@ -65,11 +65,18 @@ async def _reply_to_github(state: DocumentationState, metadata: dict) -> None:
 async def _reply_to_slack(state: DocumentationState, metadata: dict) -> None:
     """Reply to a Slack thread with generated documentation."""
     from src.integrations.slack import send_slack_message
+    from src.integrations.slack_blocks import build_published_doc_card
 
     channel = metadata["channel"]
     thread_ts = metadata.get("thread_ts")
     team_id = metadata.get("team_id")
-    body = _build_reply_body(state)
+
+    card = build_published_doc_card(
+        title=state.get("draft_title", "Untitled"),
+        doc_type=state.get("doc_type", "unknown"),
+        confidence=state.get("confidence_score", 0),
+        content=state.get("draft_content", ""),
+    )
 
     token = None
     if team_id:
@@ -81,7 +88,13 @@ async def _reply_to_slack(state: DocumentationState, metadata: dict) -> None:
         if bot:
             token = bot.bot_token
 
-    await send_slack_message(channel=channel, text=body, thread_ts=thread_ts, token=token)
+    await send_slack_message(
+        channel=channel,
+        text=card["text"],
+        blocks=card["blocks"],
+        thread_ts=thread_ts,
+        token=token,
+    )
 
     logger.info("reply_posted_slack", channel=channel, thread_ts=thread_ts)
 
