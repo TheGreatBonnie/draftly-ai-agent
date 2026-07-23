@@ -12,6 +12,7 @@ from src.config import settings
 from src.integrations.slack import add_reaction
 from src.integrations.slack_conversation import conversation_store
 from src.integrations.slack_feedback import handle_feedback
+from src.integrations.slack_home import build_app_home
 from src.integrations.slack_store import CockroachInstallationStore
 
 bolt_logger = logging.getLogger("slack_bolt")
@@ -40,6 +41,29 @@ async def handle_message(event: dict, context: dict, logger: Any) -> None:
     if not channel.startswith("D"):
         return
     await _dispatch_message(event, context)
+
+
+@slack_app.event("app_home_opened")
+async def handle_app_home_opened(client: Any, event: dict, logger: Any) -> None:
+    """Publish App Home view when user opens the Home tab."""
+    tab = event.get("tab", "")
+    if tab != "home":
+        return
+
+    user_id = event.get("user", "")
+    team_id = event.get("view", {}).get("team_id", "")
+
+    team_name = ""
+    if team_id:
+        installation = await installation_store.async_find_installation(None, team_id)
+        if installation:
+            team_name = installation.team_name or ""
+
+    view = build_app_home(team_name=team_name)
+    try:
+        await client.views_publish(user_id=user_id, view=view)
+    except Exception:
+        logger.debug("views_publish_failed")
 
 
 async def _dispatch_message(event: dict, context: dict) -> None:
