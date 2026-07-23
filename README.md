@@ -48,6 +48,9 @@ uv run python scripts/seed_demo_data.py
 # Start the API + dashboard
 uv run uvicorn src.api.app:app --reload
 
+# Or start everything (API + Slack socket mode if configured)
+uv run python main.py
+
 # Test via CLI
 uv run python -m src.cli.draftly "How do I configure CockroachDB MCP?"
 ```
@@ -80,6 +83,9 @@ docker compose up
 
 # Backend only (requires external CockroachDB)
 uv run uvicorn src.api.app:app --reload
+
+# Or start everything (API + Slack socket mode if configured)
+uv run python main.py
 
 # Run tests
 uv run pytest
