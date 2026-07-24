@@ -266,3 +266,65 @@ async def link_slack_installation(team_id: str, org_id: str) -> bool:
     )
     logger.info("slack_installation_linked", team_id=team_id, org_id=org_id)
     return True
+
+
+# --- Discord ---
+
+
+async def get_org_by_discord(guild_id: str) -> dict | None:
+    """Find organization by Discord guild_id."""
+    row = await fetch_one(
+        """SELECT clerk_org_id as id, clerk_org_name as name, discord_guild_id
+           FROM organizations WHERE discord_guild_id = $1""",
+        guild_id,
+    )
+    return dict(row) if row else None
+
+
+async def store_discord_workflow(
+    org_id: str,
+    workflow_id: str,
+    channel_id: str,
+    message_id: str,
+    thread_id: str | None = None,
+    source_message: str = "",
+) -> str:
+    """Store a Discord workflow for tracking."""
+    row = await fetch_one(
+        """INSERT INTO discord_workflows
+           (org_id, workflow_run_id, discord_channel_id, discord_message_id,
+            discord_thread_id, source_message)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id::text""",
+        org_id,
+        workflow_id,
+        channel_id,
+        message_id,
+        thread_id,
+        source_message,
+    )
+    logger.info("discord_workflow_stored", org_id=org_id, workflow_id=workflow_id)
+    return row["id"]
+
+
+async def update_discord_workflow_status(workflow_id: str, status: str) -> None:
+    """Update Discord workflow status."""
+    from src.database import execute
+
+    await execute(
+        """UPDATE discord_workflows
+           SET status = $1,
+               updated_at = now()
+           WHERE workflow_run_id = $2""",
+        status,
+        workflow_id,
+    )
+
+
+async def is_discord_message_processed(message_id: str) -> bool:
+    """Check if a Discord message has already been processed (dedup guard)."""
+    row = await fetch_one(
+        """SELECT id FROM discord_workflows
+           WHERE discord_message_id = $1 AND status IN ('running', 'completed')""",
+        message_id,
+    )
+    return row is not None

@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     # Discord
     discord_bot_token: SecretStr = SecretStr("")
     discord_public_key: SecretStr = SecretStr("")
+    discord_guild_id: str = ""
+    discord_app_id: str = ""
 
     # GitHub (Personal Access Token)
     github_token: SecretStr = SecretStr("")

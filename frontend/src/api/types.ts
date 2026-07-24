@@ -162,3 +162,12 @@ export interface SlackInstallation {
   updated_at: string;
   org_name: string;
 }
+
+export interface DiscordStatus {
+  connected: boolean;
+  guild_id: string | null;
+}
+
+export interface DiscordInviteUrl {
+  invite_url: string;
+}

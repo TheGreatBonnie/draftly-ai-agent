@@ -4,11 +4,14 @@ import json
 
 import structlog
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from src.agents.runners.resume import resume_review
+from src.api.auth import get_verified_token
 from src.config import settings
+from src.database import execute, fetch_one
 from src.integrations.discord_interactions import resolve_interaction_token
 from src.memory.reviewer import complete_review
 from src.security.tokens import verify_review_token
@@ -184,3 +187,63 @@ async def handle_interactions(request: Request) -> JSONResponse:
         return JSONResponse(content=_build_result_response(action, title))
 
     return JSONResponse(status_code=400, content={"error": "Unknown interaction type"})
+
+
+# --- Settings endpoints ---
+
+
+class LinkDiscordRequest(BaseModel):
+    guild_id: str
+
+
+@router.get("/invite-url")
+async def discord_invite_url():
+    """Return the Discord bot invite URL with required permissions."""
+    app_id = settings.discord_app_id
+    if not app_id:
+        raise HTTPException(status_code=500, detail="Discord app ID not configured")
+    # Permissions: Send Messages (2048) + Send Messages in Threads (32768) = 34816
+    invite_url = (
+        f"https://discord.com/api/oauth2/authorize"
+        f"?client_id={app_id}"
+        f"&permissions=34816"
+        f"&scope=bot"
+    )
+    return {"invite_url": invite_url}
+
+
+@router.post("/link")
+async def link_discord(
+    request: LinkDiscordRequest,
+    token: dict = Depends(get_verified_token),
+):
+    """Link a Discord guild to the current Clerk organization."""
+    org_id = token.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    await execute(
+        "UPDATE organizations SET discord_guild_id = $1 WHERE clerk_org_id = $2",
+        request.guild_id,
+        org_id,
+    )
+    logger.info("discord_linked", org_id=org_id, guild_id=request.guild_id)
+    return {"status": "linked", "guild_id": request.guild_id}
+
+
+@router.get("/status")
+async def discord_status(token: dict = Depends(get_verified_token)):
+    """Return the Discord connection status for the current org."""
+    org_id = token.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    row = await fetch_one(
+        "SELECT discord_guild_id FROM organizations WHERE clerk_org_id = $1",
+        org_id,
+    )
+    connected = bool(row and row["discord_guild_id"])
+    return {
+        "connected": connected,
+        "guild_id": row["discord_guild_id"] if row else None,
+    }

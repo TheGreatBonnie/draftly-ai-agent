@@ -24,8 +24,25 @@ from src.database import close_pool, get_pool
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import asyncio
+
+    from src.config import settings
+    from src.integrations.discord_gateway import gateway
+
     await get_pool()
+
+    # Start Discord Gateway WebSocket in background if configured
+    discord_task = None
+    if settings.discord_bot_token.get_secret_value():
+        discord_task = asyncio.create_task(gateway.start())
+
     yield
+
+    # Stop Discord Gateway on shutdown
+    await gateway.stop()
+    if discord_task:
+        discord_task.cancel()
+
     await close_pool()
 
 
