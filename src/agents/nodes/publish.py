@@ -102,8 +102,8 @@ async def _reply_to_slack(state: DocumentationState, metadata: dict) -> None:
 _DISCORD_MAX_LENGTH = 2000
 
 
-def _build_discord_reply_body(state: DocumentationState) -> str:
-    """Build a reply body that fits within Discord's message character limit."""
+def _build_discord_reply_chunks(state: DocumentationState) -> list[str]:
+    """Build reply messages that fit within Discord's message character limit."""
     title = state.get("draft_title", "Untitled")
     doc_type = state.get("doc_type", "unknown")
     confidence = state.get("confidence_score", 0)
@@ -122,16 +122,53 @@ def _build_discord_reply_body(state: DocumentationState) -> str:
         "[Draftly](https://draftly.ai).*"
     )
 
-    body = header + content + footer
-    if len(body) <= _DISCORD_MAX_LENGTH:
-        return body
+    # Single message fits
+    full_body = header + content + footer
+    if len(full_body) <= _DISCORD_MAX_LENGTH:
+        return [full_body]
 
-    truncation_notice = "\n\n*(truncated — full docs on dashboard)*"
-    available = _DISCORD_MAX_LENGTH - len(header) - len(footer) - len(truncation_notice)
-    if available < 200:
-        return header + content[: _DISCORD_MAX_LENGTH - len(header) - len(footer)] + footer
-    truncated_content = content[:available] + truncation_notice
-    return header + truncated_content + footer
+    # Split content at paragraph boundaries and pack into messages
+    paragraphs = content.split("\n\n")
+    messages: list[str] = []
+    current = header
+
+    for para in paragraphs:
+        sep = "" if current == header else "\n\n"
+        addition = sep + para
+        if len(current) + len(addition) <= _DISCORD_MAX_LENGTH:
+            current += addition
+        else:
+            # Flush current message
+            if current != header:
+                messages.append(current)
+            # If single paragraph exceeds limit, hard-split it
+            if len(para) > _DISCORD_MAX_LENGTH:
+                remaining_para = para
+                while remaining_para:
+                    chunk = remaining_para[:_DISCORD_MAX_LENGTH]
+                    remaining_para = remaining_para[_DISCORD_MAX_LENGTH:]
+                    if remaining_para:
+                        messages.append(chunk)
+                    else:
+                        current = chunk
+            else:
+                current = para
+
+    # Append footer to last message (or start a new one if it won't fit)
+    if current:
+        if len(current) + len(footer) <= _DISCORD_MAX_LENGTH:
+            messages.append(current + footer)
+        else:
+            messages.append(current)
+            messages.append(footer)
+    elif messages:
+        last = messages[-1]
+        if len(last) + len(footer) <= _DISCORD_MAX_LENGTH:
+            messages[-1] = last + footer
+        else:
+            messages.append(footer)
+
+    return messages
 
 
 async def _reply_to_discord(state: DocumentationState, metadata: dict) -> None:
@@ -144,20 +181,21 @@ async def _reply_to_discord(state: DocumentationState, metadata: dict) -> None:
         return
 
     thread_id = str(raw_thread_id)
-    body = _build_discord_reply_body(state)
+    chunks = _build_discord_reply_chunks(state)
 
     logger.info(
         "discord_reply_target",
         thread_id=thread_id,
-        body_length=len(body),
+        chunk_count=len(chunks),
+        total_length=sum(len(c) for c in chunks),
         metadata_thread_id=metadata.get("thread_id"),
         metadata_channel_id=metadata.get("channel_id"),
         metadata_message_id=metadata.get("message_id"),
     )
 
-    await send_discord_thread_reply(thread_id=thread_id, content=body)
-
-    logger.info("reply_posted_discord", thread_id=thread_id)
+    for i, chunk in enumerate(chunks):
+        await send_discord_thread_reply(thread_id=thread_id, content=chunk)
+        logger.info("discord_reply_chunk_sent", thread_id=thread_id, chunk=i + 1, total=len(chunks))
 
 
 async def publish_node(state: DocumentationState) -> dict:
