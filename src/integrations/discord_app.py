@@ -134,8 +134,21 @@ async def handle_message_create(data: dict) -> None:
         )
         if new_thread.get("id"):
             reply_to = new_thread["id"]
+            logger.info(
+                "discord_thread_created",
+                thread_id=reply_to,
+                channel_id=channel_id,
+                message_id=message_id,
+            )
     except Exception:
         logger.warning("discord_thread_create_failed", channel_id=channel_id)
+
+    logger.info(
+        "discord_pipeline_dispatching",
+        reply_to=reply_to,
+        channel_id=channel_id,
+        message_id=message_id,
+    )
 
     asyncio.create_task(
         _run_pipeline(guild_id, channel_id, message_id, reply_to, clean_text, user_id)

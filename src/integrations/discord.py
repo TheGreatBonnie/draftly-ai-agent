@@ -100,6 +100,14 @@ async def send_discord_thread_reply(thread_id: str, content: str) -> dict:
             json=payload,
             timeout=10,
         )
+        if resp.status_code not in (200, 201):
+            logger.error(
+                "discord_thread_reply_failed",
+                thread_id=thread_id,
+                status=resp.status_code,
+                body=resp.text,
+            )
+        resp.raise_for_status()
         return resp.json()
 
 
@@ -118,5 +126,12 @@ async def create_thread_from_message(
             timeout=10,
         )
         if resp.status_code not in (200, 201):
-            logger.error("discord_thread_create_failed", status=resp.status_code, body=resp.text)
+            logger.error(
+                "discord_thread_create_failed",
+                channel_id=channel_id,
+                message_id=message_id,
+                status=resp.status_code,
+                body=resp.text,
+            )
+            resp.raise_for_status()
         return resp.json()
