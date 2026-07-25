@@ -52,7 +52,7 @@
         ▼                     ▼                     ▼
 ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
 │  CockroachDB  │   │  LLM APIs     │   │  Review       │
-│  (13 tables)  │   │  (Requesty)   │   │  Dashboard    │
+│  (17 tables)  │   │  (Requesty)   │   │  Dashboard    │
 └───────────────┘   └───────────────┘   └───────────────┘
 ```
 
@@ -138,6 +138,8 @@
 - `skills/` — 5 research skills (api_question, configuration, troubleshooting, tutorial, conceptual)
 - `planners/investigation.py` — Task-based investigation plan generator
 - `runners/github_runner.py` — Full GitHub issue pipeline orchestrator
+- `runners/slack_runner.py` — Full Slack thread pipeline orchestrator
+- `runners/discord_runner.py` — Full Discord @mention pipeline orchestrator
 - `runners/resume.py` — Graph resume after human review decision
 - `middleware/rubric.py` — Iterative rubric grading logic
 - `tools/` — LangChain tool definitions:
@@ -160,7 +162,20 @@
 ### Integrations (`src/integrations/`)
 - `slack.py` — Slack API (messages, DMs, reactions)
 - `slack_blocks.py` — Slack Block Kit interactive review cards (approve/reject/revise buttons)
-- `discord.py` — Discord API (messages, thread replies)
+- `slack_app.py` — Slack Bolt app setup and event routing
+- `slack_socket.py` — Slack Socket Mode WebSocket connection for real-time events
+- `slack_conversation.py` — Thread-aware bot conversation memory
+- `slack_feedback.py` — Slack feedback collection
+- `slack_home.py` — Slack Home tab setup
+- `slack_mcp.py` — MCP server for Slack data access
+- `slack_status.py` — Slack status management
+- `slack_store.py` — CockroachDB-backed Bolt installation store
+- `markdown_to_slack.py` — Markdown to Slack mrkdwn conversion
+- `discord.py` — Discord REST API (messages, thread replies, reactions)
+- `discord_app.py` — Discord Gateway event handler (MESSAGE_CREATE processing)
+- `discord_gateway.py` — Discord Gateway WebSocket client (persistent connection, auto-reconnect)
+- `discord_blocks.py` — Discord interactive review cards (embeds, buttons, select menus)
+- `discord_interactions.py` — Discord interaction token mapping for review actions
 - `github.py` — GitHub REST API (comments, issues)
 - `github_app.py` — GitHub App auth (JWT, installation tokens, webhook verification)
 - `email.py` — SendGrid email with HTML templates (review notifications with action buttons)
@@ -175,6 +190,7 @@
   - `reviewers.py` — Reviewer CRUD + org member listing + self-registration
   - `github.py` — GitHub App install + webhook handler
   - `slack.py` — Slack interactivity handler (Block Kit button clicks)
+  - `discord.py` — Discord interaction handler (component clicks) + settings (guild link, trigger channels, invite URL)
   - `knowledge.py` — Knowledge base management (URL import, doc CRUD)
   - `memory.py` — Memory stats + semantic search
   - `docs.py` — Documentation listing and detail
@@ -212,9 +228,9 @@
 
 ### Database
 - **CockroachDB** with distributed vector index (C-SPANN)
-- 13 tables (see SCHEMA.md for full schema)
+- 17 tables (see SCHEMA.md for full schema)
 - Vector embeddings: 3072 dimensions via Requesty/OpenAI
-- 7 applied migrations (002–008)
+- 11 applied migrations (002–012)
 
 ### Deployment
 - **Docker**: Multi-stage build (Node frontend → Python runtime)

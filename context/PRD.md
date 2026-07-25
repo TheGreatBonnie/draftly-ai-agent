@@ -30,7 +30,9 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 
 ### Integrations
 - Slack API client with Block Kit interactive review cards (approve/reject/revise buttons)
-- Discord API client for messages and thread replies
+- Slack Socket Mode for real-time event handling
+- Discord Gateway WebSocket for real-time @mention events
+- Discord API client for messages, thread creation, and interactive review buttons
 - GitHub App integration (JWT auth, installation tokens, webhook verification, issue-triggered pipelines)
 - GitHub REST API client (PAT-based, for direct comments/issues)
 - SendGrid email with HTML templates for review notifications
@@ -78,9 +80,9 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 
 ## Database
 
-- 13 CockroachDB tables (see SCHEMA.md for full schema)
+- 17 CockroachDB tables (see SCHEMA.md for full schema)
 - Multi-tenant isolation via `org_id` referencing `organizations(clerk_org_id)`
-- 7 applied migrations (002–008): reviewers, GitHub tables, thread_id on reviews, notification toggles, Clerk tables, Clerk org ID as PK, reviewer Clerk user linking
+- 11 applied migrations (002–012): reviewers, GitHub tables, thread_id on reviews, notification toggles, Clerk tables, Clerk org ID as PK, reviewer Clerk user linking, Slack tables, Slack conversations, Discord workflows, Discord trigger channels
 
 ## Success Metrics
 

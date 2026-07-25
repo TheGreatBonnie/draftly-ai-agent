@@ -66,7 +66,13 @@ Multi-layered memory architecture for organizational knowledge persistence.
 |-------------|-------------|----------|
 | **Slack** | Send messages with Block Kit, DMs, reactions | `src/integrations/slack.py` |
 | **Slack Block Kit** | Interactive review cards with approve/reject/revise buttons, feedback dropdown | `src/integrations/slack_blocks.py` |
+| **Slack Socket Mode** | WebSocket connection for real-time Slack events | `src/integrations/slack_socket.py` |
+| **Slack Conversation Memory** | Thread-aware bot conversation history | `src/integrations/slack_conversation.py` |
 | **Discord** | Send messages, thread replies via Discord API v10 | `src/integrations/discord.py` |
+| **Discord App** | Gateway event handler (MESSAGE_CREATE, reaction routing) | `src/integrations/discord_app.py` |
+| **Discord Gateway** | Persistent WebSocket client, auto-reconnect, exponential backoff | `src/integrations/discord_gateway.py` |
+| **Discord Blocks** | Interactive review cards with buttons and select menus | `src/integrations/discord_blocks.py` |
+| **Discord Interactions** | Interaction token mapping for review actions | `src/integrations/discord_interactions.py` |
 | **GitHub REST API** | Post comments, fetch issues (PAT-based) | `src/integrations/github.py` |
 | **GitHub App** | JWT auth, installation tokens, webhook verification, issue-triggered pipelines | `src/integrations/github_app.py` |
 | **SendGrid Email** | HTML templates for review notifications with action buttons | `src/integrations/email.py` |
@@ -98,6 +104,7 @@ Multi-layered memory architecture for organizational knowledge persistence.
 | `/api/memory` | GET stats, GET search | Memory stats + semantic search | `src/api/routes/memory.py` |
 | `/api/github` | Install, link, webhook, callback | GitHub App integration flow | `src/api/routes/github.py` |
 | `/api/slack` | POST interactivity | Slack Block Kit button handler | `src/api/routes/slack.py` |
+| `/api/discord` | POST interactions, GET invite-url, GET/POST guild-link, GET/POST trigger-channels | Discord interaction handler + settings | `src/api/routes/discord.py` |
 | `/api/clerk` | POST webhook | Clerk event handler | `src/api/routes/clerk.py` |
 
 ---
@@ -118,7 +125,7 @@ React 19 + TypeScript + Vite 8 + TailwindCSS 4 SPA with Clerk auth.
 | Docs | `/docs` | Documentation browser with status badges | `frontend/src/pages/Docs.tsx` | 
 | Knowledge | `/knowledge` | URL import, document upload, CRUD | `frontend/src/pages/Knowledge.tsx` |
 | Memory | `/memory` | Stats dashboard + semantic search | `frontend/src/pages/Memory.tsx` |
-| Settings | `/settings` | Org switching, team roles, GitHub App connection | `frontend/src/pages/Settings.tsx` |
+| Settings | `/settings` | Org switching, team roles, GitHub App connection, Discord integration | `frontend/src/pages/Settings.tsx` |
 
 ### Components
 
@@ -170,8 +177,8 @@ React 19 + TypeScript + Vite 8 + TailwindCSS 4 SPA with Clerk auth.
 
 | Feature | Description | Location |
 |---------|-------------|----------|
-| 13-table schema | Multi-tenant with vector index support | `infrastructure/cockroachdb/schema.sql` |
-| 7 migrations | Schema evolution (002-008) | `infrastructure/cockroachdb/migrations/` |
+| 17-table schema | Multi-tenant with vector index support | `infrastructure/cockroachdb/schema.sql` |
+| 11 migrations | Schema evolution (002-012) | `infrastructure/cockroachdb/migrations/` |
 | Vector index | 3072-dim embeddings via C-SPANN | `src/memory/vector_store.py` |
 
 ### Docker
@@ -181,7 +188,7 @@ React 19 + TypeScript + Vite 8 + TailwindCSS 4 SPA with Clerk auth.
 | Multi-stage build | Node frontend → Python runtime | `Dockerfile` |
 | Docker Compose | Local dev (app + CockroachDB) | `docker-compose.yml` |
 
-### CI/CD (GitHub Actions)
+### CI/CD (❌ Not Implemented)
 
 | Pipeline | Description | Location |
 |----------|-------------|----------|
@@ -199,7 +206,7 @@ React 19 + TypeScript + Vite 8 + TailwindCSS 4 SPA with Clerk auth.
 
 ## Tests (✅ Implemented)
 
-16 test files covering core functionality.
+35 test files covering core functionality.
 
 | Test File | Coverage Area | Location |
 |-----------|---------------|----------|
@@ -218,6 +225,16 @@ React 19 + TypeScript + Vite 8 + TailwindCSS 4 SPA with Clerk auth.
 | `test_slack_interactivity.py` | Slack interactivity endpoint | `tests/api/` |
 | `test_slack_blocks.py` | Slack Block Kit card builder | `tests/integrations/` |
 | `test_slack_blocks_param.py` | Slack message sending with blocks | `tests/integrations/` |
+| `test_slack_socket.py` | Slack Socket Mode WebSocket client | `tests/integrations/` |
+| `test_slack_conversation.py` | Thread-aware bot conversation memory | `tests/integrations/` |
+| `test_discord.py` | Discord REST API (messages, threads, reactions) | `tests/integrations/` |
+| `test_discord_app.py` | Discord Gateway event handler (MESSAGE_CREATE) | `tests/integrations/` |
+| `test_discord_gateway.py` | Discord Gateway WebSocket client (Identify, reconnect) | `tests/integrations/` |
+| `test_discord_blocks.py` | Discord interactive review cards (embeds, buttons) | `tests/integrations/` |
+| `test_discord_runner.py` | Discord pipeline orchestrator | `tests/` |
+| `test_discord_interactions.py` | Discord interaction token mapping | `tests/integrations/` |
+| `test_discord_route.py` | Discord interaction handler + settings routes | `tests/api/` |
+| `test_discord_publish.py` | Discord publish node (multi-message chunking) | `tests/` |
 
 ---
 

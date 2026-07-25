@@ -54,6 +54,7 @@ Draftly uses a minimal, functional design focused on readability and efficiency.
 - Organization section: Clerk `OrganizationSwitcher`, active org name + role display
 - Team Roles section (admin only): list org members with role dropdown (Member / Reviewer / Admin)
 - GitHub Integration section: install GitHub App button, list connected orgs with repo counts
+- Discord Integration section: Guild ID input + Link button, trigger channel selector (multi-select), invite URL display with permissions (36932), Copy button
 
 ## Routes
 

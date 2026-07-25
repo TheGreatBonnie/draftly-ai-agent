@@ -28,9 +28,12 @@ uv run pytest                                    # tests (asyncio_mode=auto)
 - **Frontend** is a React 19 SPA in `frontend/`, served by FastAPI from `frontend/dist/`. Not Jinja2 templates
 - **LangGraph graph** lives in `src/agents/graph.py`. 8 nodes with conditional rubric-based routing. HITL via `interrupt()` + `Command(resume=...)`
 - **Auth**: Clerk JWT verification (`src/api/auth.py`). HMAC tokens for quick review actions (`src/security/tokens.py`)
-- **DB migrations**: Manual SQL files in `infrastructure/cockroachdb/migrations/`. No migration runner — applied via `scripts/init_db.py` or manually
+- **DB migrations**: Manual SQL files in `infrastructure/cockroachdb/migrations/`. No migration runner — applied via `scripts/init_db.py` or manually. 11 migrations (002–012)
 - **Embeddings**: 3072-dimension vectors. Vector index created dynamically by `AsyncCockroachDBVectorStore.aapply_vector_index()`
 - **Org FK references**: All child tables reference `organizations(clerk_org_id)` (STRING), not `organizations(id)` (UUID). This was changed in migration 007
+- **Discord Gateway**: Persistent WebSocket connection to Discord for real-time MESSAGE_CREATE events. Auto-reconnects with exponential backoff. Runs alongside uvicorn in `main.py`
+- **Slack Socket Mode**: WebSocket connection for real-time Slack events. Enabled via `SLACK_APP_TOKEN`. Runs alongside uvicorn in `main.py`
+- **Discord integrations**: `discord.py` (REST API), `discord_app.py` (event handler), `discord_gateway.py` (WebSocket), `discord_blocks.py` (interactive cards), `discord_interactions.py` (token mapping)
 
 ## Gotchas
 
@@ -42,7 +45,7 @@ uv run pytest                                    # tests (asyncio_mode=auto)
 
 ## Context Files
 
-- `context/SCHEMA.md` — 13-table database schema
+- `context/SCHEMA.md` — 17-table database schema
 - `context/ARCHITECTURE.md` — system architecture and component map
 - `context/PRD.md` — product requirements
 - `context/DESIGN.md` — frontend design system (React + TailwindCSS)

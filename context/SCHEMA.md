@@ -2,7 +2,7 @@
 
 ## Overview
 
-Draftly uses CockroachDB with distributed vector index for semantic search. The schema supports multi-tenant architecture with **15 tables**. All foreign key references to the parent `organizations` table use the Clerk org ID (`clerk_org_id`) as the linkage column rather than the internal UUID primary key.
+Draftly uses CockroachDB with distributed vector index for semantic search. The schema supports multi-tenant architecture with **17 tables** (15 base + 2 added via migrations). All foreign key references to the parent `organizations` table use the Clerk org ID (`clerk_org_id`) as the linkage column rather than the internal UUID primary key.
 
 ## Entity Relationship Diagram
 
@@ -52,6 +52,7 @@ Draftly uses CockroachDB with distributed vector index for semantic search. The 
 | clerk_org_name | STRING | NOT NULL |
 | slack_workspace_id | STRING | |
 | discord_guild_id | STRING | |
+| discord_trigger_channels | JSONB | DEFAULT '[]' |
 | github_org | STRING | |
 | created_at | TIMESTAMPTZ | DEFAULT now() |
 
@@ -325,6 +326,47 @@ Tracks LangGraph pipeline runs triggered by Slack messages. Links to `agent_work
 - `idx_slack_workflows_status` ON (status)
 - `idx_slack_workflows_thread` ON (channel_id, thread_ts)
 
+### 16. slack_conversations (Thread-Aware Bot Memory)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| channel_id | STRING | NOT NULL |
+| thread_ts | STRING | NOT NULL |
+| role | STRING | NOT NULL, CHECK (role IN ('user', 'assistant')) |
+| content | TEXT | NOT NULL |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+
+Stores Slack conversation history for thread-aware bot responses. Enables the bot to maintain context across multiple messages in a thread.
+
+**Indexes:**
+- `idx_slack_conversations_thread` ON (channel_id, thread_ts, created_at)
+- `idx_slack_conversations_cleanup` ON (created_at)
+
+### 17. discord_workflows (Pipeline Runs Triggered by Discord)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| workflow_id | UUID | NOT NULL |
+| discord_channel_id | STRING | NOT NULL |
+| discord_message_id | STRING | NOT NULL |
+| discord_thread_id | STRING | |
+| source_message | TEXT | |
+| status | STRING | DEFAULT 'pending', CHECK (status IN ('pending', 'running', 'completed', 'failed')) |
+| workflow_run_id | UUID | |
+| report_id | UUID | |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| completed_at | TIMESTAMPTZ | |
+
+Tracks LangGraph pipeline runs triggered by Discord @mention messages. Links to `agent_workflows` via `workflow_id`.
+
+**Indexes:**
+- `idx_discord_workflows_org` ON (org_id)
+- `idx_discord_workflows_status` ON (status)
+- `idx_discord_workflows_message` ON (discord_message_id)
+
 ## Migrations
 
 Applied migrations in order:
@@ -339,3 +381,6 @@ Applied migrations in order:
 | 007_use_clerk_org_id_as_pk | Converts all `org_id` FK references from `organizations(id)` to `organizations(clerk_org_id)` across all 10 child tables |
 | 008_add_reviewer_clerk_user | Adds `clerk_user_id` column and unique index to `reviewers` for Clerk user linking |
 | 009_add_slack_tables | Creates `slack_installations` (Bolt OAuth data) and `slack_workflows` (pipeline runs) tables |
+| 010_add_slack_conversations | Creates `slack_conversations` table for thread-aware bot conversation memory |
+| 011_add_discord_workflows | Creates `discord_workflows` table for Discord pipeline run tracking |
+| 012_add_discord_trigger_channels | Adds `discord_trigger_channels` JSONB column to `organizations` for configurable @mention channel gating |

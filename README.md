@@ -7,7 +7,7 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 ## Architecture
 
 - **LangGraph State Machine** — 8-node pipeline with conditional routing, rubric-based evaluation, and HITL interrupts
-- **CockroachDB** — 13 tables with distributed vector index (C-SPANN) for semantic search across 5 memory types
+- **CockroachDB** — 17 tables with distributed vector index (C-SPANN) for semantic search across 5 memory types
 - **Requesty** — OpenAI-compatible API for all LLM reasoning (per-stage models for research, review, rubric grading)
 - **React 19 SPA** — TypeScript, Vite, TailwindCSS, Clerk auth for the review dashboard
 - **AWS** — ECS Fargate, ECR, ALB, CloudWatch (via Terraform)
@@ -16,8 +16,8 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 
 | Platform | Direction | Usage                                                              |
 | -------- | --------- | ------------------------------------------------------------------ |
-| Slack    | In + Out  | Thread ingestion, Block Kit interactive review cards               |
-| Discord  | In + Out  | Thread ingestion, reply on publish                                 |
+| Slack    | In + Out  | Socket Mode events, Block Kit interactive review cards              |
+| Discord  | In + Out  | Gateway WebSocket, @mention triggers, thread creation, interactive review buttons, multi-message replies |
 | GitHub   | In + Out  | App webhooks (issue-triggered pipeline), issue comments on publish |
 | CLI      | In        | `python -m src.cli.draftly "question"`                             |
 | SendGrid | Out       | Email review notifications with action links                       |
@@ -142,16 +142,16 @@ allowedHosts: ["your-machine-name.tailXXXXXX.ts.net"];
 src/
   agents/        # LangGraph pipeline (graph, nodes, skills, tools, rubrics)
   memory/        # 5 memory modules (episodic, procedural, organizational, reviewer, vector)
-  integrations/  # Slack, Discord, GitHub, SendGrid, LLM
+  integrations/  # Slack (Socket Mode, blocks, conversation), Discord (Gateway, blocks, interactions), GitHub, SendGrid, LLM
   api/           # FastAPI app, auth, routes
   security/      # HMAC review tokens
   knowledge/     # URL content fetcher (webpages, PDFs, Google Docs, Notion)
   services/      # Clerk Admin API
   cli/           # CLI entry point
 frontend/        # React 19 SPA (TypeScript, Vite, TailwindCSS)
-infrastructure/  # CockroachDB schema + Terraform (AWS ECS Fargate)
+infrastructure/  # CockroachDB schema + migrations, Terraform (AWS ECS Fargate), Discord/SendGrid setup guides
 scripts/         # DB init, demo data seeding
-tests/           # Pytest suite
+tests/           # Pytest suite (35 test files)
 ```
 
 ## License
