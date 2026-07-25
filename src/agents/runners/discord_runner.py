@@ -71,7 +71,7 @@ async def run_discord_pipeline(
 ) -> None:
     """Orchestrate the full Draftly pipeline for a Discord support request."""
     from src.database import get_pool
-    from src.integrations.discord import send_discord_message, send_discord_thread_reply
+    from src.integrations.discord import send_discord_message
     from src.memory.organizations import (
         get_org_by_discord,
         store_discord_workflow,
@@ -135,10 +135,6 @@ async def run_discord_pipeline(
             await checkpointer.setup()
             graph = build_hybrid_graph().compile(checkpointer=checkpointer)
             result = await graph.ainvoke(state, config)
-
-        reply_to = thread_id or channel_id
-        if result.get("draft_content"):
-            await send_discord_thread_reply(reply_to, result["draft_content"][:2000])
 
         if result.get("human_decision") == "":
             await update_discord_workflow_status(workflow_id, "pending")

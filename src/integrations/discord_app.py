@@ -31,21 +31,36 @@ def _clean_discord_text(text: str) -> str:
     return text
 
 
+def _is_bot_mentioned(mentions: list[dict], bot_user_id: str) -> bool:
+    """Check if the bot is in the mentions list."""
+    return any(m.get("id") == bot_user_id for m in mentions)
+
+
 def _is_bot_message(author_id: str, author_bot: bool) -> bool:
     """Return True if the message is from the bot itself."""
     return author_bot
 
 
 async def handle_message_create(data: dict) -> None:
-    """Handle MESSAGE_CREATE events from the Discord Gateway."""
+    """Handle MESSAGE_CREATE events from the Discord Gateway.
+
+    Only processes messages that:
+    1. Are not from a bot
+    2. Are in a guild (not DMs)
+    3. @mention the bot
+    4. Are in a configured trigger channel (or no channels configured = no trigger)
+    """
+    from src.integrations.discord_gateway import gateway
+    from src.memory.organizations import get_org_by_discord
+
     guild_id = data.get("guild_id", "")
     channel_id = data.get("channel_id", "")
     message_id = data.get("id", "")
-    thread_id = data.get("thread", {}).get("id") if "thread" in data else None
     author = data.get("author", {})
     user_id = author.get("id", "")
     author_bot = author.get("bot", False)
     text = data.get("content", "")
+    mentions = data.get("mentions", [])
 
     # Ignore bot messages
     if _is_bot_message(user_id, author_bot):
@@ -66,6 +81,24 @@ async def handle_message_create(data: dict) -> None:
     if len(_processed_ids) > _MAX_PROCESSED:
         _processed_ids.clear()
 
+    # --- Mention + channel gating ---
+    bot_user_id = gateway.bot_user_id
+    if not bot_user_id:
+        logger.warning("discord_bot_user_id_not_set")
+        return
+
+    # Must be @mentioned
+    if not _is_bot_mentioned(mentions, bot_user_id):
+        return
+
+    # Check trigger channels
+    org = await get_org_by_discord(guild_id)
+    if org:
+        trigger_channels = org.get("discord_trigger_channels") or []
+        # If trigger channels configured, message must be in one
+        if trigger_channels and channel_id not in trigger_channels:
+            return
+
     # Clean text
     clean_text = _clean_discord_text(text)
     if not clean_text:
@@ -77,7 +110,7 @@ async def handle_message_create(data: dict) -> None:
         headers = {"Authorization": f"Bot {token}", "Content-Type": "application/json"}
         async with httpx.AsyncClient() as client:
             await client.put(
-                f"https://discord.com/api/v10/channels/{channel_id}/messages/{message_id}/reactions/@me/👀",
+                f"https://discord.com/api/v10/channels/{channel_id}/messages/{message_id}/reactions/%F0%9F%91%80/@me",
                 headers=headers,
                 timeout=10,
             )
@@ -91,8 +124,21 @@ async def handle_message_create(data: dict) -> None:
         message_id=message_id,
     )
 
+    # Create a thread on the user's message for the pipeline to reply in
+    reply_to = channel_id
+    try:
+        from src.integrations.discord import create_thread_from_message
+
+        new_thread = await create_thread_from_message(
+            channel_id, message_id, "Documentation Request"
+        )
+        if new_thread.get("id"):
+            reply_to = new_thread["id"]
+    except Exception:
+        logger.warning("discord_thread_create_failed", channel_id=channel_id)
+
     asyncio.create_task(
-        _run_pipeline(guild_id, channel_id, message_id, thread_id, clean_text, user_id)
+        _run_pipeline(guild_id, channel_id, message_id, reply_to, clean_text, user_id)
     )
 
 

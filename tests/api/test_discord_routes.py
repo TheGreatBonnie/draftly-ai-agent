@@ -17,7 +17,7 @@ async def test_invite_url_returns_url() -> None:
 
     assert "invite_url" in result
     assert "client_id=1234567890" in result["invite_url"]
-    assert "permissions=34816" in result["invite_url"]
+    assert "permissions=36932" in result["invite_url"]
 
 
 @pytest.mark.asyncio

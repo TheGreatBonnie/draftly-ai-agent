@@ -14,6 +14,8 @@ logger = structlog.get_logger()
 
 GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json"
 HEARTBEAT_INTERVAL_BUFFER = 5  # seconds to subtract from heartbeat interval
+INITIAL_RECONNECT_DELAY = 5  # seconds
+MAX_RECONNECT_DELAY = 60  # seconds
 
 
 class DiscordGateway:
@@ -24,7 +26,14 @@ class DiscordGateway:
         self._heartbeat_task: asyncio.Task[None] | None = None
         self._sequence: int | None = None
         self._session_id: str | None = None
+        self._bot_user_id: str | None = None
         self._running = False
+        self._reconnect_delay = INITIAL_RECONNECT_DELAY
+
+    @property
+    def bot_user_id(self) -> str | None:
+        """Return the bot's user ID (set from READY event)."""
+        return self._bot_user_id
 
     async def start(self) -> None:
         """Connect to the Gateway and begin listening for events."""
@@ -48,8 +57,11 @@ class DiscordGateway:
                 logger.error("discord_gateway_error", error=str(e))
 
             if self._running:
-                logger.info("discord_gateway_reconnecting")
-                await asyncio.sleep(5)
+                logger.info("discord_gateway_reconnecting", delay=self._reconnect_delay)
+                await asyncio.sleep(self._reconnect_delay)
+                self._reconnect_delay = min(
+                    self._reconnect_delay * 2, MAX_RECONNECT_DELAY
+                )
 
     async def _handle_connection(self, ws: websockets.WebSocketClientProtocol) -> None:
         """Handle a single Gateway connection lifecycle."""
@@ -82,9 +94,30 @@ class DiscordGateway:
                 # Send Identify
                 await self._send_identify(ws)
 
+            # Opcode 7: Reconnect
+            elif op == 7:
+                logger.warning("discord_gateway_reconnect_requested")
+                await ws.close()
+                return
+
+            # Opcode 9: Invalid Session
+            elif op == 9:
+                is_resumable = data if isinstance(data, bool) else False
+                logger.error(
+                    "discord_gateway_invalid_session", resumable=is_resumable
+                )
+                if not is_resumable:
+                    self._session_id = None
+                    self._sequence = None
+                await ws.close()
+                return
+
             # Opcode 11: Heartbeat ACK
             elif op == 11:
                 pass  # Heartbeat acknowledged
+
+            else:
+                logger.warning("discord_gateway_unhandled_opcode", op=op, event=event)
 
     async def _send_identify(self, ws: websockets.WebSocketClientProtocol) -> None:
         """Send the Identify payload to authenticate with the Gateway."""
@@ -93,7 +126,12 @@ class DiscordGateway:
             "op": 2,
             "d": {
                 "token": token,
-                "intents": 513,  # GUILDS (1) + MESSAGE_CONTENT (512)
+                "properties": {
+                    "os": "darwin",
+                    "browser": "draftly",
+                    "device": "draftly",
+                },
+                "intents": 513,  # GUILDS (1) + GUILD_MESSAGES (512)
             },
         }
         await ws.send(json.dumps(identify))
@@ -124,7 +162,14 @@ class DiscordGateway:
 
         if event == "READY":
             self._session_id = data.get("session_id")
-            logger.info("discord_gateway_ready", session_id=self._session_id)
+            user = data.get("user", {})
+            self._bot_user_id = user.get("id")
+            self._reconnect_delay = INITIAL_RECONNECT_DELAY
+            logger.info(
+                "discord_gateway_ready",
+                session_id=self._session_id,
+                bot_user_id=self._bot_user_id,
+            )
             return
 
         if event == "MESSAGE_CREATE":

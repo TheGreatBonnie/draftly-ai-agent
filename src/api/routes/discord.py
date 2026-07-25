@@ -196,17 +196,22 @@ class LinkDiscordRequest(BaseModel):
     guild_id: str
 
 
+class TriggerChannelsRequest(BaseModel):
+    channels: list[str]
+
+
 @router.get("/invite-url")
 async def discord_invite_url():
     """Return the Discord bot invite URL with required permissions."""
     app_id = settings.discord_app_id
     if not app_id:
         raise HTTPException(status_code=500, detail="Discord app ID not configured")
-    # Permissions: Send Messages (2048) + Send Messages in Threads (32768) = 34816
+    # Permissions: View Channels (4) + Send Messages (2048) + Send Messages in Threads (32768)
+    # + Add Reactions (64) + Create Public Threads (2048) = 36932
     invite_url = (
         f"https://discord.com/api/oauth2/authorize"
         f"?client_id={app_id}"
-        f"&permissions=34816"
+        f"&permissions=36932"
         f"&scope=bot"
     )
     return {"invite_url": invite_url}
@@ -247,3 +252,79 @@ async def discord_status(token: dict = Depends(get_verified_token)):
         "connected": connected,
         "guild_id": row["discord_guild_id"] if row else None,
     }
+
+
+@router.get("/channels")
+async def discord_channels(token: dict = Depends(get_verified_token)) -> dict:
+    """Fetch available text channels from the linked Discord guild."""
+    import httpx as httpx_lib
+
+    org_id = token.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    row = await fetch_one(
+        "SELECT discord_guild_id FROM organizations WHERE clerk_org_id = $1",
+        org_id,
+    )
+    if not row or not row["discord_guild_id"]:
+        raise HTTPException(status_code=400, detail="Discord not linked")
+
+    guild_id = row["discord_guild_id"]
+    bot_token = settings.discord_bot_token.get_secret_value()
+
+    async with httpx_lib.AsyncClient() as client:
+        resp = await client.get(
+            f"https://discord.com/api/v10/guilds/{guild_id}/channels",
+            headers={"Authorization": f"Bot {bot_token}"},
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            logger.error("discord_channels_fetch_failed", status=resp.status_code)
+            raise HTTPException(status_code=502, detail="Failed to fetch Discord channels")
+        channels = resp.json()
+
+    # Filter to text channels only (type 0 = text, type 5 = announcement, type 15 = forum)
+    TEXT_CHANNEL_TYPES = {0, 5, 15}
+    result = [
+        {"id": ch["id"], "name": ch["name"], "type": ch["type"]}
+        for ch in channels
+        if ch.get("type") in TEXT_CHANNEL_TYPES
+    ]
+    return {"channels": result}
+
+
+@router.get("/trigger-channels")
+async def get_trigger_channels(token: dict = Depends(get_verified_token)) -> dict:
+    """Return the configured trigger channels for the current org."""
+    org_id = token.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    row = await fetch_one(
+        "SELECT discord_trigger_channels FROM organizations WHERE clerk_org_id = $1",
+        org_id,
+    )
+    channels = row["discord_trigger_channels"] if row else []
+    return {"channels": channels}
+
+
+@router.post("/trigger-channels")
+async def set_trigger_channels(
+    request: TriggerChannelsRequest,
+    token: dict = Depends(get_verified_token),
+) -> dict:
+    """Set the trigger channels for the current org."""
+    import json
+
+    org_id = token.get("org_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    await execute(
+        "UPDATE organizations SET discord_trigger_channels = $1 WHERE clerk_org_id = $2",
+        json.dumps(request.channels),
+        org_id,
+    )
+    logger.info("discord_trigger_channels_updated", org_id=org_id, channels=request.channels)
+    return {"channels": request.channels}

@@ -171,3 +171,13 @@ export interface DiscordStatus {
 export interface DiscordInviteUrl {
   invite_url: string;
 }
+
+export interface DiscordChannel {
+  id: string;
+  name: string;
+  type: number;
+}
+
+export interface DiscordTriggerChannels {
+  channels: string[];
+}

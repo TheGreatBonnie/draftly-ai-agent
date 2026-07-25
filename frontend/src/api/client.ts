@@ -45,9 +45,16 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     window.location.href = "/sign-in";
     throw new ApiError(401, "Session expired");
   }
+  const contentType = res.headers.get("content-type") || "";
   if (!res.ok) {
+    if (contentType.includes("text/html")) {
+      throw new ApiError(res.status, "Backend returned HTML — check if the API server is running");
+    }
     const body = await res.json().catch(() => ({ detail: res.statusText }));
     throw new ApiError(res.status, body.detail ?? body.error ?? "Request failed");
+  }
+  if (contentType.includes("text/html")) {
+    throw new ApiError(res.status, "Backend returned HTML — check if the API server is running");
   }
   return res.json();
 }

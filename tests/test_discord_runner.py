@@ -73,7 +73,7 @@ async def test_run_discord_pipeline_org_not_found() -> None:
 @pytest.mark.asyncio
 async def test_run_discord_pipeline_calls_graph() -> None:
     """Pipeline builds state and invokes the graph with a checkpointer."""
-    mock_result = {"draft_content": "Draft docs", "human_decision": "approve"}
+    mock_result = {"draft_content": "Draft docs", "human_decision": "approved"}
 
     with (
         patch("src.database.get_pool", new_callable=AsyncMock),
@@ -122,10 +122,10 @@ async def test_run_discord_pipeline_calls_graph() -> None:
                 guild_id="g1",
                 channel_id="ch1",
                 message_id="msg1",
-                thread_id=None,
+                thread_id="thread1",
                 text="How do I reset?",
                 user_id="user1",
             )
 
-        mock_reply.assert_called_once()
-        assert "Draft docs" in mock_reply.call_args[0][1]
+        # Runner should NOT send draft reply — publish_node handles that
+        mock_reply.assert_not_called()

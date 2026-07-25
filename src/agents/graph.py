@@ -56,8 +56,11 @@ def build_hybrid_graph():
         "human_review",
         lambda state: {
             "approve": "publish",
+            "approved": "publish",
             "reject": END,
+            "rejected": END,
             "revise": "write_docs",
+            "needs_changes": "write_docs",
         }.get(state.get("human_decision", ""), END),
     )
 

@@ -101,3 +101,22 @@ async def send_discord_thread_reply(thread_id: str, content: str) -> dict:
             timeout=10,
         )
         return resp.json()
+
+
+async def create_thread_from_message(
+    channel_id: str, message_id: str, name: str
+) -> dict:
+    """Create a public thread from an existing message."""
+    token = settings.discord_bot_token.get_secret_value()
+    headers = {"Authorization": f"Bot {token}", "Content-Type": "application/json"}
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"https://discord.com/api/v10/channels/{channel_id}/messages/{message_id}/threads",
+            headers=headers,
+            json={"name": name, "auto_archive_duration": 60},
+            timeout=10,
+        )
+        if resp.status_code not in (200, 201):
+            logger.error("discord_thread_create_failed", status=resp.status_code, body=resp.text)
+        return resp.json()

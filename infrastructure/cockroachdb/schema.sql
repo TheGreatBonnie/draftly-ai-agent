@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     clerk_org_name STRING NOT NULL,
     slack_workspace_id STRING,
     discord_guild_id STRING,
+    discord_trigger_channels JSONB DEFAULT '[]'::JSONB,
     github_org STRING,
     created_at TIMESTAMPTZ DEFAULT now()
 );

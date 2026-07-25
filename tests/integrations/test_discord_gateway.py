@@ -102,15 +102,25 @@ async def test_handle_message_create_dispatches_pipeline() -> None:
         "channel_id": "ch1",
         "id": "msg4",
         "author": {"id": "user1", "bot": False},
-        "content": "How do I reset my password?",
+        "content": "How do I reset my password? @bot",
+        "mentions": [{"id": "bot_user_id_123"}],
     }
+
+    mock_gateway = AsyncMock()
+    mock_gateway.bot_user_id = "bot_user_id_123"
+
     with (
         patch(
             "src.integrations.discord_app._run_pipeline", new_callable=AsyncMock
         ) as mock_pipeline,
         patch("src.integrations.discord_app.settings") as mock_settings,
         patch("src.integrations.discord_app.httpx") as mock_httpx,
+        patch("src.integrations.discord_gateway.gateway", mock_gateway),
+        patch(
+            "src.memory.organizations.get_org_by_discord", new_callable=AsyncMock
+        ) as mock_get_org,
     ):
+        mock_get_org.return_value = {"discord_trigger_channels": []}
         mock_settings.discord_bot_token.get_secret_value.return_value = "fake-token"
         mock_response = AsyncMock()
         mock_response.status_code = 204

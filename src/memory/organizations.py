@@ -274,7 +274,8 @@ async def link_slack_installation(team_id: str, org_id: str) -> bool:
 async def get_org_by_discord(guild_id: str) -> dict | None:
     """Find organization by Discord guild_id."""
     row = await fetch_one(
-        """SELECT clerk_org_id as id, clerk_org_name as name, discord_guild_id
+        """SELECT clerk_org_id as id, clerk_org_name as name, discord_guild_id,
+                  discord_trigger_channels
            FROM organizations WHERE discord_guild_id = $1""",
         guild_id,
     )
