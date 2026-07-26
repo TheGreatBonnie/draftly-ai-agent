@@ -1,0 +1,109 @@
+<h2>ReviewDetail Page — Final Design</h2>
+<p class="subtitle">Single column, expandable review form, markdown content, before/after confidence</p>
+
+<!-- Mockup: Loading State -->
+<div class="mockup" style="margin-bottom: 24px;">
+  <div class="mockup-header">Loading State</div>
+  <div class="mockup-body" style="padding: 16px; font-family: Inter, sans-serif;">
+    <div style="height: 16px; width: 120px; background: #e8e4de; border-radius: 4px; margin-bottom: 16px; animation: pulse 1.5s infinite;"></div>
+    <div style="height: 24px; width: 80%; background: #e8e4de; border-radius: 4px; margin-bottom: 12px; animation: pulse 1.5s infinite;"></div>
+    <div style="height: 12px; width: 60%; background: #e8e4de; border-radius: 4px; margin-bottom: 24px; animation: pulse 1.5s infinite;"></div>
+    <div style="height: 200px; background: #e8e4de; border-radius: 6px; animation: pulse 1.5s infinite;"></div>
+  </div>
+</div>
+
+<!-- Mockup: Error State -->
+<div class="mockup" style="margin-bottom: 24px;">
+  <div class="mockup-header">Error State</div>
+  <div class="mockup-body" style="padding: 16px; font-family: Inter, sans-serif;">
+    <div style="border: 1px solid #fecaca; border-radius: 8px; padding: 16px; text-align: center;">
+      <div style="font-size: 14px; font-weight: 500; color: #dc2626; margin-bottom: 8px;">Failed to load review</div>
+      <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">Please check your connection and try again.</div>
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <div style="background: #e07a5f; color: white; padding: 6px 12px; border-radius: 4px; font-size: 12px;">Retry</div>
+        <div style="background: #f2f0ec; color: #2d2a26; padding: 6px 12px; border-radius: 4px; font-size: 12px;">← Back to Reviews</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mockup: Loaded State -->
+<div class="mockup" style="margin-bottom: 24px;">
+  <div class="mockup-header">Loaded State</div>
+  <div class="mockup-body" style="padding: 16px; font-family: Inter, sans-serif;">
+    <!-- ReviewHeader -->
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+      <div style="font-size: 12px; color: #e07a5f;">← Back</div>
+      <div style="flex: 1;"></div>
+      <div style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 500;">Pending</div>
+    </div>
+    
+    <!-- Title + Meta -->
+    <div style="font-size: 20px; font-weight: 700; color: #2d2a26; margin-bottom: 8px;">Improve API Documentation</div>
+    <div style="display: flex; gap: 12px; margin-bottom: 16px; font-size: 12px; color: #6b7280;">
+      <span>Requested by Alex Chen</span>
+      <span>·</span>
+      <span>2 hours ago</span>
+    </div>
+    
+    <!-- Confidence Comparison -->
+    <div style="background: #f8f6f3; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <div style="font-size: 12px; font-weight: 500; color: #6b7280; margin-bottom: 12px;">Confidence Score</div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="text-align: center;">
+          <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">BEFORE</div>
+          <div style="font-size: 28px; font-weight: 700; color: #2d2a26;">45%</div>
+        </div>
+        <div style="font-size: 20px; color: #6b7280;">→</div>
+        <div style="text-align: center;">
+          <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">AFTER</div>
+          <div style="font-size: 28px; font-weight: 700; color: #81b29a;">67%</div>
+        </div>
+        <div style="background: #e8f5e9; color: #81b29a; padding: 4px 12px; border-radius: 9999px; font-size: 14px; font-weight: 600;">+22%</div>
+      </div>
+    </div>
+    
+    <!-- ReviewContent (Markdown) -->
+    <div style="border: 1px solid #e8e4de; border-radius: 8px; padding: 24px; margin-bottom: 24px; background: white;">
+      <div style="font-size: 16px; font-weight: 600; color: #2d2a26; margin-bottom: 12px;">Documentation</div>
+      <div style="font-size: 14px; color: #4a4540; line-height: 1.7;">
+        <p style="margin-bottom: 12px;">The API documentation needs to be updated to reflect the new authentication flow. The current docs describe the legacy OAuth 1.0 process, but we've migrated to OAuth 2.0 with PKCE.</p>
+        <p style="margin-bottom: 12px;">Key changes needed:</p>
+        <ul style="margin-left: 20px; margin-bottom: 12px;">
+          <li>Update authorization endpoint URLs</li>
+          <li>Document the new PKCE challenge/verifier flow</li>
+          <li>Add examples for token refresh</li>
+        </ul>
+        <p>The existing examples in Section 3.2 should be replaced entirely.</p>
+      </div>
+    </div>
+    
+    <!-- Expandable Review Panel -->
+    <div style="border: 1px dashed #e8e4de; border-radius: 8px; padding: 16px; text-align: center; cursor: pointer;">
+      <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Ready to review?</div>
+      <div style="background: #e07a5f; color: white; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; display: inline-block;">Open Review Panel</div>
+    </div>
+    
+    <!-- Expanded Review Panel (hidden by default) -->
+    <div style="border: 1px solid #e8e4de; border-radius: 8px; padding: 16px; margin-top: 12px; display: none;">
+      <textarea style="width: 100%; height: 80px; border: 1px solid #e8e4de; border-radius: 6px; padding: 12px; font-size: 14px; resize: vertical; margin-bottom: 12px;" placeholder="Add your review notes..."></textarea>
+      <div style="display: flex; gap: 8px;">
+        <div style="background: #81b29a; color: white; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;">✓ Approve</div>
+        <div style="background: #f2cc8f; color: #2d2a26; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;">✎ Request Changes</div>
+        <div style="background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;">✗ Reject</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Component Architecture -->
+<div style="margin-top: 32px;">
+  <h3>Component Architecture</h3>
+  <div style="font-family: 'SF Mono', monospace; font-size: 13px; background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto;">
+    <pre style="margin: 0;">src/pages/ReviewDetail.tsx          # Container: state, data fetching, routing
+├── ReviewHeader.tsx                # Back nav, status badge, title, requester, time
+├── ConfidenceComparison.tsx        # Before → After with delta indicator
+├── ReviewContent.tsx               # Markdown rendered content in card
+└── ReviewForm.tsx                  # Expandable panel: textarea + approve/changes/reject</pre>
+  </div>
+</div>
