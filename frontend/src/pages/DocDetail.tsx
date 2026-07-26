@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -6,6 +6,7 @@ import { getDoc } from "../api/docs";
 import type { Doc } from "../api/types";
 import { DocTOC } from "../components/DocTOC";
 import { DocMetadata } from "../components/DocMetadata";
+import { formatDate } from "../utils/format";
 
 export function DocDetail() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,13 @@ export function DocDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -26,7 +34,8 @@ export function DocDetail() {
     if (!doc) return;
     await navigator.clipboard.writeText(doc.content);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
@@ -92,11 +101,7 @@ export function DocDetail() {
             </span>
             <span className="text-xs text-[var(--color-muted)]">
               Version {doc.version} · Updated{" "}
-              {new Date(doc.updated_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
+              {formatDate(doc.updated_at)}
             </span>
           </div>
         </div>
@@ -107,7 +112,7 @@ export function DocDetail() {
       </div>
 
       {/* Right Sidebar */}
-      <div className="w-[200px] shrink-0 border-l border-[var(--color-border)] bg-white py-5 pl-5">
+      <div className="w-[200px] shrink-0 border-l border-[var(--color-border)] bg-[var(--color-surface)] py-5 pl-5">
         <DocTOC content={doc.content} />
 
         <div className="border-t border-[var(--color-border)] pt-5">
@@ -120,12 +125,14 @@ export function DocDetail() {
           </div>
           <div className="flex flex-col gap-1.5">
             <button
+              type="button"
               onClick={handleCopy}
               className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-left text-[11px] font-medium text-[var(--color-charcoal)] transition-colors hover:border-[var(--color-charcoal)]"
             >
               {copied ? "Copied!" : "Copy content"}
             </button>
             <button
+              type="button"
               onClick={handleDownload}
               className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-left text-[11px] font-medium text-[var(--color-charcoal)] transition-colors hover:border-[var(--color-charcoal)]"
             >
