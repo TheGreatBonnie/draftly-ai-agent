@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 import { Badge } from "./Badge";
 import { relativeTime } from "../utils/format";
 import type { Review } from "../api/types";
@@ -8,23 +8,21 @@ interface ReviewHeaderProps {
 }
 
 export function ReviewHeader({ review }: ReviewHeaderProps) {
-  const navigate = useNavigate();
-
   return (
     <div className="mb-6">
-      <button
-        onClick={() => navigate("/reviews")}
-        className="mb-4 text-sm font-medium text-terracotta hover:text-terracotta/80"
+      <Link
+        to="/reviews"
+        className="mb-4 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand)]/80"
       >
         ← Back to Reviews
-      </button>
+      </Link>
 
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold text-warm-900">{review.title}</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-charcoal)]">{review.title}</h1>
         <Badge status={review.status} />
       </div>
 
-      <p className="mt-2 text-sm text-warm-500">
+      <p className="mt-2 text-sm text-[var(--color-muted)]">
         {review.doc_type} · Requested {relativeTime(review.created_at)}
       </p>
     </div>
