@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface TOCItem {
   id: string;
@@ -26,7 +26,7 @@ function extractHeadings(markdown: string): TOCItem[] {
 
 export function DocTOC({ content }: DocTOCProps) {
   const [activeId, setActiveId] = useState<string>("");
-  const headings = extractHeadings(content);
+  const headings = useMemo(() => extractHeadings(content), [content]);
 
   useEffect(() => {
     if (headings.length === 0) return;
