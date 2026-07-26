@@ -11,7 +11,7 @@ export function ReviewContent({ content }: ReviewContentProps) {
       <h2 className="mb-4 text-lg font-semibold text-[var(--color-charcoal)]">
         Documentation
       </h2>
-      <div className="prose prose-warm max-w-none">
+      <div className="prose max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>
     </div>
