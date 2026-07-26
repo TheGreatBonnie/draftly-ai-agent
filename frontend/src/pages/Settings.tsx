@@ -397,63 +397,44 @@ export function Settings() {
         </div>
       </IntegrationCard>
 
-      {/* Slack Integration section */}
-      <section className="rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Slack Integration
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Connect Draftly to your Slack workspace to automatically generate
-          documentation from support requests.
-        </p>
-
-        <div className="mt-4">
-          <a
-            href={slackInstallUrl ?? "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.522h-6.313z" />
-            </svg>
-            Connect Slack Workspace
-          </a>
-        </div>
-
-        {slackInstallations.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-gray-700">
-              Connected Workspaces
-            </h3>
-            <div className="mt-2 space-y-3">
-              {slackInstallations.map((inst) => (
-                <div
-                  key={inst.id}
-                  className="rounded-md border border-gray-200 bg-gray-50 p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900">
-                      {inst.team_name}
-                    </span>
-                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-                      Connected
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Bot ID: {inst.bot_user_id}
-                  </p>
-                </div>
-              ))}
+      {/* Slack Integration */}
+      <IntegrationCard
+        title="Slack Integration"
+        description="Connect Draftly to your Slack workspace to automatically generate documentation from support requests."
+        connected={slackInstallations.length > 0}
+        brandColor="#9333ea"
+        icon={
+          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.522h-6.313z" />
+          </svg>
+        }
+        onAction={() => {
+          if (slackInstallUrl) {
+            window.open(slackInstallUrl, "_blank", "noopener,noreferrer");
+          }
+        }}
+        actionLabel="Connect Slack Workspace"
+      >
+        <div className="space-y-3">
+          {slackInstallations.map((inst) => (
+            <div
+              key={inst.id}
+              className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-surface-alt)] p-3">
+              <div className="flex items-center justify-between">
+                <span className="min-w-0 truncate font-medium text-[var(--color-charcoal)]">
+                  {inst.team_name}
+                </span>
+                <span className="ml-2 inline-flex shrink-0 items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
+                  Connected
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                Bot ID: {inst.bot_user_id}
+              </p>
             </div>
-          </div>
-        )}
-
-        {slackInstallations.length === 0 && !loading && (
-          <p className="mt-4 text-sm text-gray-400">
-            No Slack workspaces connected yet. Click the button above to install
-            Draftly.
-          </p>
-        )}
-      </section>
+          ))}
+        </div>
+      </IntegrationCard>
 
       {/* Discord Integration section */}
       <section className="rounded-lg border border-gray-200 p-6">
