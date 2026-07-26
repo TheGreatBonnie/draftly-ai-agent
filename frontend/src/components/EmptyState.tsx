@@ -13,6 +13,7 @@ export function EmptyState({ icon = "📄", title, description, action }: EmptyS
       {description && <div className="mt-1 text-sm">{description}</div>}
       {action && (
         <button
+          type="button"
           onClick={action.onClick}
           className="mt-4 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
         >

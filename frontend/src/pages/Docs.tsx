@@ -3,6 +3,7 @@ import { listDocs } from "../api/docs";
 import type { Doc } from "../api/types";
 import { DocCard } from "../components/DocCard";
 import { EmptyState } from "../components/EmptyState";
+import { FilterTabs } from "../components/FilterTabs";
 
 type StatusFilter = "all" | "published" | "pending" | "draft" | "rejected";
 
@@ -24,31 +25,21 @@ export function Docs() {
     fetchDocs();
   }, []);
 
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: docs.length };
+    for (const d of docs) c[d.status] = (c[d.status] ?? 0) + 1;
+    return c;
+  }, [docs]);
+
   const tabs = useMemo(
     () => [
-      { key: "all" as const, label: "All", count: docs.length },
-      {
-        key: "published" as const,
-        label: "Published",
-        count: docs.filter((d) => d.status === "published").length,
-      },
-      {
-        key: "pending" as const,
-        label: "Pending",
-        count: docs.filter((d) => d.status === "pending").length,
-      },
-      {
-        key: "draft" as const,
-        label: "Draft",
-        count: docs.filter((d) => d.status === "draft").length,
-      },
-      {
-        key: "rejected" as const,
-        label: "Rejected",
-        count: docs.filter((d) => d.status === "rejected").length,
-      },
+      { key: "all" as const, label: "All", count: counts.all ?? 0 },
+      { key: "published" as const, label: "Published", count: counts.published ?? 0 },
+      { key: "pending" as const, label: "Pending", count: counts.pending ?? 0 },
+      { key: "draft" as const, label: "Draft", count: counts.draft ?? 0 },
+      { key: "rejected" as const, label: "Rejected", count: counts.rejected ?? 0 },
     ],
-    [docs],
+    [counts],
   );
 
   const filtered = useMemo(() => {
@@ -110,24 +101,7 @@ export function Docs() {
       </div>
 
       <div className="mb-4 flex items-center justify-between">
-        <div className="flex gap-1.5">
-          {tabs.map((tab) => {
-            const isActive = tab.key === activeTab;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-[var(--color-charcoal)] text-[var(--color-surface)]"
-                    : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)]"
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            );
-          })}
-        </div>
+        <FilterTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
         <input
           type="text"
           placeholder="Search documents..."
