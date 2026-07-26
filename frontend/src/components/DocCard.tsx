@@ -3,6 +3,34 @@ import type { Doc } from "../api/types";
 import { Badge } from "./Badge";
 import { ConfidenceBar } from "./ConfidenceBar";
 
+const DOC_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  troubleshooting: {
+    bg: "var(--color-terracotta-light)",
+    text: "var(--color-terracotta)",
+  },
+  howto: {
+    bg: "var(--color-sage-light)",
+    text: "var(--color-sage)",
+  },
+  reference: {
+    bg: "var(--color-sand-light)",
+    text: "var(--color-sand)",
+  },
+  guide: {
+    bg: "var(--color-blue-50)",
+    text: "var(--color-blue-600)",
+  },
+};
+
+const DEFAULT_DOC_TYPE_COLOR = {
+  bg: "var(--color-charcoal-light)",
+  text: "var(--color-surface-alt)",
+};
+
+function getDocTypeColors(docType: string) {
+  return DOC_TYPE_COLORS[docType] ?? DEFAULT_DOC_TYPE_COLOR;
+}
+
 function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength).trimEnd() + "…";
@@ -38,9 +66,17 @@ export function DocCard({ doc }: DocCardProps) {
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex items-center gap-2">
-            <span className="rounded-full bg-[var(--color-sage-light)] px-2.5 py-0.5 text-[10px] font-medium text-[var(--color-sage)]">
-              {doc.doc_type}
-            </span>
+            {(() => {
+              const { bg, text } = getDocTypeColors(doc.doc_type);
+              return (
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-[10px] font-medium"
+                  style={{ backgroundColor: bg, color: text }}
+                >
+                  {doc.doc_type}
+                </span>
+              );
+            })()}
             <span className="text-xs text-[var(--color-muted)]">
               v{doc.version} · {relativeTime(doc.created_at)}
             </span>
