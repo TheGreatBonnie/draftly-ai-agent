@@ -292,37 +292,35 @@ export function Settings() {
         )}
       </section>
 
-      {/* Team Roles section (admin only) */}
+      {/* Team Roles (admin only) */}
       {isAdmin && (
-        <section className="rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Team Roles</h2>
-          <p className="mt-1 text-sm text-gray-500">
+        <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+          <h2 className="font-semibold text-[var(--color-charcoal)]">Team Roles</h2>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
             Assign roles to organization members. Members with the{" "}
-            <strong>Reviewer</strong> role can register themselves as reviewers
-            for documentation.
+            <strong>Reviewer</strong> role can register themselves as reviewers for
+            documentation.
           </p>
 
           {members.length > 0 ? (
-            <div className="mt-4 divide-y divide-gray-100">
+            <div className="mt-4 divide-y divide-[var(--color-border-light)]">
               {members.map((member) => (
                 <div
                   key={member.user_id}
                   className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-[var(--color-charcoal)]">
                       {member.email}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--color-muted)]">
                       ID: {member.user_id}
                     </p>
                   </div>
                   <select
                     value={member.role}
-                    onChange={(e) =>
-                      handleRoleChange(member.user_id, e.target.value)
-                    }
+                    onChange={(e) => handleRoleChange(member.user_id, e.target.value)}
                     disabled={roleLoading === member.user_id}
-                    className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50">
+                    className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm focus:border-[var(--color-charcoal)] focus:ring-1 focus:ring-[var(--color-charcoal)] disabled:opacity-50">
                     {ROLE_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
@@ -333,7 +331,7 @@ export function Settings() {
               ))}
             </div>
           ) : (
-            <p className="mt-4 text-sm text-gray-400">
+            <p className="mt-4 text-sm text-[var(--color-muted)]">
               No organization members found.
             </p>
           )}
