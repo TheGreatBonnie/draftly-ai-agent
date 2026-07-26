@@ -19,6 +19,7 @@ import {
   setTriggerChannels,
 } from "../api/discord";
 import { listOrgMembers, assignRole } from "../api/reviewers";
+import { StatusOverview } from "../components/StatusOverview";
 import type {
   DiscordChannel,
   DiscordInviteUrl,
@@ -257,8 +258,15 @@ export function Settings() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-[var(--color-charcoal)]">Settings</h1>
+
+      {/* Status Overview */}
+      <StatusOverview
+        github={installations.length > 0}
+        slack={slackInstallations.length > 0}
+        discord={discordStatus?.connected === true}
+      />
 
       {/* Organization section */}
       <section className="rounded-lg border border-gray-200 p-6">
