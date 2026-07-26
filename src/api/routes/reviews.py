@@ -24,7 +24,7 @@ DECISION_TO_STATUS = {
 
 
 @router.get("/pending")
-async def get_pending(token: dict = Depends(get_verified_token)):
+async def get_pending(token: dict = Depends(get_verified_token)) -> list:
     from src.memory.reviewer import get_pending_reviews
 
     org_id = token.get("org_id")
@@ -38,7 +38,7 @@ async def decide_review(
     review_id: str,
     body: ReviewDecision,
     token: dict = Depends(get_verified_token),
-):
+) -> dict:
     from src.memory.reviewer import complete_review
 
     await complete_review(
@@ -66,7 +66,7 @@ async def decide_review(
 
 
 @router.get("/{review_id}")
-async def get_review(review_id: str, token: dict = Depends(get_verified_token)):
+async def get_review(review_id: str, token: dict = Depends(get_verified_token)) -> dict:
     from src.database import fetch_one
 
     row = await fetch_one(

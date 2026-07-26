@@ -13,7 +13,7 @@ from src.agents.state import DocumentationState
 logger = structlog.get_logger()
 
 
-def build_hybrid_graph():
+def build_hybrid_graph() -> StateGraph:
     """Build enhanced graph with Deep agents capabilities (rubric grading, parallel research)."""
     from src.agents.nodes.ingest import ingest_node_hybrid
     from src.agents.nodes.research import research_node_hybrid

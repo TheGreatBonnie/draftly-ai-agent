@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/")
-async def list_docs(token: dict = Depends(get_verified_token)):
+async def list_docs(token: dict = Depends(get_verified_token)) -> list:
     from src.database import fetch_all
 
     org_id = token.get("org_id")
@@ -23,7 +23,7 @@ async def list_docs(token: dict = Depends(get_verified_token)):
 
 
 @router.get("/{doc_id}")
-async def get_doc(doc_id: str, token: dict = Depends(get_verified_token)):
+async def get_doc(doc_id: str, token: dict = Depends(get_verified_token)) -> dict:
     from src.database import fetch_one
 
     row = await fetch_one("SELECT *, id::text as id FROM documentation WHERE id = $1", doc_id)

@@ -59,6 +59,13 @@ def build_github_state(payload: dict, org_id: str) -> DocumentationState:
             "repo": repo["name"],
             "issue_number": issue["number"],
         },
+        "reply_errors": [],
+        "question_type": "simple",
+        "research_skill": {},
+        "investigation_plan": [],
+        "rubric_status": {},
+        "subagent_results": {},
+        "message_history": [],
     }
 
 
@@ -137,7 +144,7 @@ async def run_github_pipeline(payload: dict, installation_token: str) -> None:
 
             await update_github_workflow_status(workflow_id, "running")
 
-            result = await graph.ainvoke(state, config)
+            result = await graph.ainvoke(state, config)  # type: ignore[call-overload]
 
             if result.get("human_decision") == "":
                 await update_github_workflow_status(workflow_id, "pending")

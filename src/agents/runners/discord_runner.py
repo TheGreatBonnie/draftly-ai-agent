@@ -58,6 +58,12 @@ def build_discord_state(
             "user_id": user_id,
         },
         "message_history": [],
+        "reply_errors": [],
+        "question_type": "simple",
+        "research_skill": {},
+        "investigation_plan": [],
+        "rubric_status": {},
+        "subagent_results": {},
     }
 
 
@@ -134,7 +140,7 @@ async def run_discord_pipeline(
         ) as checkpointer:
             await checkpointer.setup()
             graph = build_hybrid_graph().compile(checkpointer=checkpointer)
-            result = await graph.ainvoke(state, config)
+            result = await graph.ainvoke(state, config)  # type: ignore[call-overload]
 
         if result.get("human_decision") == "":
             await update_discord_workflow_status(workflow_id, "pending")

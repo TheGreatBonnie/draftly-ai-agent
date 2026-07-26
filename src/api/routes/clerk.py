@@ -41,6 +41,7 @@ def verify_svix_signature(payload: bytes, headers: dict[str, str]) -> bool:
     expected = hmac.new(signing_key, to_sign.encode(), hashlib.sha256).digest()
     expected_b64 = base64.b64encode(expected).decode()
 
+    assert svix_signature is not None
     for sig in svix_signature.split(" "):
         if sig.startswith("v1,"):
             received = sig[3:]

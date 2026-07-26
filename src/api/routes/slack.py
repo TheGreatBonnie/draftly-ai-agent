@@ -34,7 +34,7 @@ async def slack_interactivity(request: Request) -> Response:
 
 
 @router.get("/install-url")
-async def slack_install_url(token: dict = Depends(get_verified_token)):
+async def slack_install_url(token: dict = Depends(get_verified_token)) -> dict:
     """Return the Slack OAuth authorization URL."""
     if not settings.slack_client_id:
         raise HTTPException(status_code=500, detail="Slack client ID not configured")
@@ -107,7 +107,7 @@ async def slack_oauth_callback(code: str, state: str = "") -> RedirectResponse:
 async def link_slack(
     request: LinkSlackRequest,
     token: dict = Depends(get_verified_token),
-):
+) -> dict:
     """Link a Slack installation to the current Clerk organization."""
     from src.memory.organizations import link_slack_installation
 
@@ -120,7 +120,7 @@ async def link_slack(
 
 
 @router.get("/installations")
-async def slack_installations(token: dict = Depends(get_verified_token)):
+async def slack_installations(token: dict = Depends(get_verified_token)) -> list[dict]:
     from src.memory.organizations import list_slack_installations
 
     return await list_slack_installations()

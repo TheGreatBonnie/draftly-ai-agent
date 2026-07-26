@@ -40,12 +40,12 @@ async def fetch_one(query: str, *args: Any) -> asyncpg.Record | None:
 
 async def fetch_all(query: str, *args: Any) -> list[asyncpg.Record]:
     pool = await get_pool()
-    return await pool.fetch(query, *args)
+    return await pool.fetch(query, *args)  # type: ignore[no-any-return]
 
 
 async def execute(query: str, *args: Any) -> str:
     pool = await get_pool()
-    return await pool.execute(query, *args)
+    return await pool.execute(query, *args)  # type: ignore[no-any-return]
 
 
 async def fetch_val(query: str, *args: Any) -> Any | None:

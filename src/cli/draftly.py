@@ -14,7 +14,7 @@ from src.database import close_pool, get_pool
 logger = structlog.get_logger()
 
 
-async def run_workflow(question: str, source: str = "cli", org_id: str | None = None):
+async def run_workflow(question: str, source: str = "cli", org_id: str | None = None) -> dict:
     await get_pool()
 
     if org_id is None:
@@ -52,6 +52,13 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         "doc_id": "",
         "messages": [],
         "source_metadata": {},
+        "reply_errors": [],
+        "question_type": "simple",
+        "research_skill": {},
+        "investigation_plan": [],
+        "rubric_status": {},
+        "subagent_results": {},
+        "message_history": [],
     }
 
     config = {"configurable": {"thread_id": graph_thread_id}}
@@ -62,7 +69,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
 
         print(f"\n🔄 Processing: {question}\n")
 
-        result = await graph.ainvoke(initial_state, config)
+        result = await graph.ainvoke(initial_state, config)  # type: ignore[call-overload]
 
     print("\n✅ Completed!")
     print(f"Title: {result.get('draft_title', 'N/A')}")
@@ -75,10 +82,10 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
     print(f"\n📄 Draft:\n{result.get('draft_content', 'N/A')[:500]}...")
 
     await close_pool()
-    return result
+    return dict(result)
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         print("Usage: python -m src.cli.draftly 'your question here' --org-id <clerk_org_id>")
         sys.exit(1)

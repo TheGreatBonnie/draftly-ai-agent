@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
+from typing import Any
 
 import structlog
 
@@ -11,7 +12,7 @@ from src.database import execute, fetch_all, fetch_one
 logger = structlog.get_logger()
 
 
-def _serialize_row(row) -> dict:
+def _serialize_row(row: Any) -> dict:
     return {
         k: str(v) if isinstance(v, uuid.UUID)
         else v.isoformat() if isinstance(v, datetime)
@@ -41,8 +42,9 @@ async def store_memory(
         source,
         confidence,
     )
+    assert row is not None
     logger.info("memory_stored", id=row["id"], memory_type=memory_type, key=key)
-    return row["id"]
+    return str(row["id"])
 
 
 async def search_memory(

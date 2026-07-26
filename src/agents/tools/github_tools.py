@@ -12,9 +12,10 @@ async def search_github_issues(query: str, org: str = "", limit: int = 5) -> str
     token = settings.github_token.get_secret_value() if settings.github_token else None
     headers = {"Authorization": f"token {token}"} if token else {}
     search_url = "https://api.github.com/search/issues"
-    params = {"q": f"{query} is:issue", "per_page": limit}
+    q = f"{query} is:issue"
     if org:
-        params["q"] += f" org:{org}"
+        q += f" org:{org}"
+    params: dict[str, str | int] = {"q": q, "per_page": limit}
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(search_url, headers=headers, params=params, timeout=10)

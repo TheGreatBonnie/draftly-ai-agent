@@ -39,7 +39,7 @@ _FETCH_RATE_WINDOW = 60.0
 async def fetch_url(
     request: FetchUrlRequest,
     token: dict = Depends(get_verified_token),
-):
+) -> FetchUrlResponse:
     """Fetch and extract content from a URL for knowledge base import."""
     import time
 
@@ -71,7 +71,7 @@ async def fetch_url(
 async def ingest_knowledge(
     request: IngestKnowledgeRequest,
     token: dict = Depends(get_verified_token),
-):
+) -> dict:
     """Ingest a company document into the knowledge base."""
     org_id = token.get("org_id")
     if not org_id:
@@ -115,7 +115,7 @@ async def ingest_knowledge(
 
 
 @router.get("")
-async def list_knowledge(token: dict = Depends(get_verified_token)):
+async def list_knowledge(token: dict = Depends(get_verified_token)) -> list[dict]:
     """List all company knowledge documents."""
     org_id = token.get("org_id")
     if not org_id:
@@ -132,7 +132,7 @@ async def list_knowledge(token: dict = Depends(get_verified_token)):
 
 
 @router.delete("/{doc_id}")
-async def delete_knowledge(doc_id: str, token: dict = Depends(get_verified_token)):
+async def delete_knowledge(doc_id: str, token: dict = Depends(get_verified_token)) -> dict:
     """Delete a knowledge document and its embedding."""
     org_id = token.get("org_id")
     if not org_id:

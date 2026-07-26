@@ -37,7 +37,7 @@ async def get_or_create_dm_channel(user_id: str) -> str:
             timeout=10,
         )
         resp.raise_for_status()
-        return resp.json()["id"]
+        return str(resp.json()["id"])
 
 
 async def send_discord_message(
@@ -60,7 +60,7 @@ async def send_discord_message(
         )
         if resp.status_code not in (200, 201):
             logger.error("discord_send_failed", status=resp.status_code, body=resp.text)
-        return resp.json()
+        return dict(resp.json())
 
 
 async def edit_discord_message(
@@ -84,7 +84,7 @@ async def edit_discord_message(
         )
         if resp.status_code not in (200, 201):
             logger.error("discord_edit_failed", status=resp.status_code, body=resp.text)
-        return resp.json()
+        return dict(resp.json())
 
 
 async def send_discord_thread_reply(thread_id: str, content: str) -> dict:
@@ -108,7 +108,7 @@ async def send_discord_thread_reply(thread_id: str, content: str) -> dict:
                 body=resp.text,
             )
         resp.raise_for_status()
-        return resp.json()
+        return dict(resp.json())
 
 
 async def create_thread_from_message(
@@ -134,4 +134,4 @@ async def create_thread_from_message(
                 body=resp.text,
             )
             resp.raise_for_status()
-        return resp.json()
+        return dict(resp.json())

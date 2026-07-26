@@ -37,7 +37,7 @@ async def resume_review(review_id: str, decision: str, feedback: str = "") -> di
 
         result = await graph.ainvoke(
             Command(resume={"decision": decision, "feedback": feedback}),
-            config,
+            config,  # type: ignore[call-overload]
         )
 
     logger.info(
@@ -47,4 +47,4 @@ async def resume_review(review_id: str, decision: str, feedback: str = "") -> di
         final_node="publish" if result.get("published_urls") else "end",
     )
 
-    return result
+    return dict(result)

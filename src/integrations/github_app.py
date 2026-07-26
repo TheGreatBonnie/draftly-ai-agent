@@ -41,7 +41,7 @@ async def get_installation_token(installation_id: int) -> str:
         resp.raise_for_status()
         token_data = resp.json()
         logger.info("installation_token_obtained", installation_id=installation_id)
-        return token_data["token"]
+        return str(token_data["token"])
 
 
 def verify_webhook_signature(payload: bytes, signature: str) -> bool:
@@ -73,7 +73,7 @@ async def get_installation_info(installation_id: int) -> dict:
     async with httpx.AsyncClient() as client:
         resp = await client.get(url, headers=headers, timeout=10)
         resp.raise_for_status()
-        return resp.json()
+        return dict(resp.json())
 
 
 async def get_installation_repositories(token: str) -> list[dict]:
@@ -91,7 +91,7 @@ async def get_installation_repositories(token: str) -> list[dict]:
         )
         resp.raise_for_status()
         data = resp.json()
-        return data.get("repositories", [])
+        return list(data.get("repositories", []))
 
 
 async def post_issue_comment(
@@ -108,7 +108,7 @@ async def post_issue_comment(
         resp = await client.post(url, headers=headers, json={"body": body}, timeout=10)
         resp.raise_for_status()
         logger.info("issue_comment_posted", owner=owner, repo=repo, issue=issue_number)
-        return resp.json()
+        return dict(resp.json())
 
 
 async def add_issue_labels(
@@ -125,4 +125,4 @@ async def add_issue_labels(
         resp = await client.post(url, headers=headers, json={"labels": labels}, timeout=10)
         resp.raise_for_status()
         logger.info("issue_labels_added", owner=owner, repo=repo, issue=issue_number, labels=labels)
-        return resp.json()
+        return dict(resp.json())

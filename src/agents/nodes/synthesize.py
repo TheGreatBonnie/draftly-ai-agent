@@ -53,8 +53,8 @@ async def synthesize_node(state: DocumentationState) -> dict:
         semantic_context=json.dumps(state.get("semantic_context", [])[:3], indent=2),
         similar_threads=json.dumps(state.get("similar_threads", [])[:3], indent=2),
         existing_docs=json.dumps(state.get("existing_docs", [])[:3], indent=2),
-        github_context="\n".join(state.get("github_context", [])[:2]),
-        slack_context="\n".join(state.get("slack_context", [])[:2]),
+        github_context="\n".join(str(c) for c in state.get("github_context", [])[:2]),
+        slack_context="\n".join(str(c) for c in state.get("slack_context", [])[:2]),
         reviewer_feedback_history=json.dumps(
             state.get("reviewer_feedback_history", [])[:3], indent=2
         ),

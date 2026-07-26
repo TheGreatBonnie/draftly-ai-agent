@@ -59,6 +59,12 @@ def build_slack_state(
             "user_id": user,
         },
         "message_history": message_history or [],
+        "reply_errors": [],
+        "question_type": "simple",
+        "research_skill": {},
+        "investigation_plan": [],
+        "rubric_status": {},
+        "subagent_results": {},
     }
 
 
@@ -149,7 +155,7 @@ async def run_slack_pipeline(
         ) as checkpointer:
             await checkpointer.setup()
             graph = build_hybrid_graph().compile(checkpointer=checkpointer)
-            result = await graph.ainvoke(state, config)
+            result = await graph.ainvoke(state, config)  # type: ignore[call-overload]
 
         if result.get("draft_content"):
             await conversation_store.add_message(

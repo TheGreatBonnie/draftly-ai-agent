@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import structlog
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 from src.config import settings
 
@@ -19,11 +20,11 @@ def get_llm(
     cache_key = f"{model}:{temperature}:{max_tokens}"
     if cache_key not in _llm_cache:
         _llm_cache[cache_key] = ChatOpenAI(
-            openai_api_key=settings.requesty_api_key,
-            openai_api_base=settings.requesty_base_url,
-            model_name=model,
+            api_key=SecretStr(settings.requesty_api_key),
+            base_url=settings.requesty_base_url,
+            model=model,
             temperature=temperature,
-            max_tokens=max_tokens,
+            max_tokens=max_tokens,  # type: ignore[call-arg]
         )
     return _llm_cache[cache_key]
 
@@ -38,7 +39,7 @@ async def call_llm(
     """Call an LLM via Requesty with the given model."""
     llm = get_llm(model, temperature=temperature, max_tokens=max_tokens)
 
-    messages = []
+    messages: list[BaseMessage] = []
     if system_prompt:
         messages.append(SystemMessage(content=system_prompt))
     messages.append(HumanMessage(content=prompt))

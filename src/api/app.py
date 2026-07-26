@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from src.database import close_pool, get_pool
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     import asyncio
 
     from src.config import settings
@@ -65,7 +66,7 @@ if DIST_DIR.exists():
     app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="static-assets")
 
     @app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
-    async def serve_spa(request: Request, full_path: str):
+    async def serve_spa(request: Request, full_path: str) -> FileResponse:
         if full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="Not found")
         file_path = DIST_DIR / full_path

@@ -103,4 +103,4 @@ def _parse_grading_response(response: str, iteration: int) -> dict:
 
     evaluation["iteration"] = iteration
     evaluation["grading_run_id"] = f"rubric-{iteration}"
-    return evaluation
+    return dict(evaluation)

@@ -11,7 +11,7 @@ async def search_slack_messages(query: str, channel: str = "", limit: int = 5) -
     """Search Slack messages for relevant support conversations."""
     token = settings.slack_bot_token.get_secret_value() if settings.slack_bot_token else ""
     headers = {"Authorization": f"Bearer {token}"}
-    params = {"query": query, "count": limit}
+    params: dict[str, str | int] = {"query": query, "count": limit}
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(

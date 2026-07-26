@@ -39,6 +39,6 @@ def verify_review_token(token: str) -> dict | None:
         payload = json.loads(base64.urlsafe_b64decode(data))
         if datetime.fromisoformat(payload["expires_at"]) < datetime.now(UTC):
             return None
-        return payload
+        return dict(payload)
     except Exception:
         return None

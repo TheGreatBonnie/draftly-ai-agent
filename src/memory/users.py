@@ -19,21 +19,23 @@ async def create_clerk_user(clerk_user_id: str, email: str, name: str, avatar_ur
             "WHERE clerk_user_id = $4",
             email, name, avatar_url, clerk_user_id,
         )
-        return existing["id"]
+        return str(existing["id"])
 
     row = await fetch_one(
         "INSERT INTO clerk_users (clerk_user_id, email, name, avatar_url) "
         "VALUES ($1, $2, $3, $4) RETURNING id::text",
         clerk_user_id, email, name, avatar_url,
     )
+    assert row is not None
     logger.info("clerk_user_created", user_id=clerk_user_id)
-    return row["id"]
+    return str(row["id"])
 
 
 async def delete_clerk_user(clerk_user_id: str) -> None:
     """Remove a user from the local DB (soft-delete or remove memberships first)."""
     await execute(
-        "DELETE FROM user_organizations WHERE user_id = (SELECT id FROM clerk_users WHERE clerk_user_id = $1)",
+        "DELETE FROM user_organizations WHERE user_id = "
+        "(SELECT id FROM clerk_users WHERE clerk_user_id = $1)",
         clerk_user_id,
     )
     await execute("DELETE FROM clerk_users WHERE clerk_user_id = $1", clerk_user_id)
@@ -51,8 +53,9 @@ async def add_user_to_org(clerk_user_id: str, clerk_org_id: str, role: str = "or
         "RETURNING id::text",
         clerk_user_id, clerk_org_id, role,
     )
+    assert row is not None
     logger.info("user_added_to_org", user=clerk_user_id, org=clerk_org_id, role=role)
-    return row["id"]
+    return str(row["id"])
 
 
 async def remove_user_from_org(clerk_user_id: str, clerk_org_id: str) -> None:

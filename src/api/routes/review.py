@@ -24,7 +24,7 @@ class ReviewActionResponse(BaseModel):
 
 
 @router.get("/{token}")
-async def get_review_by_token(token: str):
+async def get_review_by_token(token: str) -> dict:
     """Verify token and return review details."""
     payload = verify_review_token(token)
     if not payload:
@@ -42,7 +42,7 @@ async def get_review_by_token(token: str):
 
 
 @router.post("/{token}/action", response_model=ReviewActionResponse)
-async def execute_quick_action(token: str, request: ReviewActionRequest):
+async def execute_quick_action(token: str, request: ReviewActionRequest) -> ReviewActionResponse:
     """Execute approve/reject/revise action via token."""
     if request.action not in ("approve", "reject", "revise"):
         raise HTTPException(status_code=400, detail="Invalid action")

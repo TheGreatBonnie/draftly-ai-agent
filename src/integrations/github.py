@@ -22,7 +22,7 @@ async def post_github_comment(owner: str, repo: str, issue_number: int, body: st
         )
         if resp.status_code not in (200, 201):
             logger.error("github_comment_failed", status=resp.status_code, body=resp.text)
-        return resp.json()
+        return dict(resp.json())
 
 
 async def get_github_issue(owner: str, repo: str, issue_number: int) -> dict:
@@ -34,4 +34,4 @@ async def get_github_issue(owner: str, repo: str, issue_number: int) -> dict:
             headers=headers,
             timeout=10,
         )
-        return resp.json()
+        return dict(resp.json())

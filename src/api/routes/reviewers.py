@@ -57,7 +57,7 @@ class SelfRegisterRequest(BaseModel):
 
 
 @router.get("/org-members")
-async def list_org_members(token: dict = Depends(require_admin_role)):
+async def list_org_members(token: dict = Depends(require_admin_role)) -> dict:
     """List Clerk org members with their roles (admin only)."""
     org_id = token.get("org_id")
     if not org_id:
@@ -67,7 +67,9 @@ async def list_org_members(token: dict = Depends(require_admin_role)):
 
 
 @router.post("/assign-role")
-async def assign_role(request: AssignRoleRequest, token: dict = Depends(require_admin_role)):
+async def assign_role(
+    request: AssignRoleRequest, token: dict = Depends(require_admin_role)
+) -> dict:
     """Assign a role to an org member via Clerk (admin only)."""
     org_id = token.get("org_id")
     if not org_id:
@@ -85,7 +87,7 @@ async def assign_role(request: AssignRoleRequest, token: dict = Depends(require_
 async def register_as_reviewer(
     request: SelfRegisterRequest,
     token: dict = Depends(require_reviewer_role),
-):
+) -> dict:
     """Register the current user as a reviewer for their org."""
     org_id = token.get("org_id")
     clerk_user_id = token.get("user_id")
@@ -121,7 +123,7 @@ async def register_as_reviewer(
 
 
 @router.post("")
-async def create(request: CreateReviewerRequest, token: dict = Depends(require_admin_role)):
+async def create(request: CreateReviewerRequest, token: dict = Depends(require_admin_role)) -> dict:
     """Create a new reviewer (admin only)."""
     org_id = token.get("org_id") or request.org_id
     if not org_id:
@@ -144,7 +146,7 @@ async def list_reviewers(
     token: dict = Depends(get_verified_token),
     org_id: str | None = None,
     active_only: bool = True,
-):
+) -> dict:
     """List reviewers for the current organization."""
     effective_org = org_id or token.get("org_id")
     if not effective_org:
@@ -154,7 +156,7 @@ async def list_reviewers(
 
 
 @router.get("/{reviewer_id}")
-async def get_reviewer(reviewer_id: str, token: dict = Depends(get_verified_token)):
+async def get_reviewer(reviewer_id: str, token: dict = Depends(get_verified_token)) -> dict:
     """Get a reviewer by ID."""
     reviewer = await get_reviewer_by_id(reviewer_id)
     if not reviewer:
@@ -167,7 +169,7 @@ async def update(
     reviewer_id: str,
     request: UpdateReviewerRequest,
     token: dict = Depends(get_verified_token),
-):
+) -> dict:
     """Update a reviewer (admin: any reviewer; reviewer: own profile only)."""
     existing = await get_reviewer_by_id(reviewer_id)
     if not existing:
@@ -206,7 +208,7 @@ async def update(
 
 
 @router.delete("/{reviewer_id}")
-async def delete(reviewer_id: str, token: dict = Depends(require_admin_role)):
+async def delete(reviewer_id: str, token: dict = Depends(require_admin_role)) -> dict:
     """Delete a reviewer (admin only)."""
     existing = await get_reviewer_by_id(reviewer_id)
     if not existing:

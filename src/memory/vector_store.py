@@ -45,8 +45,8 @@ async def get_vector_store() -> AsyncCockroachDBVectorStore:
     )
 
     embeddings = OpenAIEmbeddings(
-        openai_api_key=settings.requesty_api_key,
-        openai_api_base=settings.requesty_base_url,
+        openai_api_key=settings.requesty_api_key,  # type: ignore[call-arg]
+        openai_api_base=settings.requesty_base_url,  # type: ignore[call-arg]
         model=settings.embedding_model,
     )
 
@@ -71,7 +71,7 @@ async def get_vector_store() -> AsyncCockroachDBVectorStore:
 
 async def embed_text(text: str) -> list[float]:
     store = await get_vector_store()
-    return await store.embeddings.aembed_query(text)
+    return await store.embeddings.aembed_query(text)  # type: ignore[no-any-return]
 
 
 async def store_embedding(
@@ -96,6 +96,7 @@ async def store_embedding(
     # Use parameterized INSERT via engine directly — the library's
     # _insert_batch uses text() with string interpolation which breaks
     # when content contains %(name)s patterns (SQLAlchemy bind params).
+    assert _engine is not None
     async with _engine.engine.begin() as conn:
         await conn.execute(
             text(

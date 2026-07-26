@@ -26,7 +26,7 @@ class LinkGitHubRequest(BaseModel):
 
 
 @router.get("/install-url")
-async def github_install_url(token: dict = Depends(get_verified_token)):
+async def github_install_url(token: dict = Depends(get_verified_token)) -> dict:
     if not settings.github_app_slug:
         raise HTTPException(status_code=500, detail="GitHub App slug not configured")
     return {"install_url": f"https://github.com/apps/{settings.github_app_slug}/installations/new"}
@@ -36,7 +36,7 @@ async def github_install_url(token: dict = Depends(get_verified_token)):
 async def link_github(
     request: LinkGitHubRequest,
     token: dict = Depends(get_verified_token),
-):
+) -> dict:
     """Link a GitHub App installation to the current Clerk organization."""
     from src.integrations.github_app import (
         get_installation_info,
@@ -106,7 +106,7 @@ async def link_github(
 
 
 @router.get("/installations")
-async def github_installations(token: dict = Depends(get_verified_token)):
+async def github_installations(token: dict = Depends(get_verified_token)) -> list[dict]:
     from src.memory.organizations import list_github_installations
 
     return await list_github_installations()
@@ -116,7 +116,7 @@ async def github_installations(token: dict = Depends(get_verified_token)):
 async def github_setup_callback(
     installation_id: int | None = None,
     setup_action: str | None = None,
-):
+) -> RedirectResponse:
     if setup_action:
         logger.info(
             "github_setup_callback",

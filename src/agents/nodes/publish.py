@@ -281,13 +281,16 @@ async def publish_node(state: DocumentationState) -> dict:
     try:
         if source == "github" and metadata:
             await _reply_to_github(state, metadata)
-            published_urls.append({"platform": "github", "issue": metadata.get("issue_number")})
+            issue_num = str(metadata.get("issue_number", ""))
+            published_urls.append({"platform": "github", "issue": issue_num})
         elif source == "slack" and metadata:
             await _reply_to_slack(state, metadata)
-            published_urls.append({"platform": "slack", "channel": metadata.get("channel")})
+            channel = str(metadata.get("channel", ""))
+            published_urls.append({"platform": "slack", "channel": channel})
         elif source == "discord" and metadata:
             await _reply_to_discord(state, metadata)
-            published_urls.append({"platform": "discord", "thread": metadata.get("thread_id")})
+            thread = str(metadata.get("thread_id", ""))
+            published_urls.append({"platform": "discord", "thread": thread})
     except Exception as e:
         reply_errors.append({"platform": source, "error": str(e)})
         logger.error("reply_failed", source=source, error=str(e))

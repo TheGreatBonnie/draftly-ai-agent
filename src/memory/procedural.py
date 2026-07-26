@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
+from typing import Any
 
 import structlog
 
@@ -11,7 +12,7 @@ from src.database import execute, fetch_all, fetch_one
 logger = structlog.get_logger()
 
 
-def _serialize_row(row) -> dict:
+def _serialize_row(row: Any) -> dict:
     return {
         k: str(v) if isinstance(v, uuid.UUID)
         else v.isoformat() if isinstance(v, datetime)
@@ -37,8 +38,9 @@ async def create_workflow(
         json.dumps(graph_state),
         current_node,
     )
+    assert row is not None
     logger.info("workflow_created", id=row["id"])
-    return row["id"]
+    return str(row["id"])
 
 
 async def update_workflow(

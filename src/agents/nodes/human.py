@@ -26,7 +26,7 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
     source = str(state.get("source", "unknown"))
     draft_content = str(state.get("draft_content", ""))
 
-    results = {}
+    results: dict[str, dict] = {}
 
     for reviewer in reviewers:
         token = generate_review_token(reviewer["id"], review_id)
@@ -73,7 +73,7 @@ async def notify_reviewers(state: DocumentationState, review_id: str) -> dict:
                 await send_review_notification(
                     to=reviewer["email"],
                     reviewer_name=reviewer["name"],
-                    state=state,
+                    state=dict(state),
                     review_id=review_id,
                     token=token,
                 )
