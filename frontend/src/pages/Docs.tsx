@@ -150,6 +150,11 @@ export function Docs() {
               ? "Documentation is generated automatically from your support threads. Start a conversation on Slack or Discord to create your first doc."
               : "Try a different tab or adjust your search."
           }
+          action={
+            docs.length === 0
+              ? { label: "Connect Slack", onClick: () => window.open("https://slack.com/apps", "_blank") }
+              : undefined
+          }
         />
       ) : (
         <div className="flex flex-col gap-2.5">
