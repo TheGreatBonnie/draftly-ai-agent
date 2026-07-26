@@ -11,7 +11,12 @@ export function ConfidenceComparison({ before, after }: ConfidenceComparisonProp
   const beforePct = Math.round(before * 100);
   const afterPct = Math.round(after * 100);
   const delta = afterPct - beforePct;
-  const isPositive = delta > 0;
+  const deltaClass =
+    delta > 0
+      ? "bg-[var(--color-sage-light)] text-[var(--color-sage)]"
+      : delta < 0
+        ? "bg-red-100 text-red-600"
+        : "bg-[var(--color-surface-alt)] text-[var(--color-muted)]";
 
   return (
     <div className="mb-6 rounded-lg bg-[var(--color-surface-alt)] p-4">
@@ -29,13 +34,9 @@ export function ConfidenceComparison({ before, after }: ConfidenceComparisonProp
           <p className="text-3xl font-bold text-[var(--color-sage)]">{afterPct}%</p>
         </div>
         <span
-          className={`rounded-full px-3 py-1 text-sm font-semibold ${
-            isPositive
-              ? "bg-[var(--color-sage-light)] text-[var(--color-sage)]"
-              : "bg-red-100 text-red-600"
-          }`}
+          className={`rounded-full px-3 py-1 text-sm font-semibold ${deltaClass}`}
         >
-          {isPositive ? "+" : ""}
+          {delta > 0 ? "+" : ""}
           {delta}%
         </span>
       </div>
