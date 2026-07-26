@@ -34,6 +34,7 @@ export function Knowledge() {
 
   async function loadDocs() {
     try {
+      setError(null);
       const data = await listKnowledge();
       setDocs(data);
     } catch (err: unknown) {
@@ -320,8 +321,8 @@ export function Knowledge() {
               key={doc.id}
               doc={doc}
               onDelete={(id) => {
-                const doc = docs.find((d) => d.id === id);
-                if (doc) setDeleteTarget(doc);
+                const targetDoc = docs.find((d) => d.id === id);
+                if (targetDoc) setDeleteTarget(targetDoc);
               }}
             />
           ))}
