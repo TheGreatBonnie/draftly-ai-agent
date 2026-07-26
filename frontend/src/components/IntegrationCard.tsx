@@ -56,19 +56,14 @@ export function IntegrationCard({
             <button
               type="button"
               onClick={onAction}
-              className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors"
+              disabled={actionLoading}
+              className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
               style={{
                 backgroundColor: brandColor,
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
             >
               {icon}
-              {actionLabel}
+              {actionLoading ? "Connecting..." : actionLabel}
             </button>
           </div>
         )}
