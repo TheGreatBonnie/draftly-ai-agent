@@ -203,11 +203,57 @@ export function Settings() {
   }
 
   if (loading) {
-    return <p className="text-gray-500">Loading settings...</p>;
+    return (
+      <div className="space-y-6">
+        <div className="h-7 w-32 animate-pulse rounded bg-[var(--color-border)]" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-20 animate-pulse rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+            />
+          ))}
+        </div>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="h-40 animate-pulse rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+          />
+        ))}
+      </div>
+    );
   }
 
-  if (error) {
-    return <p className="text-red-600">Error: {error}</p>;
+  if (error && !installUrl) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-[var(--color-charcoal)]">Settings</h1>
+        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+          <div className="flex items-center justify-between">
+            <span>{error}</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="text-red-500 underline hover:text-red-700"
+              >
+                Dismiss
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  fetchData();
+                }}
+                className="rounded bg-red-100 px-3 py-1 text-red-700 hover:bg-red-200"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
