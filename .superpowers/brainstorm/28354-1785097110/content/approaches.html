@@ -1,0 +1,183 @@
+<h2>Docs Page — Three Design Approaches</h2>
+<p class="subtitle">Each shows the list view + detail page side by side</p>
+
+<h3>Approach A: Notion-Style</h3>
+<p class="subtitle">Clean, minimal chrome. Focus on content. TOC floats on the right.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <!-- List View -->
+      <div style="background: #faf8f5; border-radius: 8px; padding: 16px; font-family: system-ui;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="font-size: 16px; font-weight: 700; color: #2d2a26; margin: 0;">Documentation</h4>
+          <div style="display: flex; gap: 6px;">
+            <span style="background: #2d2a26; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px;">All (17)</span>
+            <span style="background: white; border: 1px solid #e8e4de; color: #6b7280; padding: 4px 10px; border-radius: 6px; font-size: 11px;">Published (12)</span>
+          </div>
+        </div>
+        <!-- Card -->
+        <div style="background: white; border: 1px solid #e8e4de; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 99px; font-size: 9px;">troubleshooting</span>
+            <span style="font-size: 10px; color: #9ca3af;">v2 · 2h ago</span>
+          </div>
+          <div style="font-weight: 600; font-size: 13px; color: #2d2a26;">How to fix CORS errors in production</div>
+          <div style="font-size: 11px; color: #6b7280; margin-top: 4px; line-height: 1.4;">CORS errors happen when the server doesn't include the correct Access-Control-Allow-Origin header...</div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+            <div style="width: 60px; height: 4px; background: #e8e4de; border-radius: 99px; overflow: hidden;"><div style="width: 92%; height: 100%; background: #81b29a; border-radius: 99px;"></div></div>
+            <span style="font-size: 10px; color: #6b7280;">92%</span>
+            <span style="background: #e8f5e9; color: #2e7d32; padding: 1px 6px; border-radius: 99px; font-size: 9px; margin-left: auto;">approved</span>
+          </div>
+        </div>
+      </div>
+      <!-- Detail View -->
+      <div style="background: white; border-radius: 8px; padding: 20px; font-family: system-ui; margin-top: 8px; border: 1px solid #e8e4de;">
+        <div style="font-size: 10px; color: #e07a5f; margin-bottom: 4px;">← Back to Documentation</div>
+        <h4 style="font-size: 18px; font-weight: 700; color: #2d2a26; margin: 0 0 6px 0;">How to fix CORS errors in production</h4>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 99px; font-size: 9px;">troubleshooting</span>
+          <span style="font-size: 10px; color: #9ca3af;">v2 · Published Jul 24, 2026</span>
+        </div>
+        <div style="border-top: 1px solid #e8e4de; padding-top: 12px; font-size: 11px; color: #6b7280; line-height: 1.6;">
+          <p style="margin: 0 0 8px 0;">CORS errors happen when the server doesn't include the correct <code style="background: #f5f0ea; padding: 1px 4px; border-radius: 3px; font-size: 10px;">Access-Control-Allow-Origin</code> header.</p>
+          <p style="margin: 0 0 8px 0;"><strong style="color: #2d2a26;">Common causes:</strong></p>
+          <ul style="margin: 0; padding-left: 16px;">
+            <li>Missing header in production config</li>
+            <li>Wildcard (*) not allowed with credentials</li>
+            <li>Preflight requests timing out</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Notion-Style</h3>
+      <p>Full-width content, minimal chrome. TOC appears on scroll. Clean reading experience.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Best reading experience</li><li>Familiar to Notion users</li><li>Simple to implement</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>No persistent nav while reading</li><li>Long docs hard to navigate</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <!-- List View (same) -->
+      <div style="background: #faf8f5; border-radius: 8px; padding: 16px; font-family: system-ui;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="font-size: 16px; font-weight: 700; color: #2d2a26; margin: 0;">Documentation</h4>
+          <div style="display: flex; gap: 6px;">
+            <span style="background: #2d2a26; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px;">All (17)</span>
+            <span style="background: white; border: 1px solid #e8e4de; color: #6b7280; padding: 4px 10px; border-radius: 6px; font-size: 11px;">Published (12)</span>
+          </div>
+        </div>
+        <div style="background: white; border: 1px solid #e8e4de; border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 99px; font-size: 9px;">troubleshooting</span>
+            <span style="font-size: 10px; color: #9ca3af;">v2 · 2h ago</span>
+          </div>
+          <div style="font-weight: 600; font-size: 13px; color: #2d2a26;">How to fix CORS errors in production</div>
+          <div style="font-size: 11px; color: #6b7280; margin-top: 4px; line-height: 1.4;">CORS errors happen when the server doesn't include the correct Access-Control-Allow-Origin header...</div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+            <div style="width: 60px; height: 4px; background: #e8e4de; border-radius: 99px; overflow: hidden;"><div style="width: 92%; height: 100%; background: #81b29a; border-radius: 99px;"></div></div>
+            <span style="font-size: 10px; color: #6b7280;">92%</span>
+            <span style="background: #e8f5e9; color: #2e7d32; padding: 1px 6px; border-radius: 99px; font-size: 9px; margin-left: auto;">approved</span>
+          </div>
+        </div>
+      </div>
+      <!-- Detail View with TOC sidebar -->
+      <div style="background: white; border-radius: 8px; font-family: system-ui; margin-top: 8px; border: 1px solid #e8e4de; display: flex; overflow: hidden;">
+        <div style="flex: 1; padding: 16px;">
+          <div style="font-size: 10px; color: #e07a5f; margin-bottom: 4px;">← Back</div>
+          <h4 style="font-size: 16px; font-weight: 700; color: #2d2a26; margin: 0 0 4px 0;">CORS errors in production</h4>
+          <div style="font-size: 9px; color: #9ca3af; margin-bottom: 10px;">troubleshooting · v2</div>
+          <div style="font-size: 11px; color: #6b7280; line-height: 1.6;">
+            <p style="margin: 0 0 6px 0;">CORS errors happen when the server doesn't include the correct header.</p>
+            <p style="margin: 0 0 4px 0; font-weight: 600; color: #2d2a26; font-size: 11px;">Common causes</p>
+            <ul style="margin: 0; padding-left: 14px; font-size: 10px;">
+              <li>Missing header in production</li>
+              <li>Wildcard not allowed</li>
+              <li>Preflight timeout</li>
+            </ul>
+          </div>
+        </div>
+        <div style="width: 120px; background: #faf8f5; border-left: 1px solid #e8e4de; padding: 12px;">
+          <div style="font-size: 9px; font-weight: 600; color: #2d2a26; margin-bottom: 6px;">ON THIS PAGE</div>
+          <div style="font-size: 9px; color: #e07a5f; margin-bottom: 4px;">Common causes</div>
+          <div style="font-size: 9px; color: #6b7280; margin-bottom: 4px;">Solutions</div>
+          <div style="font-size: 9px; color: #6b7280; margin-bottom: 4px;">Environment config</div>
+          <div style="font-size: 9px; color: #6b7280;">Testing</div>
+          <div style="border-top: 1px solid #e8e4de; margin-top: 10px; padding-top: 10px;">
+            <div style="font-size: 9px; font-weight: 600; color: #2d2a26; margin-bottom: 4px;">METADATA</div>
+            <div style="font-size: 9px; color: #6b7280;">Confidence: 92%</div>
+            <div style="font-size: 9px; color: #6b7280;">Version: 2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: GitBook-Style</h3>
+      <p>Two-column detail: content on left, sticky TOC + metadata on right. Structured navigation.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Persistent TOC for long docs</li><li>Metadata always visible</li><li>Professional look</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More complex layout</li><li>TOC needs heading extraction</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <!-- List View (same) -->
+      <div style="background: #faf8f5; border-radius: 8px; padding: 16px; font-family: system-ui;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="font-size: 16px; font-weight: 700; color: #2d2a26; margin: 0;">Documentation</h4>
+          <div style="display: flex; gap: 6px;">
+            <span style="background: #2d2a26; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px;">All (17)</span>
+            <span style="background: white; border: 1px solid #e8e4de; color: #6b7280; padding: 4px 10px; border-radius: 6px; font-size: 11px;">Published (12)</span>
+          </div>
+        </div>
+        <div style="background: white; border: 1px solid #e8e4de; border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 99px; font-size: 9px;">troubleshooting</span>
+            <span style="font-size: 10px; color: #9ca3af;">v2 · 2h ago</span>
+          </div>
+          <div style="font-weight: 600; font-size: 13px; color: #2d2a26;">How to fix CORS errors in production</div>
+          <div style="font-size: 11px; color: #6b7280; margin-top: 4px; line-height: 1.4;">CORS errors happen when the server doesn't include the correct Access-Control-Allow-Origin header...</div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+            <div style="width: 60px; height: 4px; background: #e8e4de; border-radius: 99px; overflow: hidden;"><div style="width: 92%; height: 100%; background: #81b29a; border-radius: 99px;"></div></div>
+            <span style="font-size: 10px; color: #6b7280;">92%</span>
+            <span style="background: #e8f5e9; color: #2e7d32; padding: 1px 6px; border-radius: 99px; font-size: 9px; margin-left: auto;">approved</span>
+          </div>
+        </div>
+      </div>
+      <!-- Detail: centered article -->
+      <div style="background: white; border-radius: 8px; font-family: system-ui; margin-top: 8px; border: 1px solid #e8e4de; padding: 24px 40px;">
+        <div style="font-size: 10px; color: #e07a5f; margin-bottom: 6px;">← Back to Documentation</div>
+        <div style="max-width: 480px; margin: 0 auto;">
+          <h4 style="font-size: 20px; font-weight: 700; color: #2d2a26; margin: 0 0 6px 0;">How to fix CORS errors in production</h4>
+          <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+            <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 99px; font-size: 9px;">troubleshooting</span>
+            <span style="font-size: 10px; color: #9ca3af;">v2 · 92% confidence</span>
+          </div>
+          <div style="font-size: 12px; color: #6b7280; line-height: 1.7;">
+            <p style="margin: 0 0 10px 0;">CORS errors happen when the server doesn't include the correct <code style="background: #f5f0ea; padding: 1px 4px; border-radius: 3px; font-size: 11px;">Access-Control-Allow-Origin</code> header.</p>
+            <p style="margin: 0 0 6px 0; font-weight: 600; color: #2d2a26;">Common causes</p>
+            <ul style="margin: 0 0 10px 0; padding-left: 16px;">
+              <li>Missing header in production config</li>
+              <li>Wildcard (*) not allowed with credentials</li>
+              <li>Preflight requests timing out</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C: Centered Article</h3>
+      <p>Centered content column, no sidebars. Maximum focus on reading. Minimal chrome.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Cleanest reading experience</li><li>Easiest to implement</li><li>Mobile-friendly</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>No TOC for long docs</li><li>Metadata in header only</li><li>Less structured</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,5 @@
+{"type":"server-started","port":60935,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:60935","screen_dir":"/Applications/Projects/hackathon/draftly/.superpowers/brainstorm/22881-1785096161/content","state_dir":"/Applications/Projects/hackathon/draftly/.superpowers/brainstorm/22881-1785096161/state"}
+{"type":"screen-added","file":"/Applications/Projects/hackathon/draftly/.superpowers/brainstorm/22881-1785096161/content/dashboard-overview.html"}
+{"type":"screen-added","file":"/Applications/Projects/hackathon/draftly/.superpowers/brainstorm/22881-1785096161/content/waiting.html"}
+{"type":"screen-added","file":"/Applications/Projects/hackathon/draftly/.superpowers/brainstorm/22881-1785096161/content/dashboard-full.html"}
+{"type":"server-stopped","reason":"idle timeout"}

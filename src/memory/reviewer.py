@@ -76,6 +76,20 @@ async def get_pending_reviews(org_id: str) -> list[dict]:
     return [_serialize_row(r) for r in rows]
 
 
+async def get_all_reviews(org_id: str) -> list[dict]:
+    rows = await fetch_all(
+        """
+        SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score
+        FROM review_sessions rs
+        JOIN documentation d ON d.id = rs.doc_id
+        WHERE d.org_id = $1
+        ORDER BY rs.created_at DESC
+        """,
+        org_id,
+    )
+    return [_serialize_row(r) for r in rows]
+
+
 async def get_review_history(org_id: str, limit: int = 10) -> list[dict]:
     rows = await fetch_all(
         """

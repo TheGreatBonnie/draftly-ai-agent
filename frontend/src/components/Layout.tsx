@@ -5,7 +5,7 @@ import { Sidebar } from "./Sidebar";
 
 export function Layout() {
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-col bg-[var(--color-surface)]">
       <AuthTokenSetter />
       <Header />
       <div className="flex min-h-0 flex-1">
