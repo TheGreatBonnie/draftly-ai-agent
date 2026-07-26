@@ -268,17 +268,17 @@ export function Settings() {
         discord={discordStatus?.connected === true}
       />
 
-      {/* Organization section */}
-      <section className="rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Organization</h2>
-        <p className="mt-1 text-sm text-gray-500">
+      {/* Organization */}
+      <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <h2 className="font-semibold text-[var(--color-charcoal)]">Organization</h2>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Switch between organizations or manage team settings.
         </p>
         <div className="mt-4">
           <OrganizationSwitcher />
         </div>
         {organization && (
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-[var(--color-charcoal-light)]">
             <p>
               Active: <strong>{organization.name}</strong>
               {membership && (
