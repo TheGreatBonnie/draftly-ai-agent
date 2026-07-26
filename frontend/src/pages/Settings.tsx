@@ -436,105 +436,104 @@ export function Settings() {
         </div>
       </IntegrationCard>
 
-      {/* Discord Integration section */}
-      <section className="rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Discord Integration
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Connect Draftly to your Discord server to automatically generate
-          documentation from support requests.
-        </p>
+      {/* Discord Integration */}
+      <IntegrationCard
+        title="Discord Integration"
+        description="Connect Draftly to your Discord server to automatically generate documentation from support requests."
+        connected={discordStatus?.connected === true}
+        brandColor="#4f46e5"
+        icon={
+          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" />
+          </svg>
+        }
+        onAction={() => {
+          if (discordInviteUrl?.invite_url) {
+            window.open(discordInviteUrl.invite_url, "_blank", "noopener,noreferrer");
+          }
+        }}
+        actionLabel="Add to Discord Server"
+      >
+        <div className="space-y-4">
+          {/* Guild ID input (when not connected) */}
+          {!discordStatus?.connected && (
+            <div className="flex items-end gap-2">
+              <div className="min-w-0 flex-1">
+                <label className="block text-sm font-medium text-[var(--color-charcoal)]">
+                  Server (Guild) ID
+                </label>
+                <input
+                  type="text"
+                  value={guildIdInput}
+                  onChange={(e) => setGuildIdInput(e.target.value)}
+                  placeholder="e.g. 123456789012345678"
+                  className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm focus:border-[var(--color-charcoal)] focus:ring-1 focus:ring-[var(--color-charcoal)]"
+                />
+                <p className="mt-1 text-xs text-[var(--color-muted)]">
+                  Right-click your server name in Discord → Copy Server ID
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleDiscordLink}
+                disabled={discordLinking || !guildIdInput.trim()}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                {discordLinking ? "Connecting..." : "Connect"}
+              </button>
+            </div>
+          )}
 
-        <div className="mt-4">
-          {discordInviteUrl && (
-            <a
-              href={discordInviteUrl.invite_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" />
-              </svg>
-              Add to Discord Server
-            </a>
+          {/* Connected state */}
+          {discordStatus?.connected && (
+            <>
+              <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-surface-alt)] p-3">
+                <div className="flex items-center justify-between">
+                  <span className="min-w-0 truncate font-medium text-[var(--color-charcoal)]">
+                    Guild: {discordStatus.guild_id}
+                  </span>
+                  <span className="ml-2 inline-flex shrink-0 items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                    Connected
+                  </span>
+                </div>
+              </div>
+
+              {/* Trigger Channels */}
+              <div>
+                <h3 className="text-sm font-medium text-[var(--color-charcoal)]">
+                  Trigger Channels
+                </h3>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">
+                  Select channels where the bot responds to @mentions. Leave empty to
+                  disable all triggers.
+                  {triggerSaving && (
+                    <span className="ml-2 text-indigo-600">Saving...</span>
+                  )}
+                </p>
+                <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-[var(--color-border)] p-2">
+                  {availableChannels.length === 0 ? (
+                    <p className="text-xs text-[var(--color-muted)]">No channels found</p>
+                  ) : (
+                    availableChannels.map((ch) => (
+                      <label
+                        key={ch.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-[var(--color-surface-alt)]">
+                        <input
+                          type="checkbox"
+                          checked={triggerChannelIds.includes(ch.id)}
+                          onChange={() => handleToggleChannel(ch.id)}
+                          disabled={triggerSaving}
+                          className="h-4 w-4 rounded border-[var(--color-border)] text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="text-[var(--color-charcoal)]">#{ch.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
-
-        {!discordStatus?.connected && (
-          <div className="mt-4 flex items-end gap-2">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Server (Guild) ID
-              </label>
-              <input
-                type="text"
-                value={guildIdInput}
-                onChange={(e) => setGuildIdInput(e.target.value)}
-                placeholder="e.g. 123456789012345678"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-              />
-              <p className="mt-1 text-xs text-gray-400">
-                Right-click your server name in Discord → Copy Server ID
-              </p>
-            </div>
-            <button
-              onClick={handleDiscordLink}
-              disabled={discordLinking || !guildIdInput.trim()}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
-              {discordLinking ? "Connecting..." : "Connect"}
-            </button>
-          </div>
-        )}
-
-        {discordStatus?.connected && (
-          <div className="mt-4">
-            <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-3">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-900">
-                  Guild: {discordStatus.guild_id}
-                </span>
-                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
-                  Connected
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <h3 className="text-sm font-medium text-gray-900">
-                Trigger Channels
-              </h3>
-              <p className="mt-1 text-xs text-gray-500">
-                Select channels where the bot responds to @mentions. Leave empty
-                to disable all triggers.
-                {triggerSaving && (
-                  <span className="ml-2 text-indigo-600">Saving...</span>
-                )}
-              </p>
-              <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-gray-200 p-2">
-                {availableChannels.length === 0 ? (
-                  <p className="text-xs text-gray-400">No channels found</p>
-                ) : (
-                  availableChannels.map((ch) => (
-                    <label
-                      key={ch.id}
-                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-gray-100">
-                      <input
-                        type="checkbox"
-                        checked={triggerChannelIds.includes(ch.id)}
-                        onChange={() => handleToggleChannel(ch.id)}
-                        disabled={triggerSaving}
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="text-gray-700">#{ch.name}</span>
-                    </label>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
+      </IntegrationCard>
     </div>
   );
 }
