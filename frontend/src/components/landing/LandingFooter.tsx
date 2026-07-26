@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 export function LandingFooter() {
   return (
     <footer className="bg-charcoal px-6 py-10 text-muted">
@@ -40,9 +42,9 @@ export function LandingFooter() {
             </h4>
             <ul className="space-y-2 text-[13px]">
               <li>
-                <a href="#" className="transition-colors hover:text-white">
+                <Link to="/help" className="transition-colors hover:text-white">
                   Documentation
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="transition-colors hover:text-white">

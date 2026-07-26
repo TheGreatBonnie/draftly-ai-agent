@@ -31,6 +31,12 @@ export function LandingNav() {
           >
             FAQ
           </a>
+          <Link
+            to="/help"
+            className="text-sm text-muted transition-colors hover:text-charcoal"
+          >
+            Docs
+          </Link>
 
           <Show when="signed-out">
             <Link
