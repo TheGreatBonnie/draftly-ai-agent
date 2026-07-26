@@ -12,7 +12,7 @@ export function ReviewHeader({ review }: ReviewHeaderProps) {
     <div className="mb-6">
       <Link
         to="/reviews"
-        className="mb-4 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand)]/80"
+        className="mb-4 text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand-hover)]"
       >
         ← Back to Reviews
       </Link>
