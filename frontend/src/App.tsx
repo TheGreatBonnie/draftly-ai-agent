@@ -7,6 +7,7 @@ import { Landing } from "./pages/Landing";
 import { Dashboard } from "./pages/Dashboard";
 import { ReviewDetail } from "./pages/ReviewDetail";
 import { Reviewers } from "./pages/Reviewers";
+import { DocDetail } from "./pages/DocDetail";
 import { Docs } from "./pages/Docs";
 import { Knowledge } from "./pages/Knowledge";
 import { Memory } from "./pages/Memory";
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="review/:id" element={<ReviewDetail />} />
           <Route path="reviewers" element={<Reviewers />} />
           <Route path="docs" element={<Docs />} />
+          <Route path="docs/:id" element={<DocDetail />} />
           <Route path="knowledge" element={<Knowledge />} />
           <Route path="memory" element={<Memory />} />
           <Route path="settings" element={<Settings />} />
