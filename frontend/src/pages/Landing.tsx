@@ -12,7 +12,7 @@ export function Landing() {
       <LandingNav />
 
       <Show when="signed-in">
-        <main className="flex flex-1 items-center justify-center bg-surface px-6 py-20">
+        <main className="flex flex-1 items-center justify-center bg-[#FAF8F5] px-6 py-20">
           <OrganizationList
             afterSelectOrganizationUrl="/dashboard"
             afterCreateOrganizationUrl="/dashboard"

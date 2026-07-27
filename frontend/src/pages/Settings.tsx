@@ -207,19 +207,19 @@ export function Settings() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-7 w-32 animate-pulse rounded bg-[var(--color-border)]" />
+        <div className="h-7 w-32 animate-pulse rounded-full bg-white/60" />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-20 animate-pulse rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+              className="glass-card h-20 animate-pulse rounded-2xl"
             />
           ))}
         </div>
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="h-40 animate-pulse rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+            className="glass-card h-40 animate-pulse rounded-2xl"
           />
         ))}
       </div>
@@ -230,7 +230,7 @@ export function Settings() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-[var(--color-charcoal)]">Settings</h1>
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="glass-card rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           <div className="flex items-center justify-between">
             <span>{error}</span>
             <div className="flex gap-2">
@@ -247,7 +247,7 @@ export function Settings() {
                   setError(null);
                   fetchData();
                 }}
-                className="rounded bg-red-100 px-3 py-1 text-red-700 hover:bg-red-200"
+                className="rounded-full bg-red-100 px-3 py-1 text-red-700 hover:bg-red-200"
               >
                 Retry
               </button>
@@ -270,7 +270,7 @@ export function Settings() {
       />
 
       {/* Organization */}
-      <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+      <section className="glass-panel rounded-2xl p-6">
         <h2 className="font-semibold text-[var(--color-charcoal)]">Organization</h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
           Switch between organizations or manage team settings.
@@ -295,7 +295,7 @@ export function Settings() {
 
       {/* Team Roles (admin only) */}
       {isAdmin && (
-        <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <section className="glass-panel rounded-2xl p-6">
           <h2 className="font-semibold text-[var(--color-charcoal)]">Team Roles</h2>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             Assign roles to organization members. Members with the{" "}
@@ -304,7 +304,7 @@ export function Settings() {
           </p>
 
           {members.length > 0 ? (
-            <div className="mt-4 divide-y divide-[var(--color-border-light)]">
+            <div className="mt-4 divide-y divide-white/40">
               {members.map((member) => (
                 <div
                   key={member.user_id}
@@ -321,7 +321,7 @@ export function Settings() {
                     value={member.role}
                     onChange={(e) => handleRoleChange(member.user_id, e.target.value)}
                     disabled={roleLoading === member.user_id}
-                    className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm focus:border-[var(--color-charcoal)] focus:ring-1 focus:ring-[var(--color-charcoal)] disabled:opacity-50">
+                    className="rounded-xl border border-white/60 bg-white/40 px-3 py-1.5 text-sm focus:border-[var(--color-charcoal)] focus:outline-none disabled:opacity-50">
                     {ROLE_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
@@ -365,7 +365,7 @@ export function Settings() {
           {installations.map((inst) => (
             <div
               key={inst.id}
-              className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-surface-alt)] p-3">
+              className="glass-card rounded-xl p-3">
               <div className="flex items-center justify-between">
                 <span className="min-w-0 truncate font-medium text-[var(--color-charcoal)]">
                   {inst.github_org}
@@ -386,7 +386,7 @@ export function Settings() {
                   {inst.repositories.map((repo) => (
                     <span
                       key={repo.full_name}
-                      className="rounded bg-[var(--color-border)] px-1.5 py-0.5 text-xs text-[var(--color-charcoal-light)]">
+                      className="rounded-full border border-white/60 bg-white/40 px-2 py-0.5 text-xs text-[var(--color-charcoal-light)]">
                       {repo.full_name}
                     </span>
                   ))}
@@ -419,7 +419,7 @@ export function Settings() {
           {slackInstallations.map((inst) => (
             <div
               key={inst.id}
-              className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-surface-alt)] p-3">
+              className="glass-card rounded-xl p-3">
               <div className="flex items-center justify-between">
                 <span className="min-w-0 truncate font-medium text-[var(--color-charcoal)]">
                   {inst.team_name}
@@ -467,7 +467,7 @@ export function Settings() {
                   value={guildIdInput}
                   onChange={(e) => setGuildIdInput(e.target.value)}
                   placeholder="e.g. 123456789012345678"
-                  className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm focus:border-[var(--color-charcoal)] focus:ring-1 focus:ring-[var(--color-charcoal)]"
+                  className="mt-1 block w-full rounded-xl border border-white/60 bg-white/40 px-4 py-2.5 text-sm focus:border-[var(--color-charcoal)] focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-[var(--color-muted)]">
                   Right-click your server name in Discord → Copy Server ID
@@ -477,7 +477,7 @@ export function Settings() {
                 type="button"
                 onClick={handleDiscordLink}
                 disabled={discordLinking || !guildIdInput.trim()}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
                 {discordLinking ? "Connecting..." : "Connect"}
               </button>
             </div>
@@ -486,7 +486,7 @@ export function Settings() {
           {/* Connected state */}
           {discordStatus?.connected && (
             <>
-              <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-surface-alt)] p-3">
+              <div className="glass-card rounded-xl p-3">
                 <div className="flex items-center justify-between">
                   <span className="min-w-0 truncate font-medium text-[var(--color-charcoal)]">
                     Guild: {discordStatus.guild_id}
@@ -509,14 +509,14 @@ export function Settings() {
                     <span className="ml-2 text-indigo-600">Saving...</span>
                   )}
                 </p>
-                <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-[var(--color-border)] p-2">
+                <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-xl border border-white/60 bg-white/40 p-2">
                   {availableChannels.length === 0 ? (
                     <p className="text-xs text-[var(--color-muted)]">No channels found</p>
                   ) : (
                     availableChannels.map((ch) => (
                       <label
                         key={ch.id}
-                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-[var(--color-surface-alt)]">
+                        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 text-sm hover:bg-white/40">
                         <input
                           type="checkbox"
                           checked={triggerChannelIds.includes(ch.id)}

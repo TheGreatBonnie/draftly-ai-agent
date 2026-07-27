@@ -12,7 +12,7 @@ interface StatusCardProps {
 
 function StatusCard({ name, connected, brandColor }: StatusCardProps) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+    <div className="glass-card rounded-2xl px-4 py-3">
       <div className="flex items-center gap-2.5">
         <span
           className="inline-block h-2.5 w-2.5 rounded-full"

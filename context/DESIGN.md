@@ -7,7 +7,7 @@ Draftly uses a **glassmorphism** design language with cool blue-gray backgrounds
 ## Visual Language
 
 - **Glassmorphism**: Translucent frosted-glass surfaces with `backdrop-filter: blur()`, layered over animated background orbs
-- **Background**: Cool blue-gray `#F4F7FB` — supports glass effect contrast
+- **Background**: Warm linen `#FAF8F5` — supports glass effect contrast
 - **Surfaces**: Two tiers — `.glass-panel` (16px blur, structural) and `.glass-card` (12px blur, interactive with hover lift)
 - **Border radius**: 16px (`rounded-2xl` / `rounded-xl`) for soft, modern feel
 - **Typography**: Inter (body), Material Symbols Outlined (icons)
@@ -27,7 +27,7 @@ Draftly uses a **glassmorphism** design language with cool blue-gray backgrounds
 
 | Token | Hex | Role |
 |-------|-----|------|
-| Page background | `#F4F7FB` | Cool blue-gray base (inline style in Layout) |
+| Page background | `#FAF8F5` | Warm linen base (inline style in Layout) |
 | `--color-surface` | `#faf8f5` | Warm white (legacy, used in some components) |
 | `--color-surface-alt` | `#f5f0ea` | Section alternation (legacy) |
 | `--color-glass` | `rgba(255,255,255,0.65)` | Glass panel background |
@@ -166,7 +166,7 @@ Two large blurred circles create ambient depth:
 
 #### Layout (`src/components/Layout.tsx`)
 - Flex row: `AuthTokenSetter` + `Sidebar` + `<Outlet />`
-- Background: inline `#F4F7FB` (cool blue-gray)
+- Background: inline `#FAF8F5` (warm linen)
 - Two `.bg-orb` divs (mint top-left, coral bottom-right)
 - No header bar
 

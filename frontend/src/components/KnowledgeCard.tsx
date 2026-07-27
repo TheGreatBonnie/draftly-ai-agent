@@ -17,7 +17,7 @@ interface KnowledgeCardProps {
 
 export function KnowledgeCard({ doc, onDelete }: KnowledgeCardProps) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-colors hover:border-[#d1cec9]">
+    <div className="glass-card rounded-2xl p-5">
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-[var(--color-charcoal)]">
@@ -40,7 +40,7 @@ export function KnowledgeCard({ doc, onDelete }: KnowledgeCardProps) {
         {truncate(doc.content, 150)}
       </p>
 
-      <div className="mt-3 flex items-center justify-between border-t border-[var(--color-border)] pt-3">
+      <div className="mt-3 flex items-center justify-between border-t border-white/40 pt-3">
         <div className="flex items-center gap-2.5">
           <Badge status={doc.status} />
           <span className="text-xs text-[var(--color-muted)]">
@@ -53,7 +53,7 @@ export function KnowledgeCard({ doc, onDelete }: KnowledgeCardProps) {
         <button
           type="button"
           onClick={() => onDelete(doc.id)}
-          className="rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+          className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-600 transition-all hover:bg-red-100"
         >
           Delete
         </button>

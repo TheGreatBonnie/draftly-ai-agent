@@ -4,7 +4,7 @@ import { Sidebar } from "./Sidebar";
 
 export function Layout() {
   return (
-    <div className="flex h-screen" style={{ backgroundColor: "#F4F7FB" }}>
+    <div className="flex h-screen" style={{ backgroundColor: "#FAF8F5" }}>
       <AuthTokenSetter />
 
       {/* Background orbs */}

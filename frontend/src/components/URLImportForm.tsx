@@ -4,6 +4,9 @@ import type { IngestKnowledgePayload } from "../api/types";
 
 const DOC_TYPES = ["howto", "faq", "tutorial", "troubleshooting", "reference"] as const;
 
+const inputClass =
+  "w-full rounded-xl border border-white/60 bg-white/40 px-4 py-2.5 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none";
+
 interface URLImportFormProps {
   onIngested: () => void;
   active: boolean;
@@ -88,14 +91,14 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://docs.example.com/api-guide"
-            className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none"
+            className={`${inputClass} flex-1`}
             disabled={state === "fetching" || state === "submitting"}
             required
           />
           <button
             type="submit"
             disabled={state === "fetching" || state === "submitting" || !url.trim()}
-            className="rounded-lg bg-[var(--color-charcoal)] px-4 py-2 text-sm font-medium text-[var(--color-surface)] hover:opacity-90 disabled:opacity-50"
+            className="rounded-full bg-[var(--color-charcoal)] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {state === "fetching" ? "Fetching..." : "Fetch"}
           </button>
@@ -107,14 +110,14 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
       </p>
 
       {state === "error" && error && (
-        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
         </p>
       )}
 
       {state === "preview" && (
         <form onSubmit={handleIngest}>
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-md bg-[var(--color-sage-light)] px-2.5 py-1 text-xs font-medium text-[var(--color-sage)]">
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/40 px-3 py-1 text-xs font-medium text-[var(--color-sage)]">
             Source: {sourceUrl} ({sourceType})
           </div>
           <div className="mb-3">
@@ -125,7 +128,7 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none"
+              className={inputClass}
               required
             />
           </div>
@@ -136,7 +139,7 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
             <select
               value={docType}
               onChange={(e) => setDocType(e.target.value)}
-              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm text-[var(--color-charcoal)] focus:border-[var(--color-charcoal)] focus:outline-none"
+              className="rounded-xl border border-white/60 bg-white/40 px-4 py-2.5 text-sm text-[var(--color-charcoal)] focus:border-[var(--color-charcoal)] focus:outline-none"
             >
               {DOC_TYPES.map((dt) => (
                 <option key={dt} value={dt}>
@@ -153,12 +156,12 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={10}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none"
+              className={inputClass}
               required
             />
           </div>
           {error && (
-            <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
             </p>
           )}
@@ -166,7 +169,7 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
             <button
               type="submit"
               disabled={state === "submitting" || !title.trim() || !content.trim()}
-              className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
+              className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
             >
               {state === "submitting" ? "Adding..." : "Add to Knowledge Base"}
             </button>
@@ -174,7 +177,7 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
               type="button"
               onClick={handleCancel}
               disabled={state === "submitting"}
-              className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] transition-colors hover:border-[var(--color-charcoal)] disabled:opacity-50"
+              className="rounded-full border border-white/60 bg-white/40 px-5 py-2.5 text-sm font-medium text-[var(--color-charcoal)] transition-all hover:bg-white/60 disabled:opacity-50"
             >
               Cancel
             </button>

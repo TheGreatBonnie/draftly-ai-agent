@@ -44,7 +44,7 @@ export function ConfirmDialog({
       aria-labelledby="confirm-dialog-title"
     >
       <div
-        className="w-full max-w-sm rounded-[var(--radius-card)] bg-[var(--color-surface)] p-6 shadow-xl"
+        className="glass-panel w-full max-w-sm rounded-2xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2
@@ -58,16 +58,16 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-[var(--color-border)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-charcoal)] transition-colors hover:border-[var(--color-charcoal)]"
+            className="rounded-full border border-white/60 bg-white/40 px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] transition-all hover:bg-white/60"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`rounded-lg px-3.5 py-1.5 text-sm font-medium text-white transition-colors ${
+            className={`rounded-full px-4 py-2 text-sm font-medium text-white transition-all ${
               danger
-                ? "bg-red-600 hover:bg-red-700"
+                ? "bg-red-500 hover:bg-red-600"
                 : "bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)]"
             }`}
           >
