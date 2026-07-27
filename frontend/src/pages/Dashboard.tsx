@@ -164,16 +164,18 @@ export function Dashboard() {
       </div>
 
       <div className="mb-5 grid grid-cols-4 gap-3">
-        <StatsCard label="Pending" value={stats.pending} />
+        <StatsCard label="Pending" value={stats.pending} icon="pending" color="var(--color-terracotta)" />
         <StatsCard
           label="Approved"
           value={stats.approved}
+          icon="check_circle"
           color="var(--color-sage)"
         />
-        <StatsCard label="This Week" value={stats.thisWeek} />
+        <StatsCard label="This Week" value={stats.thisWeek} icon="calendar_today" color="var(--color-blush)" />
         <StatsCard
           label="Avg Confidence"
           value={`${Math.round(stats.avgConfidence * 100)}%`}
+          icon="speed"
           color="var(--color-terracotta)"
         />
       </div>
