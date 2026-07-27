@@ -3,9 +3,10 @@ import { useState } from "react";
 interface ReviewFormProps {
   onSubmit: (decision: "approve" | "reject" | "revise", feedback: string) => Promise<void>;
   isSubmitting: boolean;
+  error?: string | null;
 }
 
-export function ReviewForm({ onSubmit, isSubmitting }: ReviewFormProps) {
+export function ReviewForm({ onSubmit, isSubmitting, error }: ReviewFormProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [feedback, setFeedback] = useState("");
 
@@ -39,6 +40,9 @@ export function ReviewForm({ onSubmit, isSubmitting }: ReviewFormProps) {
         value={feedback}
         onChange={(e) => setFeedback(e.target.value)}
       />
+      {error && (
+        <p className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-600">{error}</p>
+      )}
       <div className="flex gap-2">
         <button
           type="button"

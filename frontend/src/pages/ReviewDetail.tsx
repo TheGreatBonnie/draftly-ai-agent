@@ -13,36 +13,40 @@ export function ReviewDetail() {
   const [review, setReview] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     getReview(id)
       .then(setReview)
-      .catch((err) => setError(err.message))
+      .catch((err) => setLoadError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
 
   function handleRetry() {
     if (!id) return;
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     getReview(id)
       .then(setReview)
-      .catch((err) => setError(err.message))
+      .catch((err) => setLoadError(err.message))
       .finally(() => setLoading(false));
   }
 
   async function handleDecision(decision: "approve" | "reject" | "revise", feedback: string) {
     if (!id) return;
     setSubmitting(true);
+    setActionError(null);
     try {
       await decideReview(id, { decision, feedback });
       navigate("/reviews");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Decision failed");
+      const message = err instanceof Error ? err.message : "Decision failed";
+      setActionError(message);
+      throw err;
     } finally {
       setSubmitting(false);
     }
@@ -60,7 +64,7 @@ export function ReviewDetail() {
     );
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <div className="mx-auto max-w-3xl rounded-lg border border-red-200 bg-red-50 p-6 text-center">
         <p className="mb-2 text-sm font-medium text-red-600">Failed to load review</p>
@@ -101,7 +105,7 @@ export function ReviewDetail() {
         after={review.confidence_after}
       />
       <ReviewContent content={review.content} />
-      <ReviewForm onSubmit={handleDecision} isSubmitting={submitting} />
+      <ReviewForm onSubmit={handleDecision} isSubmitting={submitting} error={actionError} />
     </div>
   );
 }
