@@ -6,6 +6,20 @@ import { ConfidenceBar } from "./ConfidenceBar";
 import { decideReview } from "../api/reviews";
 import { relativeTime, truncate } from "../utils/format";
 
+const DOC_TYPE_ICONS: Record<string, string> = {
+  slack: "https://cdn.simpleicons.org/slack/4A154B",
+  github: "https://cdn.simpleicons.org/github/24292e",
+  discord: "https://cdn.simpleicons.org/discord/5865F2",
+};
+
+function getSourceIcon(docType: string): string {
+  const lower = docType.toLowerCase();
+  for (const [key, url] of Object.entries(DOC_TYPE_ICONS)) {
+    if (lower.includes(key)) return url;
+  }
+  return "https://cdn.simpleicons.org/article/6b7280";
+}
+
 interface ReviewCardProps {
   review: Review;
   onAction?: () => void;
@@ -29,6 +43,11 @@ export function ReviewCard({ review, onAction }: ReviewCardProps) {
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="mb-1.5 flex items-center gap-2">
+            <img
+              alt={review.doc_type}
+              className="h-4 w-4"
+              src={getSourceIcon(review.doc_type)}
+            />
             <span className="rounded-full bg-[var(--color-sage-light)] px-2.5 py-0.5 text-[10px] font-medium text-[var(--color-sage)]">
               {review.doc_type}
             </span>
