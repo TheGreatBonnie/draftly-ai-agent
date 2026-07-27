@@ -14,6 +14,8 @@ export interface Review {
   content: string;
   doc_type: string;
   confidence_score: number;
+  original_question: string | null;
+  platform: string | null;
 }
 
 export interface ReviewDecision {
@@ -94,6 +96,8 @@ export interface Doc {
   published_to: unknown;
   created_at: string;
   updated_at: string;
+  original_question: string | null;
+  platform: string | null;
 }
 
 export interface MemoryStats {

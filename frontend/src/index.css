@@ -208,6 +208,20 @@
   pointer-events: none;
 }
 
+/* ── Platform Badges ── */
+.platform-slack {
+  background-color: rgba(74, 21, 75, 0.1);
+  color: #4A154B;
+}
+.platform-discord {
+  background-color: rgba(88, 101, 242, 0.1);
+  color: #5865F2;
+}
+.platform-github {
+  background-color: rgba(36, 41, 47, 0.1);
+  color: #24292F;
+}
+
 /* ── Shimmer Loading ── */
 .shimmer {
   position: relative;

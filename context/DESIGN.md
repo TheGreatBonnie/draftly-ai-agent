@@ -2,28 +2,118 @@
 
 ## Overview
 
-Draftly uses a warm, approachable design with a terracotta accent palette. The app is a **React 19 SPA** with TypeScript, Vite 8, and TailwindCSS 4, served by the FastAPI backend from `frontend/dist/`. Authentication is handled by Clerk.
+Draftly uses a **glassmorphism** design language with cool blue-gray backgrounds, frosted-glass surfaces, and animated background orbs. The palette preserves the terracotta brand accent while adding mint as the live/positive indicator. The layout is sidebar-only (no top header bar). Built with React 19, TypeScript, Vite 8, TailwindCSS 4, and Clerk auth.
+
+## Visual Language
+
+- **Glassmorphism**: Translucent frosted-glass surfaces with `backdrop-filter: blur()`, layered over animated background orbs
+- **Background**: Cool blue-gray `#F4F7FB` — supports glass effect contrast
+- **Surfaces**: Two tiers — `.glass-panel` (16px blur, structural) and `.glass-card` (12px blur, interactive with hover lift)
+- **Border radius**: 16px (`rounded-2xl` / `rounded-xl`) for soft, modern feel
+- **Typography**: Inter (body), Material Symbols Outlined (icons)
+- **Motion**: Subtle — hover lifts on cards, pulsing agent status dot, shimmer loading skeletons
+
+## Color Palette
+
+### Primary
+
+| Token | Hex | Role |
+|-------|-----|------|
+| `--color-brand` | `#e07a5f` | Terracotta — CTAs, active nav, primary actions |
+| `--color-brand-hover` | `#d06a4f` | Brand hover state |
+| `--color-brand-light` | `#fdf0eb` | Brand tint backgrounds (legacy) |
+
+### Backgrounds
+
+| Token | Hex | Role |
+|-------|-----|------|
+| Page background | `#F4F7FB` | Cool blue-gray base (inline style in Layout) |
+| `--color-surface` | `#faf8f5` | Warm white (legacy, used in some components) |
+| `--color-surface-alt` | `#f5f0ea` | Section alternation (legacy) |
+| `--color-glass` | `rgba(255,255,255,0.65)` | Glass panel background |
+| `--color-glass-card` | `rgba(255,255,255,0.5)` | Glass card background |
+| `--color-glass-border` | `rgba(255,255,255,0.8)` | Glass panel border |
+
+### Text
+
+| Token | Hex | Role |
+|-------|-----|------|
+| `--color-charcoal` | `#2d2a26` | Primary text |
+| `--color-charcoal-light` | `#44403c` | Secondary dark |
+| `--color-muted` | `#6b7280` | Secondary text, descriptions |
+| `--color-faint` | `#9ca3af` | Tertiary text, labels |
+
+### Accents
+
+| Token | Hex | Role |
+|-------|-----|------|
+| `--color-mint` | `#4ECDC4` | Live status, positive trends, agent indicator |
+| `--color-mint-light` | `rgba(78,205,196,0.15)` | Mint tint backgrounds |
+| `--color-sage` | `#81b29a` | Success, approved states |
+| `--color-sage-light` | `#e8f5e9` | Sage tint |
+| `--color-sand` | `#f2cc8f` | Warning, pending states |
+| `--color-sand-light` | `#fff8e1` | Sand tint |
+| `--color-terracotta` | `#e07a5f` | Alias for brand (used in Badge) |
+| `--color-terracotta-light` | `#fdf0eb` | Terracotta tint |
+
+### Borders
+
+| Token | Hex | Role |
+|-------|-----|------|
+| `--color-border` | `#e8e4de` | Standard borders |
+| `--color-border-light` | `#e0ddd6` | Light borders |
+
+## Layout
+
+### App Shell (Sidebar-Only)
+
+```
+┌────────┬────────────────────────────────────────┐
+│ Sidebar│  Page Content                           │
+│ (glass)│                                         │
+│ 280px  │                                         │
+│        │                                         │
+└────────┴────────────────────────────────────────┘
+```
+
+- **No top header bar** — logo, nav, user profile all in sidebar
+- Sidebar: `w-[280px]`, full height, `.glass-panel` background
+- Main: `flex-1`, `overflow-y-auto`, `p-8`
+- Background orbs: fixed position, blurred circles behind content
+
+### Background Orbs
+
+Two large blurred circles create ambient depth:
+- **Mint orb**: top-left, 600x600px, `#4ECDC4`, 12% opacity
+- **Coral orb**: bottom-right, 700x700px, `#FF6B6B`, 12% opacity
+- Both animate with a slow 20s float (defined in CSS `@keyframes float` — not currently applied, static by default)
 
 ## Pages
 
 ### 1. Landing (`/`)
 - Marketing landing page with 6 sections: Nav, Hero, Features, How It Works, FAQ, Footer
 - Public, no auth required
-- Signed-out users see full marketing content
-- Signed-in users see Clerk `OrganizationList` for org selection
+- Uses the older warm palette (terracotta brand, cream backgrounds)
+- Not yet migrated to glassmorphism
 
 ### 2. Sign In / Sign Up (`/sign-in/*`, `/sign-up/*`)
 - Clerk-hosted authentication pages
 - Public, no auth required
 
 ### 3. Dashboard (`/dashboard`)
-- Card-based view of pending reviews
-- Each card shows: title, doc type, date, status badge, confidence bar
-- Links to review detail page
-- Empty state: "No pending reviews."
+- **Personalized greeting**: "Good morning, Sarah." (time-of-day + Clerk `user.firstName`)
+- **Agent status pill**: Pulsing mint dot + "Agent Active" text in glass capsule
+- **3-column stats grid**: Pending Reviews, Approved, Avg Confidence — each in a glass card with Material Symbols icon in tinted circle
+- **2-column main layout** (on large screens):
+  - Left (2/3): "Action Required" section with review cards
+  - Right (1/3): "Recent Activity" timeline panel
+- **Review cards**: Glass cards with doc-type icon, status badge, title, excerpt, inline AI confidence pill, pill action buttons (Approve/Review for pending, View for others)
+- **Activity panel**: Glass panel with vertical timeline — colored circle nodes (mint=complete, blue=edit, gray=search) with descriptive text and timestamps. Hardcoded placeholder data.
+- **Loading state**: Glass shimmer skeletons (3 placeholders with gradient sweep animation)
+- **Empty state**: Glass card with centered message
 
 ### 4. Review Detail (`/review/:id`)
-- Full document preview (generated markdown in `<pre>` block)
+- Full document preview (generated markdown)
 - Status badge + confidence bar
 - Feedback textarea (optional)
 - Three action buttons: Approve (green), Request Changes (yellow), Reject (red)
@@ -31,38 +121,28 @@ Draftly uses a warm, approachable design with a terracotta accent palette. The a
 
 ### 5. Reviewers (`/reviewers`)
 - Admin view: list all reviewers with name, email, platform IDs, notification preferences
-- Admin can add reviewers via form (name, email, Slack/Discord IDs, notification toggles)
+- Admin can add reviewers via form
 - Admin can delete reviewers
-- Reviewer role: self-registration prompt with notification preference form
-- Shows "You" badge for current user
+- Reviewer role: self-registration prompt
 
 ### 6. Documentation (`/docs`)
-- List of all generated documentation (AI-generated docs from DB)
+- List of all generated documentation
 - Each card shows: title, doc type, version, date, status badge, confidence bar
 - Expand/collapse to view full document content
-- Empty state: "No documentation yet."
 
 ### 7. Knowledge Base (`/knowledge`)
-- URL import form (fetches content from webpages, PDFs, Google Docs, Notion)
-- Manual document ingest form (title, doc type selector, content textarea)
+- URL import form (webpages, PDFs, Google Docs, Notion)
+- Manual document ingest form
 - List of company documents with expand/collapse, status badge, delete action
-- Doc types: howto, faq, tutorial, troubleshooting, reference
 
 ### 8. Memory (`/memory`)
-- 3-column stats grid: Support Threads, Documentation, Embeddings, Review Sessions, Agent Memory, Audit Logs
-- Semantic search input with results showing content type, similarity score, and text snippet
+- Stats grid + semantic search input with results
 
 ### 9. Settings (`/settings`)
-- Organization section: Clerk `OrganizationSwitcher`, active org name + role display
-- Team Roles section (admin only): list org members with role dropdown (Member / Reviewer / Admin)
-- GitHub Integration section: install GitHub App button, list connected orgs with repo counts
-- Discord Integration section: Guild ID input + Link button, trigger channel selector (multi-select), invite URL display with permissions (36932), Copy button
+- Organization, Team Roles, GitHub Integration, Discord Integration sections
 
 ### 10. Help Center (`/help/*`)
-- User documentation and guides, publicly accessible (no auth required)
-- Own layout with sidebar navigation + content area
-- Markdown-based content rendered via `react-markdown` + `remark-gfm`
-- 6 guides: Getting Started, Slack, Discord, GitHub, Reviews, Knowledge Base
+- Public documentation with sidebar navigation + markdown content
 
 ## Routes
 
@@ -71,187 +151,163 @@ Draftly uses a warm, approachable design with a terracotta accent palette. The a
 | `/` | Landing | No | Full-width |
 | `/sign-in/*` | Clerk sign-in | No | Full-width |
 | `/sign-up/*` | Clerk sign-up | No | Full-width |
-| `/help` | Help Center (Getting Started) | No | Landing nav + Help sidebar |
-| `/help/slack` | Slack Integration Guide | No | Landing nav + Help sidebar |
-| `/help/discord` | Discord Integration Guide | No | Landing nav + Help sidebar |
-| `/help/github` | GitHub Integration Guide | No | Landing nav + Help sidebar |
-| `/help/reviews` | Reviewing Documentation | No | Landing nav + Help sidebar |
-| `/help/knowledge` | Knowledge Base Guide | No | Landing nav + Help sidebar |
-| `/dashboard` | Review dashboard | Yes | Sidebar + Header |
-| `/review/:id` | Review detail | Yes | Sidebar + Header |
-| `/reviewers` | Reviewer management | Yes | Sidebar + Header |
-| `/docs` | Documentation browser | Yes | Sidebar + Header |
-| `/knowledge` | Knowledge base | Yes | Sidebar + Header |
-| `/memory` | Memory dashboard | Yes | Sidebar + Header |
-| `/settings` | Organization settings | Yes | Sidebar + Header |
+| `/help` | Help Center | No | Landing nav + Help sidebar |
+| `/dashboard` | Dashboard | Yes | Sidebar only |
+| `/review/:id` | Review detail | Yes | Sidebar only |
+| `/reviewers` | Reviewer management | Yes | Sidebar only |
+| `/docs` | Documentation browser | Yes | Sidebar only |
+| `/knowledge` | Knowledge base | Yes | Sidebar only |
+| `/memory` | Memory dashboard | Yes | Sidebar only |
+| `/settings` | Organization settings | Yes | Sidebar only |
 
 ## Components
 
-### Landing Components (`src/components/landing/`)
+### Layout Components
 
-#### LandingNav
-- Sticky nav bar with logo, section links, and auth CTA
-- Logo: terracotta "D" icon + "Draftly" text
-- Links: Features, How It Works, FAQ, Docs
-- Signed-out: Sign In link + Get Started button
-- Signed-in: Dashboard button
+#### Layout (`src/components/Layout.tsx`)
+- Flex row: `AuthTokenSetter` + `Sidebar` + `<Outlet />`
+- Background: inline `#F4F7FB` (cool blue-gray)
+- Two `.bg-orb` divs (mint top-left, coral bottom-right)
+- No header bar
 
-#### LandingHero
-- Purple eyebrow badge ("Autonomous Documentation")
-- Headline: "Turn conversations into documentation — automatically"
-- Subtitle describing the product
-- Dual CTA: Start Free (primary) + See How It Works (outline)
-- Trust badges: No credit card, Free tier, 2-min setup
-- "Already have an account? Sign In" link for returning users
+#### Sidebar (`src/components/Sidebar.tsx`)
+- Full-height glass panel (`w-[280px]`, `.glass-panel`)
+- **Logo area**: Gradient icon (terracotta→mint) + "Draftly" + "AI Documentation" subtitle
+- **Nav links**: Material Symbols icons + labels, `rounded-xl` items
+  - Active: `bg-white/60 text-brand shadow-sm border border-white/80`
+  - Inactive: `text-muted hover:bg-white/40`
+- **User profile** (bottom): Clerk `UserButton` + organization name
+- **Sign-in button**: Shows for signed-out users
 
-#### LandingFeatures
-- 6-card grid: Multi-Platform Ingest, AI Research Pipeline, Human-in-the-Loop, Semantic Memory, Confidence Scoring, Versioned Docs
-- Each card: colored icon box, title, description
+### Dashboard Components
 
-#### LandingHowItWorks
-- 3-step numbered process: Connect Your Channels, AI Generates Docs, Review & Publish
-- Colored circles (terracotta, sage, sand)
+#### StatsCard (`src/components/StatsCard.tsx`)
+- Glass card, `h-[140px]`, `rounded-2xl`
+- Top row: label (muted) + icon in tinted circle
+- Bottom row: large value (32px bold) + optional trend indicator
+- Props: `label`, `value`, `icon?`, `color?`, `trend?`
 
-#### LandingFAQ
-- 5 accordion items using `AccordionItem` component
-- Questions: How it works, platforms, approval, customization, security
+#### ReviewCard (`src/components/ReviewCard.tsx`)
+- Glass card with `group-hover` title color transition
+- Left: doc-type icon (Material Symbol in white rounded square) + badge + timestamp + title + excerpt + inline AI confidence pill
+- Right: action buttons (pill-shaped, rounded-full)
+  - Pending: Approve (sage) + Review (brand)
+  - Non-pending: View (white outline)
 
-#### LandingFooter
-- Dark charcoal background, 4-column layout
-- Brand column, Product, Resources (with /help link), Legal
-- Copyright line
+#### FilterTabs (`src/components/FilterTabs.tsx`)
+- Glass pill tabs (`rounded-full`)
+- Active: `bg-charcoal text-white`
+- Inactive: `bg-white/40 text-muted border border-white/60`
 
-### AccordionItem (`src/components/AccordionItem.tsx`)
-- Reusable FAQ accordion with expand/collapse
-- Chevron icon rotates on open
-- Uses `useState` for toggle state
+#### EmptyState (`src/components/EmptyState.tsx`)
+- Glass card wrapper, centered content
+- Icon + title + description + optional pill action button
 
-### Help Center Components (`src/components/help/`)
+#### ConfidenceBar (`src/components/ConfidenceBar.tsx`)
+- Horizontal bar (w-24, h-2) with theme-aware fill colors:
+  - Sage (green): >= 80%
+  - Sand (yellow): 50-79%
+  - Red: < 50%
 
-#### HelpLayout
-- Full-height flex layout with `LandingNav` at top
-- Left: `HelpSidebar` (200px, `bg-surface`)
-- Right: scrollable content area with `max-w-3xl` container
-- Renders `<Outlet />` for nested routes
+#### Badge (`src/components/Badge.tsx`)
+- Rounded-full pill with color variants per status
 
-#### HelpSidebar
-- Vertical nav list with 6 guide links
-- Uses `NavLink` with active state (brand accent) and inactive state (muted)
+#### ActivityItem (internal to Dashboard)
+- Timeline node: colored circle (border-2 border-white) with Material Symbol icon
+- Text: bold title + muted meta line
+- Colors: mint=complete, blue=edit, gray=search
 
-#### HelpArticle
-- Wraps `react-markdown` with `remark-gfm`
-- Applies `.prose` styles for typography
-- Takes `content: string` prop (raw markdown)
+### Shared Components
 
-### App Components (`src/components/`)
+#### ConfirmDialog, AccordionItem, URLImportForm, etc.
+- Unchanged from previous design
 
-#### Layout
-- Full-height flex column: `AuthTokenSetter` + `Header` + (`Sidebar` | `<Outlet />`)
-- Sidebar: 224px fixed width, gray-50 background, border-right
-- Main content: flex-1, overflow-y-auto, 24px padding
+## CSS Utilities
 
-#### Sidebar
-- Navigation links: Dashboard, Documentation, Knowledge Base, Memory, Settings
-- Reviewers link shown only for admin/reviewer roles (via `useOrganization()`)
-- Active link: blue-100 background, blue-700 text
-- Inactive link: gray-600 text, hover gray-100 background
+Defined in `frontend/src/index.css`:
 
-#### Header
-- Top bar across the full width
+### `.glass-panel`
+```css
+background-color: rgba(255, 255, 255, 0.65);
+backdrop-filter: blur(16px);
+border: 1px solid rgba(255, 255, 255, 0.8);
+box-shadow: 0 12px 40px rgba(41, 47, 54, 0.08);
+```
+Used for: Sidebar, Activity panel
 
-#### AuthTokenSetter
-- Syncs Clerk JWT token to the API client for authenticated requests
+### `.glass-card`
+```css
+background-color: rgba(255, 255, 255, 0.5);
+backdrop-filter: blur(12px);
+border: 1px solid rgba(255, 255, 255, 0.6);
+transition: all 0.3s ease;
+```
+Hover: `translateY(-2px)`, white border, intensified shadow
+Used for: Stats cards, review cards, filter tabs, empty state, agent status pill
 
-#### ProtectedRoute
-- Wraps authenticated routes, redirects to sign-in if unauthenticated
+### `.bg-orb`
+```css
+position: fixed;
+border-radius: 50%;
+filter: blur(120px);
+opacity: 0.12;
+pointer-events: none;
+```
+Used for: Background ambient orbs
 
-#### ReviewCard
-- Rounded card with border, hover shadow transition
-- Header: title (bold) + status `Badge`
-- Meta: doc type + date (gray-500 text-sm)
-- `ConfidenceBar` for visual score
-- "Review →" link to detail page
+### `.shimmer`
+```css
+position: relative;
+overflow: hidden;
+```
+With `::after` pseudo-element: gradient sweep animation (2s infinite)
+Used for: Loading skeleton placeholders
 
-#### ConfidenceBar
-- Horizontal bar (96px wide, 8px tall) with fill color based on score:
-  - Green (`bg-green-500`): >= 80%
-  - Yellow (`bg-yellow-500`): 50–79%
-  - Red (`bg-red-500`): < 50%
-- Percentage label to the right
+## Icons
 
-#### Badge
-- Rounded-full pill with color variants:
-  - `pending`: yellow-100 / yellow-800
-  - `approved`: green-100 / green-800
-  - `rejected`: red-100 / red-800
-  - `needs_changes`: orange-100 / orange-800
-  - `draft`: gray-100 / gray-800
-  - `in_review`: blue-100 / blue-800
-  - `published`: purple-100 / purple-800
+**Material Symbols Outlined** loaded via Google Fonts in `index.html`.
 
-#### URLImportForm
-- Form for importing content from external URLs (webpages, PDFs, Google Docs, Notion)
+Icon names used:
+- Navigation: `dashboard`, `description`, `library_books`, `memory`, `settings`, `help_center`, `rate_review`
+- Stats: `pending_actions`, `check_circle`, `psychology`, `trending_up`, `trending_down`
+- Doc types: `code`, `menu_book`, `troubleshoot`, `lightbulb`, `new_releases`, `description`
+- Activity: `check`, `edit`, `search`
+- Brand: `auto_awesome` (logo, with FILL variation)
 
-## Styling
+Font variation settings for filled icons: `style={{ fontVariationSettings: "'FILL' 1" }}`
 
-All styling uses **TailwindCSS 4** utility classes with a custom `@theme` block in `index.css`.
+## Typography
 
-### Theme Tokens (`@theme` in `index.css`)
+- **Body**: Inter (`--font-sans`)
+- **Headings**: Same Inter font family, bold weights
+- **Icons**: Material Symbols Outlined
+- **Scale**:
+  - Greeting: `text-[var(--text-heading)]` (1.5rem) + font-bold
+  - Section headings: `text-xl font-bold`
+  - Card titles: `font-semibold`
+  - Body: `text-sm`
+  - Meta/labels: `text-xs` or `text-[11px]`
+  - Stats values: `text-[32px] font-bold leading-none`
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--font-sans` | Inter, system-ui | Base typeface |
-| `--color-brand` | `#e07a5f` | Primary accent (terracotta) |
-| `--color-brand-hover` | `#d06a4f` | Brand hover state |
-| `--color-brand-light` | `#fdf0eb` | Brand tint backgrounds |
-| `--color-surface` | `#faf8f5` | Page background (warm white) |
-| `--color-surface-alt` | `#f5f0ea` | Section alternation |
-| `--color-charcoal` | `#2d2a26` | Primary text |
-| `--color-charcoal-light` | `#44403c` | Secondary dark |
-| `--color-muted` | `#6b7280` | Secondary text |
-| `--color-faint` | `#9ca3af` | Tertiary text |
-| `--color-border` | `#e8e4de` | Borders |
-| `--color-border-light` | `#e0ddd6` | Light borders |
-| `--color-sage` | `#81b29a` | Success/secondary accent |
-| `--color-sage-light` | `#e8f5e9` | Sage tint |
-| `--color-sand` | `#f2cc8f` | Highlight/warmth accent |
-| `--color-sand-light` | `#fff8e1` | Sand tint |
+## Spacing
 
-### Prose Styles (for markdown rendering)
+- Page content: `p-8`
+- Section margins: `mb-8` (stats), `mb-4` ( subsections)
+- Card gaps: `gap-4` (review list), `gap-5` (stats grid), `gap-6` (main grid)
+- Card internal: `p-5` to `p-6`
+- Sidebar: `px-4 py-6`
 
-The `.prose` class provides typography for markdown content:
-- Headings: `text-charcoal`, proper size scale, bold
-- Paragraphs: `text-muted`, `text-sm`, leading-relaxed
-- Code blocks: `bg-surface`, monospace, border, padding
-- Inline code: `bg-surface`, monospace, small, rounded
-- Links: `text-brand`, underline
-- Tables: full width, border-collapse
-- Blockquotes: left brand border, italic
+## Responsive Behavior
 
-### Typography
-- Landing hero: `text-[42px] font-bold leading-[1.15] tracking-tight`
-- Section headings: `text-[26px] font-bold`
-- Card titles: `text-sm font-semibold`
-- Body: `text-sm` (default), `text-xs` (meta, labels)
-- Font: Inter via `@theme` (`--font-sans`)
-
-### Layout
-- Landing max width: `max-w-5xl` (features, how-it-works), `max-w-3xl` (hero)
-- Help content max width: `max-w-3xl`
-- Card spacing: `gap-5` (feature grid)
-- Card padding: `p-5` (feature cards)
-- Card border: `border border-border rounded-[11px]`
-
-### Form Elements
-- Input: `rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand`
-- Button (primary): `rounded-lg bg-brand px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover`
-- Button (dark): `rounded-lg bg-charcoal px-4 py-2 text-sm font-medium text-white hover:bg-charcoal-light`
-- Button (outline): `rounded-lg border border-border-light bg-white px-6 py-2.5 text-sm font-medium text-charcoal hover:bg-surface`
+- Stats grid: `grid-cols-1 md:grid-cols-3`
+- Main grid: `grid-cols-1 lg:grid-cols-3` (reviews 2/3, activity 1/3)
+- Below `lg`: activity panel stacks below reviews
+- Sidebar: fixed `w-[280px]`, no mobile collapse
 
 ## Accessibility
 
 - ARIA labels on interactive elements
 - Keyboard navigation support
 - Color contrast ratios >= 4.5:1
-- Screen reader compatible
-- `type="button"` on all interactive buttons to prevent form submission
+- `type="button"` on all interactive buttons
+- `line-clamp-1` on truncated text

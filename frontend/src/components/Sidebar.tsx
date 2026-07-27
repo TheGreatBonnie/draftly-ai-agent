@@ -9,7 +9,7 @@ import {
 
 const baseLinks = [
   { to: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { to: "/docs", label: "Documentation", icon: "description" },
+  { to: "/reviews", label: "Reviews", icon: "description" },
   { to: "/knowledge", label: "Knowledge Base", icon: "library_books" },
   { to: "/memory", label: "Memory", icon: "memory" },
   { to: "/settings", label: "Settings", icon: "settings" },

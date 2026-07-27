@@ -1,21 +1,43 @@
-import { useState } from "react";
 import { Link } from "react-router";
-import type { Review } from "../api/types";
+import type { Doc } from "../api/types";
 import { Badge } from "./Badge";
-import { decideReview } from "../api/reviews";
 import { relativeTime, truncate } from "../utils/format";
 
-interface ReviewCardProps {
-  review: Review;
-  onAction?: () => void;
-}
-
 const DOC_TYPE_ICONS: Record<string, string> = {
-  api_reference: "code",
-  how_to: "menu_book",
   troubleshooting: "troubleshoot",
+  howto: "menu_book",
+  reference: "code",
+  guide: "lightbulb",
   concept: "lightbulb",
-  release_note: "new_releases",
+  api_reference: "code",
+};
+
+const DOC_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  troubleshooting: {
+    bg: "var(--color-terracotta-light)",
+    text: "var(--color-terracotta)",
+  },
+  howto: {
+    bg: "var(--color-sage-light)",
+    text: "var(--color-sage)",
+  },
+  reference: {
+    bg: "var(--color-sand-light)",
+    text: "var(--color-sand)",
+  },
+  guide: {
+    bg: "var(--color-blue-50)",
+    text: "var(--color-blue-600)",
+  },
+  api_reference: {
+    bg: "var(--color-sage-light)",
+    text: "var(--color-sage)",
+  },
+};
+
+const DEFAULT_DOC_TYPE_COLOR = {
+  bg: "var(--color-charcoal-light)",
+  text: "var(--color-surface-alt)",
 };
 
 function SlackIcon() {
@@ -63,45 +85,53 @@ const PLATFORM_CONFIG: Record<
   },
 };
 
-export function ReviewCard({ review, onAction }: ReviewCardProps) {
-  const [acting, setActing] = useState(false);
+function getDocTypeColors(docType: string) {
+  return DOC_TYPE_COLORS[docType] ?? DEFAULT_DOC_TYPE_COLOR;
+}
 
-  const handleDecision = async (decision: "approve" | "reject") => {
-    setActing(true);
-    try {
-      await decideReview(review.id, { decision, feedback: "" });
-      onAction?.();
-    } catch {
-      setActing(false);
-    }
-  };
+interface ReviewDocCardProps {
+  doc: Doc;
+}
 
-  const icon = DOC_TYPE_ICONS[review.doc_type] ?? "description";
-  const platform = review.platform
-    ? PLATFORM_CONFIG[review.platform.toLowerCase()]
+export function ReviewDocCard({ doc }: ReviewDocCardProps) {
+  const { bg, text } = getDocTypeColors(doc.doc_type);
+  const icon = DOC_TYPE_ICONS[doc.doc_type] ?? "description";
+  const platform = doc.platform
+    ? PLATFORM_CONFIG[doc.platform.toLowerCase()]
     : null;
 
   return (
-    <div className="glass-card group flex items-center justify-between rounded-2xl p-5">
-      <div className="flex min-w-0 flex-1 items-start gap-4">
+    <Link
+      to={`/reviews/${doc.id}`}
+      className="glass-card group block cursor-pointer rounded-2xl p-5"
+    >
+      <div className="flex items-start gap-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-white shadow-sm">
           <span className="material-symbols-outlined text-lg text-[var(--color-muted)]">
             {icon}
           </span>
         </div>
+
         <div className="min-w-0 flex-1">
-          <div className="mb-1 flex items-center gap-2">
-            <Badge status={review.status} />
+          <div className="mb-1.5 flex items-center gap-2">
+            <span
+              className="rounded-full px-2.5 py-0.5 text-[10px] font-medium"
+              style={{ backgroundColor: bg, color: text }}
+            >
+              {doc.doc_type}
+            </span>
+            <Badge status={doc.status} />
             <span className="text-xs text-[var(--color-muted)]">
-              {relativeTime(review.created_at)}
+              {relativeTime(doc.created_at)}
             </span>
           </div>
-          <h3 className="font-semibold text-[var(--color-charcoal)] transition-colors group-hover:text-[var(--color-brand)]">
-            {review.title}
+
+          <h3 className="mb-1 font-semibold text-[var(--color-charcoal)] group-hover:text-[var(--color-brand)] transition-colors">
+            {doc.title}
           </h3>
 
-          {review.original_question && (
-            <div className="mb-2 mt-1 rounded-lg border border-white/60 bg-white/40 px-3 py-2">
+          {doc.original_question && (
+            <div className="mb-2 rounded-lg border border-white/60 bg-white/40 px-3 py-2">
               <div className="mb-1 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[12px] text-[var(--color-muted)]">
                   help
@@ -111,12 +141,12 @@ export function ReviewCard({ review, onAction }: ReviewCardProps) {
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-[var(--color-charcoal-light)]">
-                &ldquo;{truncate(review.original_question, 140)}&rdquo;
+                &ldquo;{truncate(doc.original_question, 140)}&rdquo;
               </p>
             </div>
           )}
 
-          <div className="mt-1 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {platform && (
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${platform.className}`}
@@ -125,42 +155,19 @@ export function ReviewCard({ review, onAction }: ReviewCardProps) {
                 {platform.label}
               </span>
             )}
-            <span className="inline-flex items-center gap-1 rounded border border-white/80 bg-white/60 px-2 py-0.5 text-[11px] font-medium text-[var(--color-charcoal)]">
+            <span className="ml-auto inline-flex items-center gap-1 rounded border border-white/80 bg-white/60 px-2 py-0.5 text-[11px] font-medium">
               <span className="material-symbols-outlined text-[14px]">
                 psychology
               </span>
-              AI Confidence: {Math.round(review.confidence_score * 100)}%
+              {Math.round(doc.confidence_score * 100)}% confidence
             </span>
           </div>
         </div>
-      </div>
 
-      <div className="ml-4 shrink-0">
-        {review.status === "pending" ? (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleDecision("approve")}
-              disabled={acting}
-              className="h-10 rounded-full bg-[var(--color-sage)] px-5 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg hover:opacity-90 active:scale-95 disabled:opacity-50"
-            >
-              Approve
-            </button>
-            <Link
-              to={`/review/${review.id}`}
-              className="flex h-10 items-center rounded-full bg-[var(--color-brand)] px-5 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg hover:bg-[var(--color-brand-hover)] active:scale-95"
-            >
-              Review
-            </Link>
-          </div>
-        ) : (
-          <Link
-            to={`/review/${review.id}`}
-            className="inline-flex h-10 items-center rounded-full border border-gray-200 bg-white px-5 text-xs font-semibold text-[var(--color-charcoal)] shadow-sm transition-all hover:shadow hover:border-gray-300 active:scale-95"
-          >
-            View
-          </Link>
-        )}
+        <button className="shrink-0 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-xs font-semibold text-[var(--color-charcoal)] shadow-sm transition-all hover:border-gray-300 hover:shadow active:scale-95">
+          View
+        </button>
       </div>
-    </div>
+    </Link>
   );
 }

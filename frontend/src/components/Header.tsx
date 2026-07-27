@@ -4,7 +4,7 @@ import { useLocation, Link } from "react-router";
 const routeLabels: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/reviewers": "Reviewers",
-  "/docs": "Documentation",
+  "/reviews": "Reviews",
   "/knowledge": "Knowledge Base",
   "/memory": "Memory",
   "/settings": "Settings",

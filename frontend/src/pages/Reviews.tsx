@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { listDocs } from "../api/docs";
 import type { Doc } from "../api/types";
-import { DocCard } from "../components/DocCard";
+import { ReviewDocCard } from "../components/ReviewDocCard";
 import { EmptyState } from "../components/EmptyState";
 import { FilterTabs } from "../components/FilterTabs";
 
 type StatusFilter = "all" | "published" | "pending" | "draft" | "rejected";
 
-export function Docs() {
+export function Reviews() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +63,7 @@ export function Docs() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-32 animate-pulse rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+            className="h-32 animate-pulse rounded-2xl border border-white/60 bg-white/40"
           />
         ))}
       </div>
@@ -73,7 +73,7 @@ export function Docs() {
   if (error) {
     return (
       <div className="text-center">
-        <p className="text-[var(--color-muted)]">Failed to load documentation.</p>
+        <p className="text-[var(--color-muted)]">Failed to load reviews.</p>
         <p className="mt-1 text-sm text-[var(--color-muted)]">{error}</p>
         <button
           onClick={() => {
@@ -93,15 +93,15 @@ export function Docs() {
     <div>
       <div className="mb-5">
         <h1 className="text-[var(--text-heading)] font-bold text-[var(--color-charcoal)]">
-          Documentation
+          Reviews
         </h1>
         <p className="mt-0.5 text-sm text-[var(--color-muted)]">
-          Browse your AI-generated documentation library.
+          Browse and manage your AI-generated documentation.
         </p>
       </div>
 
       <div className="mb-4 flex items-center justify-between">
-        <FilterTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+        <FilterTabs tabs={tabs} active={activeTab} onChange={(k) => setActiveTab(k as StatusFilter)} />
         <input
           type="text"
           placeholder="Search documents..."
@@ -116,7 +116,7 @@ export function Docs() {
           icon={docs.length === 0 ? "📄" : "🔍"}
           title={
             docs.length === 0
-              ? "No documentation yet"
+              ? "No reviews yet"
               : "No documents match this filter"
           }
           description={
@@ -133,7 +133,7 @@ export function Docs() {
       ) : (
         <div className="flex flex-col gap-2.5">
           {filtered.map((doc) => (
-            <DocCard key={doc.id} doc={doc} />
+            <ReviewDocCard key={doc.id} doc={doc} />
           ))}
         </div>
       )}

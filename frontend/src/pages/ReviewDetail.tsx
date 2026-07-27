@@ -1,111 +1,287 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { useParams, Link, useLocation, useNavigate } from "react-router";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { getDoc } from "../api/docs";
 import { getReview, decideReview } from "../api/reviews";
-import type { Review } from "../api/types";
-import { ReviewHeader } from "../components/ReviewHeader";
-import { ConfidenceComparison } from "../components/ConfidenceComparison";
-import { ReviewContent } from "../components/ReviewContent";
+import type { Doc } from "../api/types";
+import { DocTOC } from "../components/DocTOC";
+import { DocMetadata } from "../components/DocMetadata";
 import { ReviewForm } from "../components/ReviewForm";
+import { ConfidenceComparison } from "../components/ConfidenceComparison";
+import { formatDate } from "../utils/format";
+
+interface DetailData {
+  title: string;
+  content: string;
+  doc_type: string;
+  confidence_score: number;
+  original_question: string | null;
+  platform: string | null;
+  version?: number;
+  updated_at?: string;
+  created_at?: string;
+  status?: string;
+  confidence_before?: number | null;
+  confidence_after?: number | null;
+  reviewer_feedback?: string | null;
+}
+
+const PLATFORM_CONFIG: Record<
+  string,
+  { label: string; icon: string; className: string }
+> = {
+  slack: {
+    label: "Slack",
+    icon: "💬",
+    className: "bg-purple-50 text-purple-700 border border-purple-200/60",
+  },
+  discord: {
+    label: "Discord",
+    icon: "🎮",
+    className: "bg-indigo-50 text-indigo-700 border border-indigo-200/60",
+  },
+  github: {
+    label: "GitHub",
+    icon: "🐙",
+    className: "bg-gray-100 text-gray-700 border border-gray-200/60",
+  },
+};
 
 export function ReviewDetail() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
-  const [review, setReview] = useState<Review | null>(null);
+  const isReviewSession = location.pathname.startsWith("/review/");
+
+  const [data, setData] = useState<DetailData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true);
-    setLoadError(null);
-    getReview(id)
-      .then(setReview)
-      .catch((err) => setLoadError(err.message))
-      .finally(() => setLoading(false));
-  }, [id]);
 
-  function handleRetry() {
-    if (!id) return;
-    setLoading(true);
-    setLoadError(null);
-    getReview(id)
-      .then(setReview)
-      .catch((err) => setLoadError(err.message))
-      .finally(() => setLoading(false));
-  }
+    const fetchData = isReviewSession ? getReview(id) : getDoc(id);
 
-  async function handleDecision(decision: "approve" | "reject" | "revise", feedback: string) {
+    fetchData
+      .then((result) => {
+        if (result && "error" in result) {
+          setError((result as { error: string }).error);
+        } else {
+          setData(result as DetailData);
+        }
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id, isReviewSession]);
+
+  const handleDecision = async (
+    decision: "approve" | "reject" | "revise",
+    feedback: string,
+  ) => {
     if (!id) return;
     setSubmitting(true);
-    setActionError(null);
+    setError(null);
     try {
       await decideReview(id, { decision, feedback });
-      navigate("/reviews");
+      navigate("/dashboard");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Decision failed";
-      setActionError(message);
-      throw err;
+      setError(err instanceof Error ? err.message : "Decision failed");
     } finally {
       setSubmitting(false);
     }
-  }
+  };
+
+  const handleCopy = async () => {
+    if (!data) return;
+    await navigator.clipboard.writeText(data.content);
+    setCopied(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    if (!data) return;
+    const blob = new Blob([data.content], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${data.title.toLowerCase().replace(/\s+/g, "-")}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const platform = data?.platform
+    ? PLATFORM_CONFIG[data.platform.toLowerCase()]
+    : null;
+
+  const backLink = isReviewSession ? "/dashboard" : "/reviews";
+  const backLabel = isReviewSession ? "Back to Dashboard" : "Back to Reviews";
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl animate-pulse">
-        <div className="mb-4 h-4 w-32 rounded bg-[var(--color-surface-alt)]" />
-        <div className="mb-2 h-7 w-2/3 rounded bg-[var(--color-surface-alt)]" />
-        <div className="mb-6 h-4 w-48 rounded bg-[var(--color-surface-alt)]" />
-        <div className="mb-6 h-32 rounded-lg bg-[var(--color-surface-alt)]" />
-        <div className="h-64 rounded-lg bg-[var(--color-surface-alt)]" />
+      <div className="flex flex-col gap-4">
+        <div className="h-6 w-48 animate-pulse rounded bg-[var(--color-border)]" />
+        <div className="h-8 w-96 animate-pulse rounded bg-[var(--color-border)]" />
+        <div className="h-64 animate-pulse rounded-2xl border border-white/60 bg-white/40" />
       </div>
     );
   }
 
-  if (loadError) {
+  if (error && !data) {
     return (
-      <div className="mx-auto max-w-3xl rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-        <p className="mb-2 text-sm font-medium text-red-600">Failed to load review</p>
-        <p className="mb-4 text-sm text-[var(--color-muted)]">
-          Please check your connection and try again.
+      <div className="text-center">
+        <p className="text-[var(--color-muted)]">
+          {error ?? "Document not found."}
         </p>
-        <div className="flex justify-center gap-3">
-          <button
-            onClick={handleRetry}
-            className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-          >
-            Retry
-          </button>
-          <button
-            onClick={() => navigate("/reviews")}
-            className="rounded-lg bg-[var(--color-surface-alt)] px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] hover:bg-[var(--color-border-light)]"
-          >
-            ← Back to Reviews
-          </button>
-        </div>
+        <Link
+          to={backLink}
+          className="mt-3 inline-block rounded-lg bg-[var(--color-charcoal)] px-4 py-2 text-sm font-medium text-[var(--color-surface)] hover:opacity-90"
+        >
+          {backLabel}
+        </Link>
       </div>
     );
   }
 
-  if (!review) {
+  if (!data) {
     return (
-      <div className="mx-auto max-w-3xl rounded-lg border border-[var(--color-border)] bg-white p-6 text-center">
-        <p className="text-sm text-[var(--color-muted)]">Review not found.</p>
+      <div className="text-center">
+        <p className="text-[var(--color-muted)]">Document not found.</p>
+        <Link
+          to={backLink}
+          className="mt-3 inline-block rounded-lg bg-[var(--color-charcoal)] px-4 py-2 text-sm font-medium text-[var(--color-surface)] hover:opacity-90"
+        >
+          {backLabel}
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <ReviewHeader review={review} />
-      <ConfidenceComparison
-        before={review.confidence_before}
-        after={review.confidence_after}
-      />
-      <ReviewContent content={review.content} />
-      <ReviewForm onSubmit={handleDecision} isSubmitting={submitting} error={actionError} />
+    <div className="flex min-h-0 flex-1">
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto pr-8">
+        <div className="mb-6">
+          <Link
+            to={backLink}
+            className="text-sm font-medium text-[var(--color-brand)] hover:underline"
+          >
+            &larr; {backLabel}
+          </Link>
+        </div>
+
+        <div className="mb-6">
+          <h1 className="text-[22px] font-bold leading-tight text-[var(--color-charcoal)]">
+            {data.title}
+          </h1>
+          <div className="mt-2 flex items-center gap-3">
+            <span className="rounded-full bg-[var(--color-sage-light)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-sage)]">
+              {data.doc_type}
+            </span>
+            {data.status && (
+              <span className="rounded-full bg-[var(--color-sage-light)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-sage)]">
+                {data.status}
+              </span>
+            )}
+            {platform && (
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${platform.className}`}
+              >
+                <span>{platform.icon}</span>
+                {platform.label}
+              </span>
+            )}
+            <span className="text-xs text-[var(--color-muted)]">
+              {data.version != null && `Version ${data.version} · `}
+              Updated {formatDate(data.updated_at ?? data.created_at ?? "")}
+            </span>
+          </div>
+          {data.original_question && (
+            <div className="mt-3 rounded-lg border border-white/60 bg-white/40 px-3 py-2">
+              <div className="mb-1 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[12px] text-[var(--color-muted)]">
+                  help
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                  Original Question
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-[var(--color-charcoal-light)]">
+                &ldquo;{data.original_question}&rdquo;
+              </p>
+            </div>
+          )}
+        </div>
+
+        {isReviewSession && (
+          <ConfidenceComparison
+            before={data.confidence_before ?? null}
+            after={data.confidence_after ?? null}
+          />
+        )}
+
+        {isReviewSession && data.reviewer_feedback && (
+          <div className="mb-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <p className="mb-1 text-xs font-medium text-[var(--color-muted)]">
+              Reviewer Feedback
+            </p>
+            <p className="text-sm text-[var(--color-charcoal)]">
+              {data.reviewer_feedback}
+            </p>
+          </div>
+        )}
+
+        <article className="prose">
+          <Markdown remarkPlugins={[remarkGfm]}>{data.content}</Markdown>
+        </article>
+
+        {isReviewSession && data.status === "pending" && (
+          <div className="mt-8">
+            <ReviewForm onSubmit={handleDecision} isSubmitting={submitting} error={error} />
+          </div>
+        )}
+      </div>
+
+      {/* Right Sidebar */}
+      <div className="w-[200px] shrink-0 border-l border-[var(--color-border)] bg-[var(--color-surface)] py-5 pl-5">
+        <DocTOC content={data.content} />
+
+        <div className="border-t border-[var(--color-border)] pt-5">
+          <DocMetadata doc={data as Doc} />
+        </div>
+
+        <div className="border-t border-[var(--color-border)] pt-5">
+          <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-faint)]">
+            Actions
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-left text-[11px] font-medium text-[var(--color-charcoal)] transition-colors hover:border-[var(--color-charcoal)]"
+            >
+              {copied ? "Copied!" : "Copy content"}
+            </button>
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-left text-[11px] font-medium text-[var(--color-charcoal)] transition-colors hover:border-[var(--color-charcoal)]"
+            >
+              Download as Markdown
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

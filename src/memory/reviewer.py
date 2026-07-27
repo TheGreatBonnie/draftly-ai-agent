@@ -65,9 +65,11 @@ async def complete_review(
 async def get_pending_reviews(org_id: str) -> list[dict]:
     rows = await fetch_all(
         """
-        SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score
+        SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score,
+               st.question_summary as original_question, st.source as platform
         FROM review_sessions rs
         JOIN documentation d ON d.id = rs.doc_id
+        LEFT JOIN support_threads st ON d.source_thread_id = st.id
         WHERE d.org_id = $1 AND rs.status = 'pending'
         ORDER BY rs.created_at DESC
         """,
@@ -79,9 +81,11 @@ async def get_pending_reviews(org_id: str) -> list[dict]:
 async def get_all_reviews(org_id: str) -> list[dict]:
     rows = await fetch_all(
         """
-        SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score
+        SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score,
+               st.question_summary as original_question, st.source as platform
         FROM review_sessions rs
         JOIN documentation d ON d.id = rs.doc_id
+        LEFT JOIN support_threads st ON d.source_thread_id = st.id
         WHERE d.org_id = $1
         ORDER BY rs.created_at DESC
         """,
