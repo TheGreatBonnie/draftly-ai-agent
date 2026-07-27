@@ -1,6 +1,10 @@
 import { request } from "./client";
 import type { Review, ReviewDecision } from "./types";
 
+export async function getAllReviews(): Promise<Review[]> {
+  return request<Review[]>("/reviews");
+}
+
 export async function getPendingReviews(): Promise<Review[]> {
   return request<Review[]>("/reviews/pending");
 }

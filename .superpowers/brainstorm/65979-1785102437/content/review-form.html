@@ -1,0 +1,61 @@
+<h2>Review Form Behavior</h2>
+<p class="subtitle">How should the review form work?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Always Visible</h3>
+      <p>Review form is always shown below the content. Simple, no clicks needed. Works well for short-to-medium content.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Expandable Panel</h3>
+      <p>Review form is collapsed by default with a "Review this document" button. Expands when clicked. Keeps focus on content first.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Sticky Bottom Bar</h3>
+      <p>Review controls stick to the bottom of the viewport as you scroll. Always accessible without scrolling back down.</p>
+    </div>
+  </div>
+</div>
+
+<div class="split" style="margin-top: 24px;">
+  <div class="mockup">
+    <div class="mockup-header">Option A: Always Visible</div>
+    <div class="mockup-body" style="padding: 16px; font-family: Inter, sans-serif;">
+      <div style="border: 1px solid #e8e4de; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+        <div style="font-size: 14px; font-weight: 600; color: #2d2a26; margin-bottom: 8px;">Documentation</div>
+        <div style="font-size: 12px; color: #6b7280;">Rendered markdown content here...</div>
+      </div>
+      <div style="border: 1px solid #e8e4de; border-radius: 6px; padding: 12px;">
+        <div style="font-size: 14px; font-weight: 600; color: #2d2a26; margin-bottom: 8px;">Your Review</div>
+        <div style="height: 48px; border: 1px solid #e8e4de; border-radius: 4px; margin-bottom: 8px;"></div>
+        <div style="display: flex; gap: 4px;">
+          <div style="background: #81b29a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px;">Approve</div>
+          <div style="background: #e8e4de; padding: 4px 8px; border-radius: 4px; font-size: 10px;">Changes</div>
+          <div style="background: #e8e4de; padding: 4px 8px; border-radius: 4px; font-size: 10px;">Reject</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mockup">
+    <div class="mockup-header">Option B: Expandable</div>
+    <div class="mockup-body" style="padding: 16px; font-family: Inter, sans-serif;">
+      <div style="border: 1px solid #e8e4de; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+        <div style="font-size: 14px; font-weight: 600; color: #2d2a26; margin-bottom: 8px;">Documentation</div>
+        <div style="font-size: 12px; color: #6b7280;">Rendered markdown content here...</div>
+      </div>
+      <div style="border: 1px dashed #e8e4de; border-radius: 6px; padding: 12px; text-align: center;">
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Ready to review?</div>
+        <div style="background: #e07a5f; color: white; padding: 6px 12px; border-radius: 4px; font-size: 11px; display: inline-block;">Open Review Panel</div>
+      </div>
+    </div>
+  </div>
+</div>

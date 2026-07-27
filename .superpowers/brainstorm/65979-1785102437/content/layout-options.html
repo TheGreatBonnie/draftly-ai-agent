@@ -1,0 +1,81 @@
+<h2>Layout Options for ReviewDetail</h2>
+<p class="subtitle">How should the content and review form be arranged?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Single Column (Current + Enhanced)</h3>
+      <p>Keep the single-column layout but add proper sections: metadata header, rendered markdown content, then review form below. Simple, focused, familiar.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Two-Column: Content + Review Sidebar</h3>
+      <p>Rendered markdown on the left (wider), review form + metadata on the right sidebar. More efficient use of space, keeps review controls visible while scrolling content.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Sticky Review Panel</h3>
+      <p>Full-width content area with a sticky review panel at the bottom that stays visible as you scroll through long documentation. Best for lengthy content.</p>
+    </div>
+  </div>
+</div>
+
+<div class="split" style="margin-top: 24px;">
+  <div class="mockup">
+    <div class="mockup-header">Option A: Single Column</div>
+    <div class="mockup-body" style="padding: 16px; font-family: Inter, sans-serif;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <span style="font-size: 12px; color: #6b7280;">← Back</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <span style="font-size: 18px; font-weight: 700; color: #2d2a26;">Title</span>
+        <span style="background: #e8f5e9; color: #81b29a; padding: 2px 8px; border-radius: 9999px; font-size: 10px;">Approved</span>
+      </div>
+      <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">api · 67% confidence · 2 hours ago</div>
+      <div style="border: 1px solid #e8e4de; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+        <div style="font-size: 14px; font-weight: 600; color: #2d2a26; margin-bottom: 8px;">Documentation</div>
+        <div style="font-size: 12px; color: #6b7280;">Rendered markdown content...</div>
+      </div>
+      <div style="border: 1px solid #e8e4de; border-radius: 6px; padding: 12px;">
+        <div style="font-size: 14px; font-weight: 600; color: #2d2a26; margin-bottom: 8px;">Review</div>
+        <div style="height: 48px; border: 1px solid #e8e4de; border-radius: 4px; margin-bottom: 8px;"></div>
+        <div style="display: flex; gap: 4px;">
+          <div style="background: #81b29a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px;">Approve</div>
+          <div style="background: #e8e4de; padding: 4px 8px; border-radius: 4px; font-size: 10px;">Changes</div>
+          <div style="background: #e8e4de; padding: 4px 8px; border-radius: 4px; font-size: 10px;">Reject</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mockup">
+    <div class="mockup-header">Option B: Two-Column</div>
+    <div class="mockup-body" style="padding: 16px; font-family: Inter, sans-serif;">
+      <div style="display: flex; gap: 12px;">
+        <div style="flex: 2;">
+          <div style="font-size: 18px; font-weight: 700; color: #2d2a26; margin-bottom: 4px;">Title</div>
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">api · 67% confidence</div>
+          <div style="border: 1px solid #e8e4de; border-radius: 6px; padding: 12px;">
+            <div style="font-size: 12px; color: #6b7280;">Rendered markdown content (wider)...</div>
+          </div>
+        </div>
+        <div style="flex: 1;">
+          <div style="border: 1px solid #e8e4de; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
+            <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">STATUS</div>
+            <span style="background: #e8f5e9; color: #81b29a; padding: 2px 6px; border-radius: 9999px; font-size: 10px;">Approved</span>
+          </div>
+          <div style="border: 1px solid #e8e4de; border-radius: 6px; padding: 12px;">
+            <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">REVIEW</div>
+            <div style="height: 48px; border: 1px solid #e8e4de; border-radius: 4px; margin-bottom: 8px;"></div>
+            <div style="background: #81b29a; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; text-align: center;">Submit</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

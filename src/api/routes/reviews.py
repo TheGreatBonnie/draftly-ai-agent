@@ -23,6 +23,16 @@ DECISION_TO_STATUS = {
 }
 
 
+@router.get("")
+async def get_all(token: dict = Depends(get_verified_token)):
+    from src.memory.reviewer import get_all_reviews
+
+    org_id = token.get("org_id")
+    if not org_id:
+        return []
+    return await get_all_reviews(org_id=org_id)
+
+
 @router.get("/pending")
 async def get_pending(token: dict = Depends(get_verified_token)) -> list:
     from src.memory.reviewer import get_pending_reviews
@@ -70,8 +80,12 @@ async def get_review(review_id: str, token: dict = Depends(get_verified_token)) 
     from src.database import fetch_one
 
     row = await fetch_one(
-        "SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score "
-        "FROM review_sessions rs JOIN documentation d ON d.id = rs.doc_id WHERE rs.id = $1",
+        "SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score, "
+        "st.question_summary as original_question, st.source as platform "
+        "FROM review_sessions rs "
+        "JOIN documentation d ON d.id = rs.doc_id "
+        "LEFT JOIN support_threads st ON d.source_thread_id = st.id "
+        "WHERE rs.id = $1",
         review_id,
     )
     return dict(row) if row else {"error": "not found"}

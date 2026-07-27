@@ -4,9 +4,11 @@ import { useLocation, Link } from "react-router";
 const routeLabels: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/reviewers": "Reviewers",
-  "/docs": "Documentation",
+  "/reviews": "Reviews",
+  "/knowledge": "Knowledge Base",
   "/memory": "Memory",
   "/settings": "Settings",
+  "/help": "Help Center",
 };
 
 function getBreadcrumb(pathname: string): { label: string; path: string }[] {
@@ -40,24 +42,30 @@ export function Header() {
   const { isSignedIn } = useAuth();
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4">
+    <header className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-white px-4">
       {/* Left: Logo + app name */}
       <div className="flex items-center gap-2">
-        <span className="text-lg font-bold text-blue-600">D</span>
-        <span className="text-sm font-semibold text-gray-900">Draftly</span>
+        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--color-brand)]">
+          <span className="text-xs font-bold text-white">D</span>
+        </div>
+        <span className="text-sm font-semibold text-[var(--color-charcoal)]">
+          Draftly
+        </span>
       </div>
 
       {/* Center: Breadcrumb */}
-      <nav className="flex items-center gap-1 text-sm text-gray-500">
+      <nav className="flex items-center gap-1 text-sm text-[var(--color-muted)]">
         {crumbs.map((crumb, i) => (
           <span key={crumb.path} className="flex items-center gap-1">
-            {i > 0 && <span className="text-gray-300">/</span>}
+            {i > 0 && <span className="text-[var(--color-faint)]">/</span>}
             {i === crumbs.length - 1 ? (
-              <span className="font-medium text-gray-900">{crumb.label}</span>
-            ) : (
-              <a href={crumb.path} className="hover:text-gray-700">
+              <span className="font-medium text-[var(--color-charcoal)]">
                 {crumb.label}
-              </a>
+              </span>
+            ) : (
+              <Link to={crumb.path} className="hover:text-[var(--color-charcoal)]">
+                {crumb.label}
+              </Link>
             )}
           </span>
         ))}
@@ -66,13 +74,13 @@ export function Header() {
       {/* Right: Org name + actions */}
       <div className="flex items-center gap-3">
         {isSignedIn && (
-          <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+          <span className="rounded-md bg-[var(--color-brand-light)] px-2 py-0.5 text-xs font-medium text-[var(--color-brand)]">
             {organization?.name || "No Org"}
           </span>
         )}
         <Link
           to="/settings"
-          className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="rounded-md p-1 text-[var(--color-faint)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-charcoal)]"
           title="Settings"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +100,7 @@ export function Header() {
         </Link>
         <Show when="signed-out">
           <SignInButton mode="modal">
-            <button className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+            <button className="rounded-md bg-[var(--color-brand)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--color-brand-hover)]">
               Sign In
             </button>
           </SignInButton>

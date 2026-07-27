@@ -1,1 +1,250 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand: #e07a5f;
+  --color-brand-hover: #d06a4f;
+  --color-brand-light: #fdf0eb;
+
+  --color-surface: #faf8f5;
+  --color-surface-alt: #f5f0ea;
+
+  --color-charcoal: #2d2a26;
+  --color-charcoal-light: #44403c;
+
+  --color-muted: #6b7280;
+  --color-faint: #9ca3af;
+
+  --color-border: #e8e4de;
+  --color-border-light: #e0ddd6;
+
+  --color-sage: #81b29a;
+  --color-sage-light: #e8f5e9;
+
+  --color-sand: #f2cc8f;
+  --color-sand-light: #fff8e1;
+
+  --color-terracotta: #e07a5f;
+  --color-terracotta-light: #fdf0eb;
+
+  --radius-card: 16px;
+  --shadow-card: 0 4px 24px rgba(41, 47, 54, 0.08);
+  --shadow-card-hover: 0 8px 32px rgba(41, 47, 54, 0.12);
+  --text-heading: 1.5rem;
+
+  --color-glass: rgba(255, 255, 255, 0.65);
+  --color-glass-card: rgba(255, 255, 255, 0.5);
+  --color-glass-border: rgba(255, 255, 255, 0.8);
+
+  --color-mint: #4ECDC4;
+  --color-mint-light: rgba(78, 205, 196, 0.15);
+}
+
+.prose h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-charcoal);
+  line-height: 1.25;
+  margin-bottom: 1rem;
+  letter-spacing: -0.025em;
+}
+
+.prose h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-charcoal);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.prose h3 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--color-charcoal);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose p {
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.prose ul,
+.prose ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin-bottom: 0.25rem;
+}
+
+.prose ol li {
+  list-style-type: decimal;
+}
+
+.prose ul li {
+  list-style-type: disc;
+}
+
+.prose code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  color: var(--color-charcoal);
+}
+
+.prose pre {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.prose pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--color-charcoal);
+}
+
+.prose a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.prose a:hover {
+  color: var(--color-brand-hover);
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--color-charcoal);
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.prose th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-charcoal);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.prose td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-muted);
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--color-brand);
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 2rem 0;
+}
+
+/* ── Glassmorphism ── */
+.glass-panel {
+  background-color: var(--color-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: 0 12px 40px rgba(41, 47, 54, 0.08);
+}
+
+.glass-card {
+  background-color: var(--color-glass-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 16px 48px rgba(41, 47, 54, 0.12);
+}
+
+/* ── Background Orbs ── */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: 0;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+/* ── Platform Badges ── */
+.platform-slack {
+  background-color: rgba(74, 21, 75, 0.1);
+  color: #4A154B;
+}
+.platform-discord {
+  background-color: rgba(88, 101, 242, 0.1);
+  color: #5865F2;
+}
+.platform-github {
+  background-color: rgba(36, 41, 47, 0.1);
+  color: #24292F;
+}
+
+/* ── Shimmer Loading ── */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 20%,
+    rgba(255, 255, 255, 0.6) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

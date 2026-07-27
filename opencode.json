@@ -14,7 +14,10 @@
     "cockroachdb-docs-mcp-server": {
       "type": "remote",
       "url": "https://cockroachdb.mcp.kapa.ai",
-      "enabled": true
+      "enabled": true,
+      "oauth": {
+        "scope": "openid"
+      }
     }
   },
   "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]
