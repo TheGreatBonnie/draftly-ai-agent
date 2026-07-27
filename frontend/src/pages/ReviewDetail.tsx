@@ -51,11 +51,11 @@ export function ReviewDetail() {
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl animate-pulse">
-        <div className="mb-4 h-4 w-32 rounded bg-warm-200" />
-        <div className="mb-2 h-7 w-2/3 rounded bg-warm-200" />
-        <div className="mb-6 h-4 w-48 rounded bg-warm-200" />
-        <div className="mb-6 h-32 rounded-lg bg-warm-200" />
-        <div className="h-64 rounded-lg bg-warm-200" />
+        <div className="mb-4 h-4 w-32 rounded bg-[var(--color-surface-alt)]" />
+        <div className="mb-2 h-7 w-2/3 rounded bg-[var(--color-surface-alt)]" />
+        <div className="mb-6 h-4 w-48 rounded bg-[var(--color-surface-alt)]" />
+        <div className="mb-6 h-32 rounded-lg bg-[var(--color-surface-alt)]" />
+        <div className="h-64 rounded-lg bg-[var(--color-surface-alt)]" />
       </div>
     );
   }
@@ -64,19 +64,19 @@ export function ReviewDetail() {
     return (
       <div className="mx-auto max-w-3xl rounded-lg border border-red-200 bg-red-50 p-6 text-center">
         <p className="mb-2 text-sm font-medium text-red-600">Failed to load review</p>
-        <p className="mb-4 text-sm text-warm-500">
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
           Please check your connection and try again.
         </p>
         <div className="flex justify-center gap-3">
           <button
             onClick={handleRetry}
-            className="rounded-lg bg-terracotta px-4 py-2 text-sm font-medium text-white hover:bg-terracotta/90"
+            className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
           >
             Retry
           </button>
           <button
             onClick={() => navigate("/reviews")}
-            className="rounded-lg bg-warm-100 px-4 py-2 text-sm font-medium text-warm-900 hover:bg-warm-200"
+            className="rounded-lg bg-[var(--color-surface-alt)] px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] hover:bg-[var(--color-border-light)]"
           >
             ← Back to Reviews
           </button>
@@ -87,8 +87,8 @@ export function ReviewDetail() {
 
   if (!review) {
     return (
-      <div className="mx-auto max-w-3xl rounded-lg border border-warm-200 bg-white p-6 text-center">
-        <p className="text-sm text-warm-500">Review not found.</p>
+      <div className="mx-auto max-w-3xl rounded-lg border border-[var(--color-border)] bg-white p-6 text-center">
+        <p className="text-sm text-[var(--color-muted)]">Review not found.</p>
       </div>
     );
   }
