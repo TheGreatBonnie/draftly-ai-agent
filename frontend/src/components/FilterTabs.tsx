@@ -12,17 +12,17 @@ interface FilterTabsProps {
 
 export function FilterTabs({ tabs, active, onChange }: FilterTabsProps) {
   return (
-    <div className="flex gap-1.5">
+    <div className="flex gap-2">
       {tabs.map((tab) => {
         const isActive = tab.key === active;
         return (
           <button
             key={tab.key}
             onClick={() => onChange(tab.key)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
               isActive
-                ? "bg-[var(--color-charcoal)] text-[var(--color-surface)]"
-                : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)]"
+                ? "bg-[var(--color-charcoal)] text-white shadow-sm"
+                : "border border-white/60 bg-white/40 text-[var(--color-muted)] hover:bg-white/60 hover:text-[var(--color-charcoal)]"
             }`}
           >
             {tab.label} ({tab.count})
