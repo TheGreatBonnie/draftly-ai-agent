@@ -1,7 +1,9 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap");
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
 
   --color-brand: #e07a5f;
   --color-brand-hover: #d06a4f;
@@ -157,4 +159,36 @@
   border: none;
   border-top: 1px solid var(--color-border);
   margin: 2rem 0;
+}
+
+/* Glass panel utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Background orb animation */
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -40px) scale(1.05); }
+  100% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+/* Ping animation for status indicator */
+@keyframes ping-slow {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
 }
