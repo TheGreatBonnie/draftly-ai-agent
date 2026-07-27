@@ -15,20 +15,18 @@ export function KnowledgeStats({ docs }: KnowledgeStatsProps) {
 
   return (
     <div className="mb-5 grid grid-cols-4 gap-3">
-      <StatsCard label="Total Documents" value={counts.total} icon="description" color="var(--color-charcoal)" />
+      <StatsCard label="Total Documents" value={counts.total} />
       <StatsCard
         label="Published"
         value={counts.published}
-        icon="public"
         color="var(--color-sage)"
       />
       <StatsCard
         label="Pending Review"
         value={counts.pending}
-        icon="pending"
         color="var(--color-sand)"
       />
-      <StatsCard label="Drafts" value={counts.draft} icon="edit_note" color="var(--color-muted)" />
+      <StatsCard label="Drafts" value={counts.draft} />
     </div>
   );
 }
