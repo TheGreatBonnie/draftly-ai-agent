@@ -112,6 +112,88 @@ def build_discord_review_card(
     }
 
 
+def build_discord_improvement_card(
+    summary: str,
+    proposal_count: int,
+    prompt_count: int,
+    rubric_count: int,
+    tool_count: int,
+    dashboard_url: str,
+    tokens: list[dict],
+) -> dict:
+    embed = {
+        "title": "Draftly Improvement Suggestions",
+        "description": (
+            f"Found **{proposal_count}** improvement suggestions:\n"
+            f"\u2022 {prompt_count} prompt rewrite{'s' if prompt_count != 1 else ''}\n"
+            f"\u2022 {rubric_count} rubric update{'s' if rubric_count != 1 else ''}\n"
+            f"\u2022 {tool_count} tool suggestion{'s' if tool_count != 1 else ''}"
+        ),
+        "color": 49407,
+        "footer": {"text": "Links expire in 24 hours"},
+    }
+
+    if summary:
+        embed["fields"] = [
+            {"name": "Summary", "value": summary[:1024], "inline": False}
+        ]
+
+    components = []
+
+    for entry in tokens[:5]:
+        proposal = entry["proposal"]
+        label = (
+            proposal.get("proposed_changes", {}).get("node")
+            or proposal.get("proposed_changes", {}).get("criterion")
+            or proposal.get("proposed_changes", {}).get("name", "unknown")
+        )
+        token = entry["token"]
+        short_key = secrets.token_urlsafe(6)
+        store_interaction_token(short_key, token)
+
+        components.append({
+            "type": 1,
+            "components": [
+                {
+                    "type": 2,
+                    "style": 5,
+                    "label": f"View: {label[:40]}",
+                    "url": f"{dashboard_url}/improvements/{proposal['id']}",
+                },
+                {
+                    "type": 2,
+                    "style": 3,
+                    "label": "Approve",
+                    "custom_id": f"improvement_approve:{short_key}",
+                },
+                {
+                    "type": 2,
+                    "style": 4,
+                    "label": "Reject",
+                    "custom_id": f"improvement_reject:{short_key}",
+                },
+            ],
+        })
+
+    components.append({
+        "type": 1,
+        "components": [
+            {
+                "type": 2,
+                "style": 5,
+                "label": "View All in Dashboard",
+                "url": f"{dashboard_url}/improvements",
+            }
+        ],
+    })
+
+    return {
+        "embeds": [embed],
+        "components": components,
+        "content": f"Draftly Improvement Suggestions ({proposal_count} found)",
+    }
+
+
 def build_discord_result_embed(status: str, title: str) -> dict:
     """Build an updated embed showing the review result."""
     color_map = {

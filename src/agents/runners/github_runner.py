@@ -59,6 +59,8 @@ def build_github_state(payload: dict, org_id: str) -> DocumentationState:
             "repo": repo["name"],
             "issue_number": issue["number"],
         },
+        "_node_traces": [],
+        "_trace_collected": False,
     }
 
 

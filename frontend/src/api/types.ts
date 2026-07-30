@@ -107,6 +107,8 @@ export interface MemoryStats {
   review_sessions: number;
   agent_memory: number;
   audit_logs: number;
+  platform_counts?: PlatformCounts;
+  active_workflows?: number;
 }
 
 export interface SearchResult {
@@ -184,4 +186,70 @@ export interface DiscordChannel {
 
 export interface DiscordTriggerChannels {
   channels: string[];
+}
+
+export interface ImprovementProposal {
+  id: string;
+  org_id: string;
+  improvement_type: "prompt" | "rubric" | "tool";
+  proposed_changes: Record<string, unknown>;
+  rationale: string;
+  status: "pending" | "approved" | "rejected" | "applied" | "failed";
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PromptVersion {
+  id: string;
+  org_id: string;
+  node_name: string;
+  prompt_text: string;
+  version: number;
+  is_active: boolean;
+}
+
+export interface RubricVersion {
+  id: string;
+  org_id: string;
+  criterion_name: string;
+  criterion_text: string;
+  version: number;
+  is_active: boolean;
+}
+
+export interface ToolConfig {
+  id: string;
+  org_id: string;
+  name: string;
+  description: string;
+  implementation_type: string;
+  config: Record<string, unknown>;
+  enabled: boolean;
+  version: number;
+}
+
+export interface ActivityEvent {
+  id: string;
+  actor: "agent" | "human" | "system";
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  platform: string;
+  channel: string | null;
+  source: string;
+  summary: string;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface PlatformCounts {
+  slack?: number;
+  discord?: number;
+  github?: number;
+  cli?: number;
+  system?: number;
+  [key: string]: number | undefined;
 }

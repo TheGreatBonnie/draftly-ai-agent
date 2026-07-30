@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -8,10 +9,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.api.routes import (
+    activity,
     clerk,
     discord,
     docs,
     github,
+    improvements,
     knowledge,
     memory,
     review,
@@ -23,13 +26,33 @@ from src.database import close_pool, get_pool
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     import asyncio
 
+    from src.agents.graph import set_trace_collector
+    from src.analytics.hill_climber import HillClimber
+    from src.analytics.traces import TraceCollector
     from src.config import settings
     from src.integrations.discord_gateway import gateway
 
     await get_pool()
+
+    # Initialize trace collection
+    trace_collector = TraceCollector(
+        flush_threshold=settings.trace_analysis_interval,
+    )
+    hill_climber = HillClimber(
+        trace_collector=trace_collector,
+        org_id="",
+        analysis_interval=settings.trace_analysis_interval,
+    )
+    set_trace_collector(trace_collector)
+
+    async def on_flush() -> None:
+        if await hill_climber.should_analyze():
+            asyncio.create_task(hill_climber.run_analysis_cycle())
+
+    trace_collector.set_on_flush_callback(on_flush)
 
     # Start Discord Gateway WebSocket in background if configured
     discord_task = None
@@ -37,6 +60,9 @@ async def lifespan(app: FastAPI):
         discord_task = asyncio.create_task(gateway.start())
 
     yield
+
+    # Flush remaining traces on shutdown
+    await trace_collector.flush()
 
     # Stop Discord Gateway on shutdown
     await gateway.stop()
@@ -58,6 +84,8 @@ app.include_router(github.router, prefix="/api/github", tags=["github"])
 app.include_router(clerk.router, prefix="/api/clerk", tags=["clerk"])
 app.include_router(slack.router, prefix="/api/slack", tags=["slack"])
 app.include_router(discord.router, prefix="/api/discord", tags=["discord"])
+app.include_router(activity.router, prefix="/api/activity", tags=["activity"])
+app.include_router(improvements.router, prefix="/api", tags=["improvements"])
 
 DIST_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
 
@@ -65,7 +93,7 @@ if DIST_DIR.exists():
     app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="static-assets")
 
     @app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
-    async def serve_spa(request: Request, full_path: str):
+    async def serve_spa(request: Request, full_path: str) -> FileResponse:
         if full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="Not found")
         file_path = DIST_DIR / full_path

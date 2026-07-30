@@ -59,6 +59,8 @@ def build_slack_state(
             "user_id": user,
         },
         "message_history": message_history or [],
+        "_node_traces": [],
+        "_trace_collected": False,
     }
 
 

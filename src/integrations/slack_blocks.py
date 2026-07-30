@@ -190,3 +190,78 @@ def build_published_doc_card(
             },
         ],
     }
+
+
+def build_improvement_card(
+    summary: str,
+    proposal_count: int,
+    prompt_count: int,
+    rubric_count: int,
+    tool_count: int,
+    dashboard_url: str,
+    tokens: list[dict],
+) -> dict:
+    blocks: list[dict] = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": "\U0001f4a1 Draftly Improvement Suggestions",
+            },
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"Found *{proposal_count}* improvement suggestions:\n"
+                f"\u2022 *{prompt_count}* prompt rewrite{'s' if prompt_count != 1 else ''}\n"
+                f"\u2022 *{rubric_count}* rubric update{'s' if rubric_count != 1 else ''}\n"
+                f"\u2022 *{tool_count}* tool suggestion{'s' if tool_count != 1 else ''}",
+            },
+        },
+    ]
+
+    if summary:
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Summary:*\n{summary[:300]}"},
+        })
+
+    blocks.append({"type": "divider"})
+
+    for entry in tokens[:5]:
+        proposal = entry["proposal"]
+        label = (
+            proposal.get("proposed_changes", {}).get("node")
+            or proposal.get("proposed_changes", {}).get("criterion")
+            or proposal.get("proposed_changes", {}).get("name", "unknown")
+        )
+        blocks.append({
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": f"\u2705 Approve: {label[:35]}"},
+                    "style": "primary",
+                    "url": f"{dashboard_url}/improvements/{proposal['id']}",
+                    "action_id": f"approve_improvement_{proposal['id']}",
+                },
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": f"\u274c Reject: {label[:35]}"},
+                    "style": "danger",
+                    "url": f"{dashboard_url}/improvements/{proposal['id']}",
+                    "action_id": f"reject_improvement_{proposal['id']}",
+                },
+            ],
+        })
+
+    blocks.append({
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": f"<{dashboard_url}/improvements|View all proposals in Dashboard>",
+        },
+    })
+
+    return {"blocks": blocks}

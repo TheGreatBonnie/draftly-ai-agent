@@ -11,6 +11,7 @@ import { Reviews } from "./pages/Reviews";
 import { Knowledge } from "./pages/Knowledge";
 import { Memory } from "./pages/Memory";
 import { Settings } from "./pages/Settings";
+import { Improvements } from "./pages/Improvements";
 import { Help } from "./pages/Help";
 import { SignInPage } from "./pages/SignIn";
 import { SignUpPage } from "./pages/SignUp";
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="reviews/:id" element={<ReviewDetail />} />
           <Route path="knowledge" element={<Knowledge />} />
           <Route path="memory" element={<Memory />} />
+          <Route path="improvements" element={<Improvements />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

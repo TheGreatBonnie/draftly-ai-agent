@@ -2,12 +2,12 @@
 
 ## Project Scope
 
-Draftly is an autonomous documentation engineering platform that transforms support conversations into production-ready documentation using AI agents, CockroachDB, and AWS. It ingests threads from Slack, Discord, GitHub, and CLI, runs them through a rubric-graded LangGraph pipeline with human-in-the-loop review, and publishes documentation back to the originating platform.
+Draftly is an autonomous documentation engineering platform that transforms support conversations into production-ready documentation using AI agents, CockroachDB, and AWS. It ingests threads from Slack, Discord, GitHub, and CLI, runs them through a rubric-graded LangGraph pipeline (9 nodes with tracing) with human-in-the-loop review, publishes documentation back to the originating platform, and self-improves via a hill-climbing meta-loop that analyzes execution traces to optimize prompts, rubrics, and tools.
 
 ## MVP Features
 
 ### Core Pipeline
-- LangGraph 8-node state machine with conditional routing and HITL interrupts
+- LangGraph 9-node state machine (8 pipeline nodes + collect_trace terminal) with node-level timing wrappers and conditional routing
 - Rubric-based evaluation with up to 3 iterative LLM-as-a-judge grading passes
 - Automated ingestion from Slack, Discord, GitHub (via GitHub App webhooks), and CLI
 - Question classification (simple / moderate / complex) driving research depth
@@ -56,6 +56,16 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 - Slack interactive cards with Block Kit buttons for quick review actions
 - Email review links with HMAC tokens for quick review actions
 
+### Hill-Climbing Self-Improvement (Loop 4)
+- Automatic trace collection: node-level timing, errors, and quality metrics captured for every pipeline run
+- Buffer-based trace storage with configurable flush threshold
+- LLM-powered trace analysis: identifies failure patterns, quality issues, and performance bottlenecks
+- LLM-generated improvement proposals for prompts, rubrics, and tools
+- Human-in-the-loop review: approve/reject proposals via API endpoints
+- Versioned prompt and rubric configs with automatic roll-forward on approval
+- Dynamic tool configuration registry for adding new research tools
+- Startup seeding of version 1 prompt and rubric configs
+
 ### CLI
 - Command-line ingestion: `python -m src.cli.draftly 'question' --org-id <id>`
 - Compiles graph with CockroachDB checkpointer, invokes full pipeline, prints results
@@ -64,9 +74,9 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 
 ### Stack
 - Python 3.11+ with FastAPI
-- LangGraph for agent orchestration (state machine, conditional routing, HITL interrupts)
+- LangGraph for agent orchestration (state machine, conditional routing, HITL interrupts, node tracing)
 - CockroachDB with distributed vector index (C-SPANN, 3072-dimension embeddings)
-- Requesty/OpenAI-compatible API for LLM (per-stage models for research, review, rubric-grader)
+- Requesty/OpenAI-compatible API for LLM (per-stage models for research, review, rubric-grader, analysis)
 - React 19 + TypeScript + Vite 8 + TailwindCSS 4 (frontend SPA)
 - Clerk for authentication and organization management
 - SendGrid for email delivery
@@ -80,9 +90,9 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 
 ## Database
 
-- 17 CockroachDB tables (see SCHEMA.md for full schema)
+- 22 CockroachDB tables (see SCHEMA.md for full schema)
 - Multi-tenant isolation via `org_id` referencing `organizations(clerk_org_id)`
-- 11 applied migrations (002–012): reviewers, GitHub tables, thread_id on reviews, notification toggles, Clerk tables, Clerk org ID as PK, reviewer Clerk user linking, Slack tables, Slack conversations, Discord workflows, Discord trigger channels
+- 12 applied migrations (002–013): reviewers, GitHub tables, thread_id on reviews, notification toggles, Clerk tables, Clerk org ID as PK, reviewer Clerk user linking, Slack tables, Slack conversations, Discord workflows, Discord trigger channels, loop engineering (5 hill-climbing tables)
 
 ## Success Metrics
 
@@ -93,6 +103,8 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 | Human review approval rate | >= 90% |
 | Support thread coverage | >= 80% |
 | Agent workflow completion rate | >= 95% |
+| Confidence improvement per hill-climbing iteration | >= 5% |
+| Improvement proposal approval rate | >= 50% |
 
 ## Out of Scope
 
@@ -102,3 +114,4 @@ Draftly is an autonomous documentation engineering platform that transforms supp
 - Mobile application
 - CI/CD with GitHub Actions (planned, not yet implemented)
 - Production AWS environment (only staging provisioned)
+- Loop 3 enhancements: cron jobs, GitHub release/PR events, event prioritization, rate limiting

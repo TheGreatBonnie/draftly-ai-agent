@@ -58,6 +58,8 @@ def build_discord_state(
             "user_id": user_id,
         },
         "message_history": [],
+        "_node_traces": [],
+        "_trace_collected": False,
     }
 
 

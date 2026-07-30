@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { getMemoryStats, searchMemory } from "../api/memory";
 import type { MemoryStats, SearchResult } from "../api/types";
 
-const statLabels: Record<keyof MemoryStats, string> = {
+type MemoryStatCounts = Pick<MemoryStats, "support_threads" | "documentation" | "embeddings" | "review_sessions" | "agent_memory" | "audit_logs">;
+
+const statLabels: Record<keyof MemoryStatCounts, string> = {
   support_threads: "Support Threads",
   documentation: "Documentation",
   embeddings: "Embeddings",
@@ -11,7 +13,7 @@ const statLabels: Record<keyof MemoryStats, string> = {
   audit_logs: "Audit Logs",
 };
 
-const STAT_ICONS: Record<keyof MemoryStats, string> = {
+const STAT_ICONS: Record<keyof MemoryStatCounts, string> = {
   support_threads: "forum",
   documentation: "description",
   embeddings: "vector_square",
@@ -63,12 +65,12 @@ export function Memory() {
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
                 <span className="material-symbols-outlined text-lg text-[var(--color-muted)]">
-                  {STAT_ICONS[key as keyof MemoryStats]}
+                  {STAT_ICONS[key as keyof MemoryStatCounts]}
                 </span>
               </div>
               <div>
                 <div className="text-2xl font-bold text-[var(--color-charcoal)]">
-                  {stats[key as keyof MemoryStats]}
+                  {(stats as MemoryStatCounts)[key as keyof MemoryStatCounts]}
                 </div>
                 <div className="text-xs text-[var(--color-muted)]">{label}</div>
               </div>

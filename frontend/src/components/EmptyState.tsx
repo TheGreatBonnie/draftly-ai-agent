@@ -5,22 +5,17 @@ interface EmptyStateProps {
   action?: { label: string; onClick: () => void };
 }
 
-export function EmptyState({
-  icon = "📄",
-  title,
-  description,
-  action,
-}: EmptyStateProps) {
+export function EmptyState({ icon = "inbox", title, description, action }: EmptyStateProps) {
   return (
-    <div className="glass-card rounded-2xl py-12 text-center text-[var(--color-muted)]">
-      <div className="mb-2 text-4xl">{icon}</div>
-      <div className="font-medium text-[var(--color-charcoal)]">{title}</div>
-      {description && <div className="mt-1 text-sm">{description}</div>}
+    <div className="bg-surface-container-low border border-outline-variant rounded-xl py-12 px-6 text-center">
+      <span className="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-3 inline-block">{icon}</span>
+      <p className="font-semibold text-on-surface font-sans">{title}</p>
+      {description && <p className="mt-1.5 text-sm text-on-surface-variant/60">{description}</p>}
       {action && (
         <button
           type="button"
           onClick={action.onClick}
-          className="mt-4 rounded-full bg-[var(--color-brand)] px-5 py-2 text-sm font-medium text-white shadow-md transition-all hover:bg-[var(--color-brand-hover)]"
+          className="mt-5 rounded-full bg-primary/10 border border-primary/30 px-5 py-2 text-sm font-medium text-primary hover:bg-primary/20 transition-all active:scale-95"
         >
           {action.label}
         </button>

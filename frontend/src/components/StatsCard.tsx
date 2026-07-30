@@ -8,15 +8,15 @@ interface StatsCardProps {
 
 export function StatsCard({ label, value, icon, color, trend }: StatsCardProps) {
   return (
-    <div className="glass-card flex h-[140px] flex-col justify-between rounded-2xl p-6">
+    <div className="bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between gap-3 inner-glow-top transition-all hover:border-primary/30">
       <div className="flex items-start justify-between">
-        <p className="text-sm font-medium text-[var(--color-muted)]">{label}</p>
+        <p className="text-xs text-on-surface-variant font-mono uppercase tracking-wider">{label}</p>
         {icon && (
           <div
-            className="flex h-8 w-8 items-center justify-center rounded-full"
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
             style={{
-              backgroundColor: color ? `${color}20` : "var(--color-mint-light)",
-              color: color ?? "var(--color-mint)",
+              backgroundColor: color ? `${color}20` : "transparent",
+              color: color ?? "var(--color-primary)",
             }}
           >
             <span className="material-symbols-outlined text-lg">{icon}</span>
@@ -24,18 +24,14 @@ export function StatsCard({ label, value, icon, color, trend }: StatsCardProps) 
         )}
       </div>
       <div className="flex items-baseline gap-3">
-        <h3 className="text-[32px] font-bold leading-none text-[var(--color-charcoal)]">
+        <h3 className="text-[28px] font-bold leading-none tracking-tight text-on-surface font-sans">
           {value}
         </h3>
         {trend && (
-          <span
-            className={`flex items-center gap-0.5 text-sm font-semibold ${
-              trend.positive ? "text-[var(--color-mint)]" : "text-red-500"
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">
+          <span className={`flex items-center gap-0.5 text-xs font-semibold ${trend.positive ? "text-secondary" : "text-error"}`}>
+            <span className="material-symbols-outlined text-[14px]">
               {trend.positive ? "trending_up" : "trending_down"}
-            </span>{" "}
+            </span>
             {trend.value}
           </span>
         )}
