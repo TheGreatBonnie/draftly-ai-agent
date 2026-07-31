@@ -153,6 +153,9 @@ def test_processor_skips_self_telemetry_events():
     collector.processor(
         None, "error", {"event": "event_flush_failed", "level": "error", "error": "DB down"}
     )
+    collector.processor(
+        None, "error", {"event": "event_flush_loop_failed", "level": "error"}
+    )
     collector.processor(None, "info", {"event": "normal_event", "level": "info"})
     assert len(collector._buffer) == 1
     assert collector._buffer[0]["event_type"] == "normal_event"

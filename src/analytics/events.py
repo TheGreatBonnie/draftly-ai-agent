@@ -24,7 +24,7 @@ from src.database import get_pool
 _MAX_STRING_LEN = 2000
 _MAX_DETAILS_BYTES = 50_000
 _RESERVED_KEYS = {"logger", "timestamp", "exc_info", "stack_info", "record"}
-_SELF_TELEMETRY_EVENTS = {"events_flushed", "event_flush_failed"}
+_SELF_TELEMETRY_EVENTS = {"events_flushed", "event_flush_failed", "event_flush_loop_failed"}
 
 logger = structlog.get_logger()
 
