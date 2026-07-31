@@ -4,7 +4,7 @@ interface GlobalStatusCardProps {
 
 export function GlobalStatusCard({ sourceCount }: GlobalStatusCardProps) {
   return (
-    <div className="bg-surface-container-high border border-outline-variant p-6 rounded-xl flex items-center gap-6 min-w-[320px] relative overflow-hidden group">
+    <div className="bg-surface-container-high border border-outline-variant p-6 rounded-xl flex items-center gap-6 min-w-[320px] relative overflow-hidden">
       <div className="absolute top-0 right-0 p-1 opacity-10 pointer-events-none">
         <svg className="w-20 h-20 text-on-surface-variant" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
