@@ -1,44 +1,7 @@
 import { Link } from "react-router";
-import type { Doc } from "../api/types";
+import type { Review } from "../api/types";
 import { Badge } from "./Badge";
 import { relativeTime, truncate } from "../utils/format";
-
-const DOC_TYPE_ICONS: Record<string, string> = {
-  troubleshooting: "troubleshoot",
-  howto: "menu_book",
-  reference: "code",
-  guide: "lightbulb",
-  concept: "lightbulb",
-  api_reference: "code",
-};
-
-const DOC_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  troubleshooting: {
-    bg: "var(--color-terracotta-light)",
-    text: "var(--color-terracotta)",
-  },
-  howto: {
-    bg: "var(--color-sage-light)",
-    text: "var(--color-sage)",
-  },
-  reference: {
-    bg: "var(--color-sand-light)",
-    text: "var(--color-sand)",
-  },
-  guide: {
-    bg: "var(--color-blue-50)",
-    text: "var(--color-blue-600)",
-  },
-  api_reference: {
-    bg: "var(--color-sage-light)",
-    text: "var(--color-sage)",
-  },
-};
-
-const DEFAULT_DOC_TYPE_COLOR = {
-  bg: "var(--color-charcoal-light)",
-  text: "var(--color-surface-alt)",
-};
 
 function SlackIcon() {
   return (
@@ -85,52 +48,43 @@ const PLATFORM_CONFIG: Record<
   },
 };
 
-function getDocTypeColors(docType: string) {
-  return DOC_TYPE_COLORS[docType] ?? DEFAULT_DOC_TYPE_COLOR;
+interface PendingReviewCardProps {
+  review: Review;
 }
 
-interface ReviewDocCardProps {
-  doc: Doc;
-}
-
-export function ReviewDocCard({ doc }: ReviewDocCardProps) {
-  const { bg, text } = getDocTypeColors(doc.doc_type);
-  const icon = DOC_TYPE_ICONS[doc.doc_type] ?? "description";
-  const platform = doc.platform
-    ? PLATFORM_CONFIG[doc.platform.toLowerCase()]
+export function PendingReviewCard({ review }: PendingReviewCardProps) {
+  const platform = review.platform
+    ? PLATFORM_CONFIG[review.platform.toLowerCase()]
     : null;
 
   return (
     <Link
-      to={`/reviews/${doc.id}`}
+      to={`/review/${review.id}`}
       className="glass-card group block cursor-pointer rounded-2xl p-5"
     >
       <div className="flex items-start gap-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <span className="material-symbols-outlined text-[24px] text-primary">
-            {icon}
+            rate_review
           </span>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex items-center gap-2">
-            <span
-              className="rounded-full px-2.5 py-0.5 text-[10px] font-mono font-bold"
-              style={{ backgroundColor: bg, color: text }}
-            >
-              {doc.doc_type}
+            <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-mono font-bold text-primary">
+              {review.doc_type}
             </span>
-            <Badge status={doc.status} />
+            <Badge status={review.status} />
             <span className="text-[11px] font-mono text-on-surface-variant/60">
-              {relativeTime(doc.created_at)}
+              {relativeTime(review.created_at)}
             </span>
           </div>
 
           <h3 className="mb-1 font-semibold text-on-surface group-hover:text-primary transition-colors">
-            {doc.title}
+            {review.title}
           </h3>
 
-          {doc.original_question && (
+          {review.original_question && (
             <div className="mb-2 rounded-lg bg-surface-container border border-outline-variant px-3 py-2">
               <div className="mb-1 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[12px] text-on-surface-variant/60">
@@ -141,7 +95,7 @@ export function ReviewDocCard({ doc }: ReviewDocCardProps) {
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-on-surface-variant">
-                &ldquo;{truncate(doc.original_question, 140)}&rdquo;
+                &ldquo;{truncate(review.original_question, 140)}&rdquo;
               </p>
             </div>
           )}
@@ -159,7 +113,7 @@ export function ReviewDocCard({ doc }: ReviewDocCardProps) {
               <span className="material-symbols-outlined text-[14px]">
                 psychology
               </span>
-              {Math.round(doc.confidence_score * 100)}%
+              {Math.round(review.confidence_score * 100)}%
             </span>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { MetricCard } from "../components/MetricCard";
 import { EngineViz } from "../components/EngineViz";
 import { IngestFeedItem } from "../components/IngestFeedItem";
 import { KernelLog } from "../components/KernelLog";
-import { StatsCard } from "../components/StatsCard";
+import { PendingReviewCard } from "../components/PendingReviewCard";
 
 const sampleTime = () => new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
 
@@ -143,7 +143,7 @@ export function Dashboard() {
             nextTask={nextTask}
           />
         </div>
-        <div className="lg:col-span-1 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col min-h-0 relative inner-glow-top">
+        <div className="lg:col-span-1 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col min-h-0 relative inner-glow-top lg:max-h-[520px]">
           <div className="scanline opacity-10"></div>
           <div className="px-6 py-4 border-b border-outline-variant/40 flex items-center justify-between relative z-10 shrink-0">
             <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-on-surface font-sans">Ingest Feed</h2>
@@ -183,15 +183,9 @@ export function Dashboard() {
             <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-on-surface-variant font-sans">Action Required</h2>
             <span className="px-2.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-mono font-bold">{pending.length}</span>
           </div>
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {pending.map((review) => (
-              <StatsCard
-                key={review.id}
-                label={review.title}
-                value={`${Math.round(review.confidence_score * 100)}%`}
-                icon="rate_review"
-                color="#c0c1ff"
-              />
+              <PendingReviewCard key={review.id} review={review} />
             ))}
           </div>
         </section>

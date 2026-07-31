@@ -35,32 +35,58 @@ export function useDashboardData(): DashboardData {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetch = () => {
-    setLoading(true);
-    setError(null);
-    Promise.all([
+  const updateState = (
+    reviewsData: Review[],
+    stats: MemoryStats | null,
+    feedData: ActivityEvent[],
+    slackInstalls: unknown[],
+    githubInstalls: unknown[],
+    discordStatus: { connected: boolean },
+  ) => {
+    setReviews(reviewsData);
+    setMemoryStats(stats);
+    setFeed(feedData);
+    setPlatformCounts(stats?.platform_counts ?? {});
+    setActiveWorkflows(stats?.active_workflows ?? 0);
+    setSlackConnected(slackInstalls.length > 0);
+    setGithubConnected(githubInstalls.length > 0);
+    setDiscordConnected(discordStatus.connected);
+  };
+
+  const loadData = () => {
+    return Promise.all([
       getAllReviews(),
       getMemoryStats(),
       getActivityFeed(8),
       listSlackInstallations().catch(() => []),
       listInstallations().catch(() => []),
       getDiscordStatus().catch(() => ({ connected: false })),
-    ])
-      .then(([reviewsData, stats, feedData, slackInstalls, githubInstalls, discordStatus]) => {
-        setReviews(reviewsData);
-        setMemoryStats(stats);
-        setFeed(feedData);
-        setPlatformCounts(stats?.platform_counts ?? {});
-        setActiveWorkflows(stats?.active_workflows ?? 0);
-        setSlackConnected(slackInstalls.length > 0);
-        setGithubConnected(githubInstalls.length > 0);
-        setDiscordConnected(discordStatus.connected);
-      })
+    ]);
+  };
+
+  const fetch = () => {
+    setLoading(true);
+    setError(null);
+    loadData()
+      .then(([reviewsData, stats, feedData, slackInstalls, githubInstalls, discordStatus]) =>
+        updateState(reviewsData, stats, feedData, slackInstalls, githubInstalls, discordStatus),
+      )
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetch(); }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadData()
+        .then(([reviewsData, stats, feedData, slackInstalls, githubInstalls, discordStatus]) =>
+          updateState(reviewsData, stats, feedData, slackInstalls, githubInstalls, discordStatus),
+        )
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return {
     reviews, memoryStats, feed, platformCounts, activeWorkflows,
