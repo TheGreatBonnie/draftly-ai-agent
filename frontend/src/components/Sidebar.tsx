@@ -4,7 +4,10 @@ import { Show, UserButton, useAuth, useOrganization } from "@clerk/react";
 const links = [
   { to: "/dashboard", label: "Command Center", icon: "terminal" },
   { to: "/reviews", label: "Drafts", icon: "edit_note" },
+  { to: "/reviewers", label: "Reviewers", icon: "group" },
   { to: "/knowledge", label: "Documentation", icon: "auto_stories" },
+  { to: "/memory", label: "Memory", icon: "database" },
+  { to: "/improvements", label: "Improvements", icon: "trending_up" },
   { to: "/settings", label: "Integrations", icon: "hub" },
 ];
 

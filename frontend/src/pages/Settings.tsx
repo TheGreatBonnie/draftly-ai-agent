@@ -60,6 +60,7 @@ export function Settings() {
   );
   const [triggerChannelIds, setTriggerChannelIds] = useState<string[]>([]);
   const [triggerSaving, setTriggerSaving] = useState(false);
+  const [channelsOpen, setChannelsOpen] = useState(false);
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -412,34 +413,50 @@ export function Settings() {
                 <span className="text-[10px] font-mono bg-secondary-container/30 text-secondary px-2 py-0.5 rounded-full">Connected</span>
               </div>
 
-              {/* Trigger Channels */}
+              {/* Trigger Channels (collapsible) */}
               <div>
-                <h4 className="text-sm font-semibold text-on-surface mb-1">Trigger Channels</h4>
-                <p className="text-xs text-on-surface-variant mb-2">
-                  Select channels where the bot responds to @mentions.
-                  {triggerSaving && <span className="ml-2 text-secondary">Saving...</span>}
-                </p>
-                <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-outline-variant bg-surface-variant/20 p-2 scrollbar-thin">
-                  {availableChannels.length === 0 ? (
-                    <p className="text-xs text-on-surface-variant">No channels found</p>
-                  ) : (
-                    availableChannels.map((ch) => (
-                      <label
-                        key={ch.id}
-                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-surface-variant/40"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={triggerChannelIds.includes(ch.id)}
-                          onChange={() => handleToggleChannel(ch.id)}
-                          disabled={triggerSaving}
-                          className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary bg-surface-variant"
-                        />
-                        <span className="text-on-surface">#{ch.name}</span>
-                      </label>
-                    ))
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setChannelsOpen(!channelsOpen)}
+                  className="flex w-full items-center justify-between text-left"
+                >
+                  <div>
+                    <h4 className="text-sm font-semibold text-on-surface">Trigger Channels</h4>
+                    <p className="text-xs text-on-surface-variant">
+                      {triggerSaving && <span className="text-secondary">Saving...</span>}
+                      {triggerSaving ? " " : ""}{triggerChannelIds.length} channel{triggerChannelIds.length !== 1 ? "s" : ""} active
+                    </p>
+                  </div>
+                  <svg
+                    className={`w-4 h-4 text-on-surface-variant transition-transform duration-200 ${channelsOpen ? "rotate-180" : ""}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {channelsOpen && (
+                  <div className="mt-3 max-h-36 space-y-1 overflow-y-auto rounded-lg border border-outline-variant bg-surface-variant/20 p-2 scrollbar-thin">
+                    {availableChannels.length === 0 ? (
+                      <p className="text-xs text-on-surface-variant">No channels found</p>
+                    ) : (
+                      availableChannels.map((ch) => (
+                        <label
+                          key={ch.id}
+                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-surface-variant/40"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={triggerChannelIds.includes(ch.id)}
+                            onChange={() => handleToggleChannel(ch.id)}
+                            disabled={triggerSaving}
+                            className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary bg-surface-variant"
+                          />
+                          <span className="text-on-surface">#{ch.name}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
