@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 
 from src.api.auth import get_verified_token
+from src.database import fetch_all
 
 router = APIRouter()
 
@@ -14,8 +15,6 @@ async def get_activity(
     limit: int = Query(10, ge=1, le=50),
     token: dict = Depends(get_verified_token),
 ):
-    from src.database import fetch_all
-
     org_id = token.get("org_id")
     if not org_id:
         return []
@@ -41,8 +40,6 @@ async def get_latest_activity(
     after: str = Query("", description="ISO timestamp — return events after this time"),
     token: dict = Depends(get_verified_token),
 ):
-    from src.database import fetch_all
-
     org_id = token.get("org_id")
     if not org_id or not after:
         return []
@@ -63,6 +60,37 @@ async def get_latest_activity(
     )
 
     return [_serialize_activity(r, verbose=False) for r in rows]
+
+
+@router.get("/events")
+async def get_agent_events(
+    limit: int = Query(50, ge=1, le=200),
+    token: dict = Depends(get_verified_token),
+) -> list[dict]:
+    org_id = token.get("org_id")
+    if not org_id:
+        return []
+
+    rows = await fetch_all(
+        """
+        SELECT event_type, level, details, created_at
+        FROM agent_events
+        WHERE org_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2
+        """,
+        org_id,
+        limit,
+    )
+    return [
+        {
+            "event_type": row["event_type"],
+            "level": row["level"],
+            "details": row["details"] if isinstance(row["details"], dict) else {},
+            "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+        }
+        for row in rows
+    ]
 
 
 def _serialize_activity(row: dict, verbose: bool = True) -> dict:
