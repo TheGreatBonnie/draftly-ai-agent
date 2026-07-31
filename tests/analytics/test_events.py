@@ -59,10 +59,25 @@ def test_processor_truncates_long_strings():
 
 def test_processor_drops_oversized_details():
     collector = make_collector()
-    big = {"k%d" % i: "v" * 2000 for i in range(100)}
+    big = {f"k{i}": "v" * 2000 for i in range(100)}
     collector.processor(None, "info", {"event": "e", "level": "info", **big})
     record = collector._buffer[0]
     assert record["details"].get("dropped") is True
+
+
+def test_processor_survives_unserializable_details():
+    collector = make_collector()
+    collector.processor(None, "info", {"event": "e", "level": "info", "bad": {(1, 2): "x"}})
+    assert len(collector._buffer) == 1
+    record = collector._buffer[0]
+    assert record["details"] == {"dropped": True, "reason": "unserializable_details"}
+
+
+def test_processor_does_not_mutate_event_dict():
+    collector = make_collector()
+    event_dict = {"event": "e", "level": "info", "org_id": "org-1", "question": "How?"}
+    collector.processor(None, "info", event_dict)
+    assert event_dict == {"event": "e", "level": "info", "org_id": "org-1", "question": "How?"}
 
 
 @pytest.mark.asyncio

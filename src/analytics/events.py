@@ -44,7 +44,19 @@ class EventCollector:
     ) -> dict[str, Any]:
         """structlog processor: snapshot each event before rendering."""
         if settings.event_capture_enabled:
-            self._buffer.append(self._build_record(dict(event_dict)))
+            try:
+                self._buffer.append(self._build_record(dict(event_dict)))
+            except Exception:
+                self._dropped += 1
+                self._buffer.append(
+                    {
+                        "org_id": None,
+                        "workflow_id": None,
+                        "event_type": str(event_dict.get("event", "unknown")),
+                        "level": str(event_dict.get("level", "info")),
+                        "details": {"dropped": True, "reason": "unserializable_details"},
+                    }
+                )
         return event_dict
 
     def _build_record(self, event_dict: dict[str, Any]) -> dict[str, Any]:
