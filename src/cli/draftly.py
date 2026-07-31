@@ -18,13 +18,12 @@ configure_logging()
 
 
 async def run_workflow(question: str, source: str = "cli", org_id: str | None = None):
-    await get_pool()
-    await start_flusher()
-
     if org_id is None:
         print("Error: --org-id is required. Create an org via Clerk first.")
-        await close_pool()
         sys.exit(1)
+
+    await get_pool()
+    await start_flusher()
 
     graph_thread_id = f"cli-{hash(question)}"
 
