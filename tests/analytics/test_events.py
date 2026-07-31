@@ -145,3 +145,56 @@ async def test_store_events_uses_executemany():
     rows = pool.executemany.await_args.args[1]
     assert rows[0][0] == "org-1"
     assert rows[0][4] == '{"a": 1}'
+
+
+def test_processor_skips_self_telemetry_events():
+    collector = make_collector()
+    collector.processor(None, "info", {"event": "events_flushed", "level": "info", "count": 5})
+    collector.processor(
+        None, "error", {"event": "event_flush_failed", "level": "error", "error": "DB down"}
+    )
+    collector.processor(None, "info", {"event": "normal_event", "level": "info"})
+    assert len(collector._buffer) == 1
+    assert collector._buffer[0]["event_type"] == "normal_event"
+
+
+def test_configure_logging_installs_processor():
+    import structlog
+
+    from src.analytics import events as events_module
+
+    events_module.configure_logging()
+    processors = structlog.get_config()["processors"]
+    assert processors[-2] == events_module.collector.processor
+    assert isinstance(processors[-1], structlog.dev.ConsoleRenderer)
+
+
+@pytest.mark.asyncio
+async def test_start_flusher_idempotent():
+    from src.analytics import events as events_module
+
+    await events_module.stop_flusher()
+    await events_module.start_flusher()
+    first = events_module._flush_task
+    assert first is not None
+    await events_module.start_flusher()
+    assert events_module._flush_task is first
+    await events_module.stop_flusher()
+    assert events_module._flush_task is None
+
+
+@pytest.mark.asyncio
+async def test_stop_flusher_flushes_pending():
+    from src.analytics import events as events_module
+
+    await events_module.stop_flusher()
+    pending = EventCollector(max_buffer_size=10)
+    pending.processor(None, "info", {"event": "e1", "level": "info"})
+
+    with (
+        patch.object(events_module, "collector", pending),
+        patch("src.analytics.events._store_events", new_callable=AsyncMock) as mock_store,
+    ):
+        await events_module.stop_flusher()
+
+    mock_store.assert_awaited_once()

@@ -7,8 +7,10 @@ because of analytics — capture is best-effort, fire-and-forget telemetry.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 from collections import deque
+from collections.abc import MutableMapping
 from typing import Any
 
 import structlog
@@ -19,6 +21,7 @@ from src.database import get_pool
 _MAX_STRING_LEN = 2000
 _MAX_DETAILS_BYTES = 50_000
 _RESERVED_KEYS = {"logger", "timestamp", "exc_info", "stack_info", "record"}
+_SELF_TELEMETRY_EVENTS = {"events_flushed", "event_flush_failed"}
 
 logger = structlog.get_logger()
 
@@ -45,10 +48,13 @@ class EventCollector:
         self,
         _logger: Any,
         _method_name: str,
-        event_dict: dict[str, Any],
-    ) -> dict[str, Any]:
+        event_dict: MutableMapping[str, Any],
+    ) -> MutableMapping[str, Any]:
         """structlog processor: snapshot each event before rendering."""
-        if settings.event_capture_enabled:
+        if (
+            settings.event_capture_enabled
+            and event_dict.get("event") not in _SELF_TELEMETRY_EVENTS
+        ):
             try:
                 self._buffer.append(self._build_record(dict(event_dict)))
             except Exception:
@@ -131,3 +137,56 @@ async def _store_events(events: list[dict[str, Any]]) -> None:
             for event in events
         ],
     )
+
+
+collector = EventCollector(max_buffer_size=settings.event_buffer_size)
+_flush_task: asyncio.Task[None] | None = None
+
+
+def configure_logging() -> None:
+    """Configure structlog to snapshot every structured event into the collector.
+
+    Replicates structlog's built-in defaults and inserts ``collector.processor``
+    between timestamps and rendering. Must run before the first log call.
+    """
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.StackInfoRenderer(),
+            structlog.dev.set_exc_info,  # structlog>=26: lives in structlog.dev
+            structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S", utc=False),
+            collector.processor,
+            structlog.dev.ConsoleRenderer(colors=False),
+        ],
+        wrapper_class=structlog.make_filtering_bound_logger(0),
+        logger_factory=structlog.PrintLoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
+
+
+async def _flush_loop(interval_seconds: float) -> None:
+    while True:
+        await asyncio.sleep(interval_seconds)
+        await collector.flush()
+
+
+async def start_flusher() -> None:
+    """Start the background drain task (idempotent)."""
+    global _flush_task
+    if _flush_task is not None:
+        return
+    _flush_task = asyncio.create_task(_flush_loop(settings.event_flush_interval_seconds))
+
+
+async def stop_flusher() -> None:
+    """Cancel the background drain task and flush whatever remains."""
+    global _flush_task
+    if _flush_task is not None:
+        _flush_task.cancel()
+        try:
+            await _flush_task
+        except asyncio.CancelledError:
+            pass
+        _flush_task = None
+    await collector.flush()
