@@ -14,30 +14,30 @@ const DOC_TYPE_ICONS: Record<string, string> = {
 
 const DOC_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   troubleshooting: {
-    bg: "var(--color-terracotta-light)",
-    text: "var(--color-terracotta)",
+    bg: "rgba(255, 178, 183, 0.12)",
+    text: "rgba(255, 178, 183, 1)",
   },
   howto: {
-    bg: "var(--color-sage-light)",
-    text: "var(--color-sage)",
+    bg: "rgba(78, 222, 163, 0.12)",
+    text: "#4edea3",
   },
   reference: {
-    bg: "var(--color-sand-light)",
-    text: "var(--color-sand)",
+    bg: "rgba(192, 193, 255, 0.08)",
+    text: "#c0c1ff",
   },
   guide: {
-    bg: "var(--color-blue-50)",
-    text: "var(--color-blue-600)",
+    bg: "rgba(192, 193, 255, 0.12)",
+    text: "#c0c1ff",
   },
   api_reference: {
-    bg: "var(--color-sage-light)",
-    text: "var(--color-sage)",
+    bg: "rgba(78, 222, 163, 0.12)",
+    text: "#4edea3",
   },
 };
 
 const DEFAULT_DOC_TYPE_COLOR = {
-  bg: "var(--color-charcoal-light)",
-  text: "var(--color-surface-alt)",
+  bg: "rgba(199, 196, 215, 0.7)",
+  text: "rgba(23, 31, 51, 1)",
 };
 
 function SlackIcon() {

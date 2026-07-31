@@ -19,12 +19,12 @@ export function KnowledgeStats({ docs }: KnowledgeStatsProps) {
       <StatsCard
         label="Published"
         value={counts.published}
-        color="var(--color-sage)"
+        color="var(--color-secondary)"
       />
       <StatsCard
         label="Pending Review"
         value={counts.pending}
-        color="var(--color-sand)"
+        color="var(--color-tertiary)"
       />
       <StatsCard label="Drafts" value={counts.draft} />
     </div>

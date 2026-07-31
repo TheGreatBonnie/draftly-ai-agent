@@ -114,8 +114,8 @@ export function Knowledge() {
     return (
       <div>
         <div className="mb-5">
-          <div className="h-7 w-48 animate-pulse rounded-full bg-white/60" />
-          <div className="mt-2 h-4 w-80 animate-pulse rounded-full bg-white/60" />
+          <div className="h-7 w-48 animate-pulse rounded-full bg-surface-container-high" />
+          <div className="mt-2 h-4 w-80 animate-pulse rounded-full bg-surface-container-high" />
         </div>
         <div className="mb-5 grid grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
@@ -140,15 +140,15 @@ export function Knowledge() {
   if (error && docs.length === 0) {
     return (
       <div className="text-center">
-        <p className="text-[var(--color-muted)]">Failed to load documents.</p>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">{error}</p>
+        <p className="text-on-surface-variant">Failed to load documents.</p>
+        <p className="mt-1 text-sm text-on-surface-variant">{error}</p>
         <button
           onClick={() => {
             setError(null);
             setLoading(true);
             loadDocs();
           }}
-          className="mt-3 rounded-full bg-[var(--color-charcoal)] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+          className="mt-3 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-on-primary-container hover:opacity-90"
         >
           Retry
         </button>
@@ -159,12 +159,12 @@ export function Knowledge() {
   return (
     <div>
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="mb-4 rounded-xl border border-error/30 bg-error-container/20 px-4 py-3 text-sm text-error">
           {error}
           <button
             type="button"
             onClick={() => setError(null)}
-            className="ml-2 font-medium text-red-700 hover:text-red-900"
+            className="ml-2 font-medium text-error hover:opacity-90"
           >
             Dismiss
           </button>
@@ -172,10 +172,10 @@ export function Knowledge() {
       )}
 
       <div className="mb-5">
-        <h1 className="text-[var(--text-heading)] font-bold text-[var(--color-charcoal)]">
+        <h1 className="text-headline-xl font-bold text-on-surface">
           Knowledge Base
         </h1>
-        <p className="mt-0.5 text-sm text-[var(--color-muted)]">
+        <p className="mt-0.5 text-sm text-on-surface-variant">
           Add company documentation so the AI uses it as context when generating solutions.
         </p>
       </div>
@@ -183,7 +183,7 @@ export function Knowledge() {
       <KnowledgeStats docs={docs} />
 
       <div className="glass-panel mb-6 rounded-2xl p-5">
-        <div className="mb-4 flex gap-0 border-b border-white/40">
+        <div className="mb-4 flex gap-0 border-b border-outline-variant/40">
           {(
             [
               { key: "url" as const, label: "Import from URL" },
@@ -196,8 +196,8 @@ export function Knowledge() {
               onClick={() => setActiveTab(tab.key)}
               className={`border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "border-[var(--color-charcoal)] text-[var(--color-charcoal)]"
-                  : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-on-surface-variant hover:text-primary"
               }`}
             >
               {tab.label}
@@ -212,7 +212,7 @@ export function Knowledge() {
         {activeTab === "manual" && (
           <form onSubmit={handleManualSubmit}>
             <div className="mb-3">
-              <label className="mb-1 block text-sm font-medium text-[var(--color-charcoal)]">
+              <label className="mb-1 block text-sm font-medium text-on-surface">
                 Title
               </label>
               <input
@@ -220,18 +220,18 @@ export function Knowledge() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Internal API Auth Guide"
-                className="w-full rounded-xl border border-white/60 bg-white/40 px-4 py-2.5 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none"
+                className="w-full rounded-xl border border-outline-variant bg-surface-container px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
                 required
               />
             </div>
             <div className="mb-3">
-              <label className="mb-1 block text-sm font-medium text-[var(--color-charcoal)]">
+              <label className="mb-1 block text-sm font-medium text-on-surface">
                 Document Type
               </label>
               <select
                 value={docType}
                 onChange={(e) => setDocType(e.target.value)}
-                className="rounded-xl border border-white/60 bg-white/40 px-4 py-2.5 text-sm text-[var(--color-charcoal)] focus:border-[var(--color-charcoal)] focus:outline-none"
+                className="rounded-xl border border-outline-variant bg-surface-container px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:outline-none"
               >
                 {DOC_TYPES.map((dt) => (
                   <option key={dt} value={dt}>
@@ -241,7 +241,7 @@ export function Knowledge() {
               </select>
             </div>
             <div className="mb-3">
-              <label className="mb-1 block text-sm font-medium text-[var(--color-charcoal)]">
+              <label className="mb-1 block text-sm font-medium text-on-surface">
                 Content
               </label>
               <textarea
@@ -249,12 +249,12 @@ export function Knowledge() {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Paste or write your documentation here..."
                 rows={6}
-                className="w-full rounded-xl border border-white/60 bg-white/40 px-4 py-2.5 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none"
+                className="w-full rounded-xl border border-outline-variant bg-surface-container px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
                 required
               />
             </div>
             {formError && (
-              <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <p className="mb-3 rounded-xl border border-error/30 bg-error-container/20 px-4 py-3 text-sm text-error">
                 {formError}
               </p>
             )}
@@ -262,7 +262,7 @@ export function Knowledge() {
               <button
                 type="submit"
                 disabled={submitting || !title.trim() || !content.trim()}
-                className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-on-primary-container hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? "Adding..." : "Add to Knowledge Base"}
               </button>
@@ -275,7 +275,7 @@ export function Knowledge() {
                   setFormError(null);
                   setActiveTab("url");
                 }}
-                className="rounded-full border border-white/60 bg-white/40 px-5 py-2.5 text-sm font-medium text-[var(--color-charcoal)] transition-all hover:bg-white/60"
+                className="rounded-full border border-outline-variant bg-surface-container px-5 py-2.5 text-sm font-medium text-on-surface transition-all hover:bg-surface-container-high"
               >
                 Cancel
               </button>
@@ -291,7 +291,7 @@ export function Knowledge() {
           placeholder="Search documents..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-48 rounded-full border border-white/60 bg-white/40 px-4 py-2 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none"
+          className="w-48 rounded-full border border-outline-variant bg-surface-container px-4 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
         />
       </div>
 

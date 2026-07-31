@@ -5,7 +5,7 @@ import type { IngestKnowledgePayload } from "../api/types";
 const DOC_TYPES = ["howto", "faq", "tutorial", "troubleshooting", "reference"] as const;
 
 const inputClass =
-  "w-full rounded-xl border border-white/60 bg-white/40 px-4 py-2.5 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none";
+  "w-full rounded-xl border border-outline-variant bg-surface-container px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none";
 
 interface URLImportFormProps {
   onIngested: () => void;
@@ -98,30 +98,30 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
           <button
             type="submit"
             disabled={state === "fetching" || state === "submitting" || !url.trim()}
-            className="rounded-full bg-[var(--color-charcoal)] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-on-primary-container hover:opacity-90 disabled:opacity-50"
           >
             {state === "fetching" ? "Fetching..." : "Fetch"}
           </button>
         </div>
       </form>
 
-      <p className="mb-3 text-xs text-[var(--color-muted)]">
+      <p className="mb-3 text-xs text-on-surface-variant">
         Paste a URL and we'll extract the content automatically.
       </p>
 
       {state === "error" && error && (
-        <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <p className="mb-3 rounded-xl border border-error/30 bg-error-container/20 px-4 py-3 text-sm text-error">
           {error}
         </p>
       )}
 
       {state === "preview" && (
         <form onSubmit={handleIngest}>
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/40 px-3 py-1 text-xs font-medium text-[var(--color-sage)]">
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-container px-3 py-1 text-xs font-medium text-secondary">
             Source: {sourceUrl} ({sourceType})
           </div>
           <div className="mb-3">
-            <label className="mb-1 block text-sm font-medium text-[var(--color-charcoal)]">
+            <label className="mb-1 block text-sm font-medium text-on-surface">
               Title
             </label>
             <input
@@ -133,13 +133,13 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
             />
           </div>
           <div className="mb-3">
-            <label className="mb-1 block text-sm font-medium text-[var(--color-charcoal)]">
+            <label className="mb-1 block text-sm font-medium text-on-surface">
               Document Type
             </label>
             <select
               value={docType}
               onChange={(e) => setDocType(e.target.value)}
-              className="rounded-xl border border-white/60 bg-white/40 px-4 py-2.5 text-sm text-[var(--color-charcoal)] focus:border-[var(--color-charcoal)] focus:outline-none"
+              className="rounded-xl border border-outline-variant bg-surface-container px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:outline-none"
             >
               {DOC_TYPES.map((dt) => (
                 <option key={dt} value={dt}>
@@ -149,7 +149,7 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
             </select>
           </div>
           <div className="mb-3">
-            <label className="mb-1 block text-sm font-medium text-[var(--color-charcoal)]">
+            <label className="mb-1 block text-sm font-medium text-on-surface">
               Content
             </label>
             <textarea
@@ -161,7 +161,7 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
             />
           </div>
           {error && (
-            <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <p className="mb-3 rounded-xl border border-error/30 bg-error-container/20 px-4 py-3 text-sm text-error">
               {error}
             </p>
           )}
@@ -169,7 +169,7 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
             <button
               type="submit"
               disabled={state === "submitting" || !title.trim() || !content.trim()}
-              className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
+              className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-on-primary-container hover:opacity-90 disabled:opacity-50"
             >
               {state === "submitting" ? "Adding..." : "Add to Knowledge Base"}
             </button>
@@ -177,7 +177,7 @@ export function URLImportForm({ onIngested, active }: URLImportFormProps) {
               type="button"
               onClick={handleCancel}
               disabled={state === "submitting"}
-              className="rounded-full border border-white/60 bg-white/40 px-5 py-2.5 text-sm font-medium text-[var(--color-charcoal)] transition-all hover:bg-white/60 disabled:opacity-50"
+              className="rounded-full border border-outline-variant bg-surface-container px-5 py-2.5 text-sm font-medium text-on-surface transition-all hover:bg-surface-container-high disabled:opacity-50"
             >
               Cancel
             </button>

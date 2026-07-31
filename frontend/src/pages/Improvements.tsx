@@ -46,55 +46,55 @@ function ProposalCard({
     <div className="glass-card rounded-2xl p-5">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-[var(--color-brand)]">
+          <span className="material-symbols-outlined text-primary">
             {proposal.improvement_type === "prompt"
               ? "edit_note"
               : proposal.improvement_type === "rubric"
                 ? "checklist"
                 : "build"}
           </span>
-          <span className="rounded-full bg-[var(--color-brand-light)] px-3 py-1 text-xs font-medium text-[var(--color-brand)]">
+          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
             {proposal.improvement_type}
           </span>
         </div>
-        <span className="text-xs text-[var(--color-faint)]">
+        <span className="text-xs text-on-surface-variant/40">
           {new Date(proposal.created_at).toLocaleDateString()}
         </span>
       </div>
 
-      <h3 className="mb-1 font-semibold text-[var(--color-charcoal)]">{label}</h3>
+      <h3 className="mb-1 font-semibold text-on-surface">{label}</h3>
 
       {(oldText || newText) && (
-        <div className="mb-3 grid grid-cols-2 gap-3 rounded-xl bg-white/40 p-3 text-sm">
+        <div className="mb-3 grid grid-cols-2 gap-3 rounded-xl bg-surface-container p-3 text-sm">
           {oldText && (
             <div>
-              <p className="mb-1 text-xs font-medium text-[var(--color-faint)]">Current</p>
-              <pre className="whitespace-pre-wrap text-[var(--color-charcoal)]">{oldText}</pre>
+              <p className="mb-1 text-xs font-medium text-on-surface-variant/40">Current</p>
+              <pre className="whitespace-pre-wrap text-on-surface">{oldText}</pre>
             </div>
           )}
           {newText && (
             <div>
-              <p className="mb-1 text-xs font-medium text-[var(--color-mint)]">Proposed</p>
-              <pre className="whitespace-pre-wrap text-[var(--color-charcoal)]">{newText}</pre>
+              <p className="mb-1 text-xs font-medium text-secondary">Proposed</p>
+              <pre className="whitespace-pre-wrap text-on-surface">{newText}</pre>
             </div>
           )}
         </div>
       )}
 
       {proposal.rationale && (
-        <p className="mb-4 text-sm text-[var(--color-muted)]">{proposal.rationale}</p>
+        <p className="mb-4 text-sm text-on-surface-variant">{proposal.rationale}</p>
       )}
 
       <div className="flex gap-3">
         <button
           onClick={() => onApprove(proposal.id)}
-          className="rounded-full bg-[var(--color-sage)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-on-secondary-container hover:opacity-90"
         >
           Approve
         </button>
         <button
           onClick={() => onReject(proposal.id)}
-          className="rounded-full bg-red-400 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          className="rounded-full bg-error px-4 py-2 text-sm font-medium text-white hover:opacity-90"
         >
           Reject
         </button>
@@ -115,17 +115,17 @@ function ConfigSection({
   return (
     <div className="mb-6">
       <div className="mb-3 flex items-center gap-2">
-        <span className="material-symbols-outlined text-[var(--color-brand)]">{icon}</span>
-        <h2 className="font-semibold text-[var(--color-charcoal)]">{title}</h2>
+        <span className="material-symbols-outlined text-primary">{icon}</span>
+        <h2 className="font-semibold text-on-surface">{title}</h2>
       </div>
       <div className="space-y-2">
         {items.map((item, i) => (
           <div key={i} className="glass-card rounded-xl p-3">
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-sm font-medium text-[var(--color-charcoal)]">{item.label}</span>
-              <span className="text-xs text-[var(--color-faint)]">v{item.version}</span>
+              <span className="text-sm font-medium text-on-surface">{item.label}</span>
+              <span className="text-xs text-on-surface-variant/40">v{item.version}</span>
             </div>
-            <p className="line-clamp-3 text-xs text-[var(--color-muted)]">{item.text}</p>
+            <p className="line-clamp-3 text-xs text-on-surface-variant">{item.text}</p>
           </div>
         ))}
       </div>
@@ -175,7 +175,7 @@ export function Improvements() {
   if (!orgId) {
     return (
       <div className="flex h-40 items-center justify-center">
-        <p className="text-[var(--color-muted)]">Select an organization to view improvements.</p>
+        <p className="text-on-surface-variant">Select an organization to view improvements.</p>
       </div>
     );
   }
@@ -199,10 +199,10 @@ export function Improvements() {
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--color-charcoal)]">
+        <h1 className="text-headline-xl font-bold tracking-tight text-on-surface">
           Improvements
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">
+        <p className="mt-1 text-sm text-on-surface-variant">
           Review and apply AI-suggested improvements to prompts, rubrics, and tools.
         </p>
       </div>
@@ -212,10 +212,10 @@ export function Improvements() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
+className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
               activeTab === tab.key
-                ? "bg-[var(--color-charcoal)] text-white"
-                : "glass-card text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
+                ? "bg-primary text-on-primary-container"
+                : "bg-surface-container-low border border-outline-variant text-on-surface-variant/60"
             }`}
           >
             {tab.label}
@@ -229,7 +229,7 @@ export function Improvements() {
             <div>
               <button
                 onClick={() => setSelected(null)}
-                className="mb-4 text-sm text-[var(--color-brand)] hover:underline"
+                className="mb-4 text-sm text-primary hover:underline"
               >
                 &larr; Back to list
               </button>
@@ -241,11 +241,11 @@ export function Improvements() {
             </div>
           ) : pending.length === 0 ? (
             <div className="glass-card flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
-              <span className="material-symbols-outlined text-3xl text-[var(--color-mint)]">
+              <span className="material-symbols-outlined text-3xl text-secondary">
                 check_circle
               </span>
-              <p className="text-[var(--color-charcoal)]">No pending improvements.</p>
-              <p className="text-sm text-[var(--color-muted)]">
+              <p className="text-on-surface">No pending improvements.</p>
+              <p className="text-sm text-on-surface-variant">
                 New suggestions will appear here after trace analysis cycles.
               </p>
             </div>

@@ -13,25 +13,25 @@ export function ConfidenceComparison({ before, after }: ConfidenceComparisonProp
   const delta = afterPct - beforePct;
   const deltaClass =
     delta > 0
-      ? "bg-[var(--color-sage-light)] text-[var(--color-sage)]"
+      ? "bg-secondary/10 text-secondary"
       : delta < 0
-        ? "bg-red-100 text-red-600"
-        : "bg-[var(--color-surface-alt)] text-[var(--color-muted)]";
+        ? "bg-error-container/20 text-error"
+        : "bg-surface-container text-on-surface-variant/60";
 
   return (
-    <div className="mb-6 rounded-lg bg-[var(--color-surface-alt)] p-4">
-      <p className="mb-3 text-xs font-medium text-[var(--color-muted)]">
+    <div className="mb-6 rounded-lg bg-surface-container p-4">
+      <p className="mb-3 text-xs font-medium text-on-surface-variant">
         Confidence Score
       </p>
       <div className="flex items-center gap-4">
         <div className="text-center">
-          <p className="text-[10px] uppercase text-[var(--color-muted)]">Before</p>
-          <p className="text-3xl font-bold text-[var(--color-charcoal)]">{beforePct}%</p>
+          <p className="text-[10px] uppercase text-on-surface-variant">Before</p>
+          <p className="text-3xl font-bold text-on-surface">{beforePct}%</p>
         </div>
-        <span className="text-xl text-[var(--color-faint)]">→</span>
+        <span className="text-xl text-on-surface-variant/40">→</span>
         <div className="text-center">
-          <p className="text-[10px] uppercase text-[var(--color-muted)]">After</p>
-          <p className="text-3xl font-bold text-[var(--color-sage)]">{afterPct}%</p>
+          <p className="text-[10px] uppercase text-on-surface-variant">After</p>
+          <p className="text-3xl font-bold text-secondary">{afterPct}%</p>
         </div>
         <span
           className={`rounded-full px-3 py-1 text-sm font-semibold ${deltaClass}`}

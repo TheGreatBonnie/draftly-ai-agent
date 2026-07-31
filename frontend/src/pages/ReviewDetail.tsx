@@ -28,9 +28,9 @@ interface DetailData {
 }
 
 const PLATFORM_SVG: Record<string, { label: string; color: string }> = {
-  slack: { label: "Slack", color: "text-purple-600" },
-  discord: { label: "Discord", color: "text-indigo-600" },
-  github: { label: "GitHub", color: "text-gray-600" },
+  slack: { label: "Slack", color: "text-primary" },
+  discord: { label: "Discord", color: "text-primary" },
+  github: { label: "GitHub", color: "text-on-surface-variant" },
 };
 
 export function ReviewDetail() {
@@ -125,12 +125,12 @@ export function ReviewDetail() {
   if (error && !data) {
     return (
       <div className="text-center">
-        <p className="text-[var(--color-muted)]">
+        <p className="text-on-surface-variant">
           {error ?? "Document not found."}
         </p>
         <Link
           to={backLink}
-          className="mt-3 inline-block rounded-full bg-[var(--color-charcoal)] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+          className="mt-3 inline-block rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
         >
           {backLabel}
         </Link>
@@ -141,10 +141,10 @@ export function ReviewDetail() {
   if (!data) {
     return (
       <div className="text-center">
-        <p className="text-[var(--color-muted)]">Document not found.</p>
+        <p className="text-on-surface-variant">Document not found.</p>
         <Link
           to={backLink}
-          className="mt-3 inline-block rounded-full bg-[var(--color-charcoal)] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+          className="mt-3 inline-block rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
         >
           {backLabel}
         </Link>
@@ -159,49 +159,49 @@ export function ReviewDetail() {
         <div className="mb-6">
           <Link
             to={backLink}
-            className="text-sm font-medium text-[var(--color-brand)] hover:underline"
+            className="text-sm font-medium text-primary hover:underline"
           >
             &larr; {backLabel}
           </Link>
         </div>
 
         <div className="glass-card mb-6 rounded-2xl p-5">
-          <h1 className="text-[22px] font-bold leading-tight text-[var(--color-charcoal)]">
+          <h1 className="text-headline-xl font-bold leading-tight text-on-surface">
             {data.title}
           </h1>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-[var(--color-sage-light)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-sage)]">
+            <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-[11px] font-medium text-secondary">
               {data.doc_type}
             </span>
             {data.status && (
-              <span className="rounded-full bg-[var(--color-sage-light)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-sage)]">
+              <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-[11px] font-medium text-secondary">
                 {data.status}
               </span>
             )}
             {platform && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/60 px-2.5 py-0.5 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/80 bg-surface-container-high px-2.5 py-0.5 text-[11px] font-semibold">
                 <span className={`material-symbols-outlined text-[14px] ${platform.color}`}>
                   {platform.label === "Slack" ? "chat" : platform.label === "Discord" ? "forum" : "code"}
                 </span>
                 {platform.label}
               </span>
             )}
-            <span className="text-xs text-[var(--color-muted)]">
+            <span className="text-xs text-on-surface-variant">
               {data.version != null && `Version ${data.version} · `}
               Updated {formatDate(data.updated_at ?? data.created_at ?? "")}
             </span>
           </div>
           {data.original_question && (
-            <div className="mt-3 rounded-xl border border-white/60 bg-white/40 px-4 py-3">
+            <div className="mt-3 rounded-xl border border-outline-variant bg-surface-container px-4 py-3">
               <div className="mb-1 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px] text-[var(--color-muted)]">
+                <span className="material-symbols-outlined text-[12px] text-on-surface-variant">
                   help
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">
                   Original Question
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-[var(--color-charcoal-light)]">
+              <p className="text-sm leading-relaxed text-on-surface-variant">
                 &ldquo;{data.original_question}&rdquo;
               </p>
             </div>
@@ -217,10 +217,10 @@ export function ReviewDetail() {
 
         {isReviewSession && data.reviewer_feedback && (
           <div className="glass-card mb-6 rounded-2xl p-5">
-            <p className="mb-1 text-xs font-medium text-[var(--color-muted)]">
+            <p className="mb-1 text-xs font-medium text-on-surface-variant">
               Reviewer Feedback
             </p>
-            <p className="text-sm text-[var(--color-charcoal)]">
+            <p className="text-sm text-on-surface">
               {data.reviewer_feedback}
             </p>
           </div>
@@ -243,26 +243,26 @@ export function ReviewDetail() {
       <div className="glass-panel w-[200px] shrink-0 rounded-2xl py-5 pl-5">
         <DocTOC content={data.content} />
 
-        <div className="border-t border-white/40 pt-5">
+        <div className="border-t border-outline-variant/40 pt-5">
           <DocMetadata doc={data as Doc} />
         </div>
 
-        <div className="border-t border-white/40 pt-5">
-          <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-faint)]">
+        <div className="border-t border-outline-variant/40 pt-5">
+          <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/40">
             Actions
           </div>
           <div className="flex flex-col gap-1.5">
             <button
               type="button"
               onClick={handleCopy}
-              className="rounded-full border border-white/60 bg-white/40 px-3 py-1.5 text-left text-[11px] font-medium text-[var(--color-charcoal)] transition-all hover:bg-white/60"
+              className="rounded-full border border-outline-variant bg-surface-container px-3 py-1.5 text-left text-[11px] font-medium text-on-surface transition-all hover:bg-surface-container-high"
             >
               {copied ? "Copied!" : "Copy content"}
             </button>
             <button
               type="button"
               onClick={handleDownload}
-              className="rounded-full border border-white/60 bg-white/40 px-3 py-1.5 text-left text-[11px] font-medium text-[var(--color-charcoal)] transition-all hover:bg-white/60"
+              className="rounded-full border border-outline-variant bg-surface-container px-3 py-1.5 text-left text-[11px] font-medium text-on-surface transition-all hover:bg-surface-container-high"
             >
               Download as Markdown
             </button>

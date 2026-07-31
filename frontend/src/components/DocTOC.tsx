@@ -62,7 +62,7 @@ export function DocTOC({ content }: DocTOCProps) {
 
   return (
     <div className="mb-6">
-      <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-faint)]">
+      <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/40">
         On this page
       </div>
       <nav className="flex flex-col gap-1.5">
@@ -74,8 +74,8 @@ export function DocTOC({ content }: DocTOCProps) {
               onClick={() => handleClick(heading.id)}
               className={`text-left text-xs transition-colors ${
                 isActive
-                  ? "border-l-2 border-[var(--color-brand)] pl-2 text-[var(--color-brand)]"
-                  : "pl-2 text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
+                  ? "border-l-2 border-primary pl-2 text-primary"
+                  : "pl-2 text-on-surface-variant hover:text-on-surface"
               }`}
             >
               {heading.text}

@@ -48,10 +48,10 @@ export function Memory() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-8">
-        <h1 className="text-[var(--text-heading)] font-bold text-[var(--color-charcoal)]">
+        <h1 className="text-headline-xl font-bold text-on-surface">
           Memory
         </h1>
-        <p className="mt-0.5 text-sm text-[var(--color-muted)]">
+        <p className="mt-0.5 text-sm text-on-surface-variant">
           Semantic search across all your documentation and threads.
         </p>
       </div>
@@ -63,16 +63,16 @@ export function Memory() {
               key={key}
               className="glass-card flex items-center gap-3 rounded-2xl p-4"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
-                <span className="material-symbols-outlined text-lg text-[var(--color-muted)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-low border border-outline-variant">
+                <span className="material-symbols-outlined text-lg text-on-surface-variant">
                   {STAT_ICONS[key as keyof MemoryStatCounts]}
                 </span>
               </div>
               <div>
-                <div className="text-2xl font-bold text-[var(--color-charcoal)]">
+                <div className="text-2xl font-bold text-on-surface">
                   {(stats as MemoryStatCounts)[key as keyof MemoryStatCounts]}
                 </div>
-                <div className="text-xs text-[var(--color-muted)]">{label}</div>
+                <div className="text-xs text-on-surface-variant">{label}</div>
               </div>
             </div>
           ))}
@@ -80,12 +80,12 @@ export function Memory() {
       )}
 
       <div className="glass-panel rounded-2xl p-6">
-        <h2 className="mb-4 text-lg font-bold text-[var(--color-charcoal)]">
+        <h2 className="mb-4 text-lg font-bold text-on-surface">
           Semantic Search
         </h2>
         <div className="mb-4 flex gap-2">
           <input
-            className="flex-1 rounded-full border border-white/60 bg-white/40 px-4 py-2.5 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none"
+            className="flex-1 rounded-full border border-outline-variant bg-surface-container px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
             placeholder="Search documentation, threads, reviews..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -94,7 +94,7 @@ export function Memory() {
           <button
             onClick={handleSearch}
             disabled={searching}
-            className="rounded-full bg-[var(--color-charcoal)] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-on-primary-container hover:opacity-90 disabled:opacity-50"
           >
             {searching ? "Searching..." : "Search"}
           </button>
@@ -107,18 +107,18 @@ export function Memory() {
                 key={`${r.content_id}-${i}`}
                 className="glass-card rounded-xl p-4"
               >
-                <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
-                  <span className="rounded-full bg-[var(--color-sage-light)] px-2.5 py-0.5 text-[10px] font-medium text-[var(--color-sage)]">
+                <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                  <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-[10px] font-medium text-secondary">
                     {r.content_type}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded border border-white/80 bg-white/60 px-2 py-0.5 text-[11px] font-medium">
+                  <span className="inline-flex items-center gap-1 rounded border border-outline-variant/80 bg-surface-container-high px-2 py-0.5 text-[11px] font-medium">
                     <span className="material-symbols-outlined text-[14px]">
                       psychology
                     </span>
                     {Math.round(r.score * 100)}% match
                   </span>
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--color-charcoal-light)]">
+                <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
                   {r.content_text}
                 </p>
               </div>
@@ -127,7 +127,7 @@ export function Memory() {
         )}
 
         {results.length === 0 && !searching && query.trim() && (
-          <p className="text-center text-sm text-[var(--color-muted)]">
+          <p className="text-center text-sm text-on-surface-variant">
             No results found.
           </p>
         )}

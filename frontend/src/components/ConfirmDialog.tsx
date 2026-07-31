@@ -37,7 +37,7 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onCancel}
       role="dialog"
       aria-modal="true"
@@ -49,16 +49,16 @@ export function ConfirmDialog({
       >
         <h2
           id="confirm-dialog-title"
-          className="text-base font-semibold text-[var(--color-charcoal)]"
+          className="text-base font-semibold text-on-surface"
         >
           {title}
         </h2>
-        <p className="mt-2 text-sm text-[var(--color-muted)]">{description}</p>
+        <p className="mt-2 text-sm text-on-surface-variant">{description}</p>
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full border border-white/60 bg-white/40 px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] transition-all hover:bg-white/60"
+            className="rounded-full border border-outline-variant bg-surface-container px-4 py-2 text-sm font-medium text-on-surface transition-all hover:bg-surface-container-high"
           >
             Cancel
           </button>
@@ -67,8 +67,8 @@ export function ConfirmDialog({
             onClick={onConfirm}
             className={`rounded-full px-4 py-2 text-sm font-medium text-white transition-all ${
               danger
-                ? "bg-red-500 hover:bg-red-600"
-                : "bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)]"
+                ? "bg-error hover:opacity-90"
+                : "bg-primary hover:opacity-90"
             }`}
           >
             {confirmLabel}
