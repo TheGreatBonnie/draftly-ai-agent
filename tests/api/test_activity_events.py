@@ -40,3 +40,24 @@ async def test_get_agent_events_no_org():
         result = await get_agent_events(limit=50, token={})
     assert result == []
     mock_fetch.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_agent_events_parses_str_details():
+    from src.api.routes.activity import get_agent_events
+
+    rows = [
+        {
+            "event_type": "llm_call",
+            "level": "info",
+            "details": '{"model": "tensorx/deepseek-v4-flash"}',
+            "created_at": None,
+        }
+    ]
+    with patch(
+        "src.api.routes.activity.fetch_all", new_callable=AsyncMock, return_value=rows
+    ):
+        result = await get_agent_events(limit=50, token={"org_id": "org-1"})
+
+    assert result[0]["details"] == {"model": "tensorx/deepseek-v4-flash"}
+    assert result[0]["created_at"] is None

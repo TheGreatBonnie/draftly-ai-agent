@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
@@ -82,15 +83,26 @@ async def get_agent_events(
         org_id,
         limit,
     )
-    return [
-        {
-            "event_type": row["event_type"],
-            "level": row["level"],
-            "details": row["details"] if isinstance(row["details"], dict) else {},
-            "created_at": row["created_at"].isoformat() if row["created_at"] else None,
-        }
-        for row in rows
-    ]
+    return [_serialize_event(row) for row in rows]
+
+
+def _serialize_event(row: dict) -> dict:
+    raw = row["details"]
+    if isinstance(raw, str):
+        try:
+            details = json.loads(raw)
+        except json.JSONDecodeError:
+            details = {}
+    elif isinstance(raw, dict):
+        details = raw
+    else:
+        details = {}
+    return {
+        "event_type": row["event_type"],
+        "level": row["level"],
+        "details": details if isinstance(details, dict) else {},
+        "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+    }
 
 
 def _serialize_activity(row: dict, verbose: bool = True) -> dict:
