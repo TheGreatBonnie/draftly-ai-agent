@@ -87,3 +87,61 @@ async def test_processor_respects_capture_disabled():
         mock_settings.event_capture_enabled = False
         collector.processor(None, "info", {"event": "e", "level": "info"})
     assert len(collector._buffer) == 0
+
+
+@pytest.mark.asyncio
+async def test_flush_stores_buffered_events():
+    collector = make_collector()
+    collector.processor(None, "info", {"event": "e1", "level": "info", "org_id": "org-1"})
+    collector.processor(None, "error", {"event": "e2", "level": "error"})
+
+    with patch("src.analytics.events._store_events", new_callable=AsyncMock) as mock_store:
+        count = await collector.flush()
+
+    assert count == 2
+    mock_store.assert_awaited_once()
+    events = mock_store.await_args.args[0]
+    assert [e["event_type"] for e in events] == ["e1", "e2"]
+    assert len(collector._buffer) == 0
+
+
+@pytest.mark.asyncio
+async def test_flush_empty_buffer():
+    collector = make_collector()
+    with patch("src.analytics.events._store_events", new_callable=AsyncMock) as mock_store:
+        count = await collector.flush()
+    assert count == 0
+    mock_store.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_flush_error_does_not_raise():
+    collector = make_collector()
+    collector.processor(None, "info", {"event": "e1", "level": "info"})
+    with patch("src.analytics.events._store_events", side_effect=Exception("DB down")):
+        count = await collector.flush()
+    assert count == 0
+    assert len(collector._buffer) == 0
+
+
+@pytest.mark.asyncio
+async def test_store_events_uses_executemany():
+    from src.analytics.events import _store_events
+
+    pool = AsyncMock()
+    with patch("src.analytics.events.get_pool", new_callable=AsyncMock, return_value=pool):
+        await _store_events(
+            [
+                {
+                    "org_id": "org-1",
+                    "workflow_id": None,
+                    "event_type": "e1",
+                    "level": "info",
+                    "details": {"a": 1},
+                }
+            ]
+        )
+    pool.executemany.assert_awaited_once()
+    rows = pool.executemany.await_args.args[1]
+    assert rows[0][0] == "org-1"
+    assert rows[0][4] == '{"a": 1}'

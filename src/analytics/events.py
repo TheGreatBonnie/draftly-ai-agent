@@ -11,11 +11,16 @@ import json
 from collections import deque
 from typing import Any
 
+import structlog
+
 from src.config import settings
+from src.database import get_pool
 
 _MAX_STRING_LEN = 2000
 _MAX_DETAILS_BYTES = 50_000
 _RESERVED_KEYS = {"logger", "timestamp", "exc_info", "stack_info", "record"}
+
+logger = structlog.get_logger()
 
 
 def _as_optional_str(value: Any) -> str | None:
@@ -92,3 +97,37 @@ class EventCollector:
         if isinstance(value, str) and len(value) > _MAX_STRING_LEN:
             return value[:_MAX_STRING_LEN] + "...[truncated]"
         return value
+
+    async def flush(self) -> int:
+        """Persist buffered events; never raises."""
+        if not self._buffer:
+            return 0
+        events = list(self._buffer)
+        self._buffer.clear()
+        try:
+            await _store_events(events)
+        except Exception as e:
+            logger.error("event_flush_failed", error=str(e), count=len(events))
+            return 0
+        logger.info("events_flushed", count=len(events))
+        return len(events)
+
+
+async def _store_events(events: list[dict[str, Any]]) -> None:
+    pool = await get_pool()
+    await pool.executemany(
+        """
+        INSERT INTO agent_events (org_id, workflow_id, event_type, level, details)
+        VALUES ($1, $2, $3, $4, $5::jsonb)
+        """,
+        [
+            (
+                event["org_id"],
+                event["workflow_id"],
+                event["event_type"],
+                event["level"],
+                json.dumps(event["details"], default=str),
+            )
+            for event in events
+        ],
+    )
