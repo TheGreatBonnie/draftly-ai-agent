@@ -1,0 +1,459 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Draftly | Enterprise Command Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        :root {
+            --grid-opacity: 0.03;
+        }
+        body {
+            background-color: #0b1326;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, var(--grid-opacity)) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, var(--grid-opacity)) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .glow-primary {
+            box-shadow: 0 0 15px rgba(192, 193, 255, 0.15);
+        }
+        .pulse-ring {
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.4); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(78, 222, 163, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(78, 222, 163, 0); }
+        }
+        .pipeline-connector {
+            background: repeating-linear-gradient(90deg, #464554, #464554 4px, transparent 4px, transparent 8px);
+        }
+        .active-pipeline-connector {
+            background: repeating-linear-gradient(90deg, #c0c1ff, #c0c1ff 4px, transparent 4px, transparent 8px);
+            background-size: 200% 100%;
+            animation: flow 10s linear infinite;
+        }
+        @keyframes flow {
+            from { background-position: 0 0; }
+            to { background-position: 100% 0; }
+        }
+        .inner-glow-top {
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#c7c4d7",
+                        "tertiary-fixed": "#ffdadb",
+                        "surface-bright": "#31394d",
+                        "outline": "#908fa0",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "error-container": "#93000a",
+                        "secondary-container": "#00a572",
+                        "surface-container-high": "#222a3d",
+                        "tertiary-container": "#ff516a",
+                        "surface-container": "#171f33",
+                        "on-primary-container": "#0d0096",
+                        "surface-tint": "#c0c1ff",
+                        "inverse-primary": "#494bd6",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#5b0017",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary": "#1000a9",
+                        "primary-fixed": "#e1e0ff",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "tertiary": "#ffb2b7",
+                        "surface-container-low": "#131b2e",
+                        "primary-container": "#8083ff",
+                        "surface-variant": "#2d3449",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-secondary": "#003824",
+                        "surface-container-lowest": "#060e20",
+                        "primary": "#c0c1ff",
+                        "surface": "#0b1326",
+                        "on-background": "#dae2fd",
+                        "on-secondary-container": "#00311f",
+                        "on-secondary-fixed": "#002113",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-tertiary": "#67001b",
+                        "surface-container-highest": "#2d3449",
+                        "secondary": "#4edea3",
+                        "on-surface": "#dae2fd",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#0b1326",
+                        "inverse-surface": "#dae2fd",
+                        "inverse-on-surface": "#283044",
+                        "outline-variant": "#464554",
+                        "secondary-fixed": "#6ffbbe",
+                        "background": "#0b1326",
+                        "on-primary-fixed": "#07006c",
+                        "on-secondary-fixed-variant": "#005236"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "margin-desktop": "32px",
+                        "panel-split": "1px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "code-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="text-on-surface selection:bg-primary/30 selection:text-primary overflow-hidden">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-screen flex flex-col p-4 gap-4 z-40 bg-surface-container-low border-r border-outline-variant w-64">
+<div class="flex flex-col gap-2 mb-4 px-2">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-lg font-headline-lg font-black text-on-surface tracking-tighter leading-none">DRAFTLY</span>
+<span class="text-label-sm font-label-sm text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary pulse-ring"></span>
+                    ACTIVE_NODE: 01
+                </span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 px-4 bg-primary text-on-primary-container rounded-lg font-bold flex items-center justify-center gap-2 hover:glow-primary transition-all active:scale-95 mb-4 shadow-lg">
+<span class="material-symbols-outlined text-[20px]">add</span>
+        Create Document
+    </button>
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-bold transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-body-md">Command Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">edit_square</span>
+<span class="text-body-md">Review Queue</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-body-md">Insights</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">lan</span>
+<span class="text-body-md">Pipeline Config</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant pt-4 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-sm">System Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg" href="#">
+<span class="material-symbols-outlined">help_center</span>
+<span class="text-label-sm">Internal Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-64 flex flex-col h-screen relative">
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 z-50 bg-surface-container/60 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="text-headline-lg font-bold text-primary tracking-tighter">Enterprise Command</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-primary border-b-2 border-primary pb-1 font-body-md" href="#">Operational Hub</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md" href="#">Document Manager</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md" href="#">Audit Logs</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-container-high rounded-full border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-label-sm uppercase">Cloud-Active</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant cursor-pointer">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGOHZEY_2kO9QDFtOu0sms1tpIA2VxDk29C0ixR5vIb28YacILqG6jrqS8SHBF4LC-ZqzIyJZbtdb-vwvMWh5wZjz7mwtaV38o2CcAVETLZMFoTL-KRq_uqtetFnTfZzUDVx7N7PMkE8crTQFOHSIrM1DB8dD-TmIBx9JOM3UiIjp_jbePXMBQ_lrS9xqM2cWqohHUopdC2XMQa0ycDUuM4MH2pnCQRDpsZ2YHWv61LiR9EHvs2bOsx3eo2VRk9lkfS8rRf5iRuyY">
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-gutter">
+<div class="max-w-[1600px] mx-auto space-y-6">
+<!-- High-Level KPIs -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="bg-surface-container-low border border-outline-variant p-5 rounded-xl inner-glow-top">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Total Docs Published</p>
+<div class="flex items-end gap-2">
+<h3 class="text-headline-xl text-primary leading-none">2,482</h3>
+<span class="text-secondary text-label-sm font-bold mb-1">+12%</span>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-5 rounded-xl inner-glow-top">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Average Latency</p>
+<div class="flex items-end gap-2">
+<h3 class="text-headline-xl text-secondary leading-none">184ms</h3>
+<span class="text-secondary text-label-sm font-bold mb-1">STABLE</span>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-5 rounded-xl inner-glow-top">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Success Rate</p>
+<div class="flex items-end gap-2">
+<h3 class="text-headline-xl text-tertiary leading-none">99.8%</h3>
+<span class="text-on-surface-variant text-label-sm mb-1">24H AVG</span>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-5 rounded-xl inner-glow-top">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Active Integrations</p>
+<div class="flex items-end gap-2">
+<h3 class="text-headline-xl text-on-surface leading-none">14</h3>
+<span class="text-primary text-label-sm font-bold mb-1">2 PENDING</span>
+</div>
+</div>
+</section>
+<!-- Main Orchestration Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Zone: Pipeline View (Processing) -->
+<section class="col-span-12 lg:col-span-9 space-y-6">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant bg-surface-container/50 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">view_kanban</span>
+<h2 class="text-body-md font-bold uppercase tracking-widest">Document Processing Pipeline</h2>
+</div>
+<div class="flex gap-2">
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold border border-outline-variant">AUTO-SCALE: ON</span>
+</div>
+</div>
+<div class="p-8">
+<div class="relative flex items-center justify-between">
+<!-- Pipeline Nodes -->
+<div class="z-10 flex flex-col items-center gap-3 group">
+<div class="w-16 h-16 rounded-2xl bg-surface-container border-2 border-outline-variant flex items-center justify-center group-hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">input</span>
+</div>
+<span class="text-label-sm font-bold">Ingestion</span>
+<div class="px-2 py-0.5 bg-secondary/10 text-secondary border border-secondary/30 rounded text-[10px]">8 active</div>
+</div>
+<div class="flex-1 h-0.5 pipeline-connector active-pipeline-connector mx-4 relative overflow-hidden"></div>
+<div class="z-10 flex flex-col items-center gap-3 group">
+<div class="w-16 h-16 rounded-2xl bg-primary-container/20 border-2 border-primary flex items-center justify-center glow-primary">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<span class="text-label-sm font-bold text-primary">AI Engine</span>
+<div class="px-2 py-0.5 bg-primary/20 text-primary border border-primary/30 rounded text-[10px]">3 processing</div>
+</div>
+<div class="flex-1 h-0.5 pipeline-connector mx-4"></div>
+<div class="z-10 flex flex-col items-center gap-3 group opacity-60">
+<div class="w-16 h-16 rounded-2xl bg-surface-container border-2 border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">fact_check</span>
+</div>
+<span class="text-label-sm font-bold">Verification</span>
+<div class="px-2 py-0.5 bg-surface-container-high border border-outline-variant rounded text-[10px]">0 waiting</div>
+</div>
+<div class="flex-1 h-0.5 pipeline-connector mx-4"></div>
+<div class="z-10 flex flex-col items-center gap-3 group opacity-60">
+<div class="w-16 h-16 rounded-2xl bg-surface-container border-2 border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">publish</span>
+</div>
+<span class="text-label-sm font-bold">Portal Delivery</span>
+<div class="px-2 py-0.5 bg-surface-container-high border border-outline-variant rounded text-[10px]">0 queued</div>
+</div>
+</div>
+<!-- Processing Details Table -->
+<div class="mt-12 overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-[10px] uppercase tracking-widest text-on-surface-variant border-b border-outline-variant">
+<th class="pb-3 px-2">Document ID</th>
+<th class="pb-3 px-2">Source</th>
+<th class="pb-3 px-2">Engine Progress</th>
+<th class="pb-3 px-2 text-right">Status</th>
+</tr>
+</thead>
+<tbody class="text-label-sm font-code-md">
+<tr class="border-b border-outline-variant/30 hover:bg-surface-container/30 transition-colors">
+<td class="py-4 px-2">DOC_SEC_482</td>
+<td class="py-4 px-2 flex items-center gap-2">
+<img alt="Slack" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyPUctmIClo18gAlCZnPozEGNz59b4Hwnee3oUKG4rG6cIU64F8r2kJ8_86ztSUIlh7j_B4CRgg1ekTjj-o4S0WQi6XhNtdT3NGRob0K5CVMdgFoFgKOPnDzZgx2GlL1O717RhTM4cjH_HSclfkZ5raAFWUZLg-fbnGPie6nI-YD0aeVdq8V9kzN9pQ1vUQkSenliRrdlTI-qk2sfPQErON9XHV8dOEjgXgdTHnWPwMaQvzAysT32es8YCY0XDVCO_6GL2vIHJcMo">
+                                                #prod-security
+                                            </td>
+<td class="py-4 px-2">
+<div class="w-32 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%]"></div>
+</div>
+</td>
+<td class="py-4 px-2 text-right">
+<span class="text-primary font-bold">ANALYZING</span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/30 hover:bg-surface-container/30 transition-colors">
+<td class="py-4 px-2">DOC_ARC_221</td>
+<td class="py-4 px-2 flex items-center gap-2">
+<img alt="GitHub" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFMY5UKfCMK_3LqVniSk6sYC1FQdVmqat5RL_SYD84zecoGj-2EOWZRdymedzHNA_QBF_A5rberjM4QTu-9KNDrHuZYfj584FN8sbopdXJFQ98kMhXJVe63x8IXugl0ZiGfAZXL_yzBOT2NgL1kRUA8_wzO1GCYCEPWgKHUO4Cgw12b-1EURJ0eEBi3j0BEiEllkiwP0KPck4Yo7tSg_lIhL98RcaErAEiXy6-hwLRFKE_XVUmV6z8FqaW4QIJftL9iQQWNnPLGhY">
+                                                repo/main
+                                            </td>
+<td class="py-4 px-2">
+<div class="w-32 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[92%]"></div>
+</div>
+</td>
+<td class="py-4 px-2 text-right">
+<span class="text-secondary font-bold">VALIDATING</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- System Kernel Logs -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 h-40 flex flex-col relative overflow-hidden">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant">Operational Journal</h2>
+<span class="text-[10px] font-code-md text-secondary">ID: NODE_01_PRO</span>
+</div>
+<div class="flex-1 font-code-md text-[12px] text-on-surface-variant/70 overflow-y-auto space-y-1" id="log-container">
+<p class="">[12:44:05] Contextual bridge established with AWS_S3_PROD...</p>
+<p class="text-primary">[12:44:12] High priority ingestion from #security-alerts detected.</p>
+<p class="">[12:44:18] Engine core re-allocating resources for NLP analysis...</p>
+<p class="">[12:45:01] Processing pipeline scaled +1 instance.</p><p class="">[12:45:12] Token usage optimized (Savings: 14%).</p><p class="">[12:45:18] Slack bridge re-syncing #dev-ops history...</p><p class="">[12:45:32] DOC_POL_112 validated and ready for review.</p><p class="">[12:45:45] Latency check: 182ms. Connection: EXCELLENT.</p><p class="">[12:46:02] AI Engine completed entity extraction for DOC_SEC_482.</p><p class="">[12:45:01] Processing pipeline scaled +1 instance.</p><p class="text-primary">[12:45:12] Token usage optimized (Savings: 14%).</p><p>[12:45:18] Slack bridge re-syncing #dev-ops history...</p><p>[12:45:32] DOC_POL_112 validated and ready for review.</p><p>[12:45:45] Latency check: 182ms. Connection: EXCELLENT.</p><p>[12:46:02] AI Engine completed entity extraction for DOC_SEC_482.</p><p>[12:45:01] Processing pipeline scaled +1 instance.</p></div>
+</div>
+</section>
+<!-- Zones: Ingestion (Source) & Delivery (Portal) -->
+<section class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+<!-- Drafts for Review Queue (New) -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+<div class="px-5 py-4 border-b border-outline-variant bg-primary-container/10 flex items-center justify-between">
+<h2 class="text-label-sm font-bold uppercase tracking-widest text-primary">Needs Review</h2>
+<span class="bg-primary text-on-primary text-[10px] px-2 py-0.5 rounded-full font-bold">3</span>
+</div>
+<div class="p-4 space-y-3">
+<div class="p-3 bg-surface-container-lowest border border-outline-variant rounded-lg hover:border-primary transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-1">
+<span class="text-[10px] font-bold text-on-surface">API_AUTH_GUIDE.md</span>
+<span class="text-[9px] text-on-surface-variant">10m ago</span>
+</div>
+<p class="text-[11px] text-on-surface-variant line-clamp-1 mb-2 italic">Refactored JWT implementation...</p>
+<button class="w-full py-1.5 bg-surface-container-high group-hover:bg-primary group-hover:text-on-primary text-[10px] font-bold rounded transition-colors uppercase">Review Draft</button>
+</div>
+<div class="p-3 bg-surface-container-lowest border border-outline-variant rounded-lg hover:border-primary transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-1">
+<span class="text-[10px] font-bold text-on-surface">SOC2_RESPONSE.docx</span>
+<span class="text-[9px] text-on-surface-variant">1h ago</span>
+</div>
+<p class="text-[11px] text-on-surface-variant line-clamp-1 mb-2 italic">Standardizing encryption logs...</p>
+<button class="w-full py-1.5 bg-surface-container-high group-hover:bg-primary group-hover:text-on-primary text-[10px] font-bold rounded transition-colors uppercase">Review Draft</button>
+</div>
+</div>
+</div>
+<!-- Ingest Feed (Source Zone) -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden flex flex-col flex-1">
+<div class="px-5 py-4 border-b border-outline-variant flex items-center justify-between">
+<h2 class="text-label-sm font-bold uppercase tracking-widest">Source Ingest</h2>
+<span class="w-2 h-2 rounded-full bg-secondary pulse-ring"></span>
+</div>
+<div class="p-4 space-y-4 overflow-y-auto">
+<div class="flex items-start gap-3 p-2 rounded-lg hover:bg-surface-container-lowest transition-colors">
+<div class="w-8 h-8 rounded bg-[#4A154B] flex items-center justify-center shrink-0">
+<img alt="Slack" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyPUctmIClo18gAlCZnPozEGNz59b4Hwnee3oUKG4rG6cIU64F8r2kJ8_86ztSUIlh7j_B4CRgg1ekTjj-o4S0WQi6XhNtdT3NGRob0K5CVMdgFoFgKOPnDzZgx2GlL1O717RhTM4cjH_HSclfkZ5raAFWUZLg-fbnGPie6nI-YD0aeVdq8V9kzN9pQ1vUQkSenliRrdlTI-qk2sfPQErON9XHV8dOEjgXgdTHnWPwMaQvzAysT32es8YCY0XDVCO_6GL2vIHJcMo">
+</div>
+<div class="min-w-0">
+<p class="text-[11px] font-bold truncate">#ops-general</p>
+<p class="text-[10px] text-on-surface-variant line-clamp-2">"Deploy scheduled for 22:00 UTC."</p>
+</div>
+</div>
+<div class="flex items-start gap-3 p-2 rounded-lg hover:bg-surface-container-lowest transition-colors">
+<div class="w-8 h-8 rounded bg-white flex items-center justify-center shrink-0">
+<img alt="GitHub" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFMY5UKfCMK_3LqVniSk6sYC1FQdVmqat5RL_SYD84zecoGj-2EOWZRdymedzHNA_QBF_A5rberjM4QTu-9KNDrHuZYfj584FN8sbopdXJFQ98kMhXJVe63x8IXugl0ZiGfAZXL_yzBOT2NgL1kRUA8_wzO1GCYCEPWgKHUO4Cgw12b-1EURJ0eEBi3j0BEiEllkiwP0KPck4Yo7tSg_lIhL98RcaErAEiXy6-hwLRFKE_XVUmV6z8FqaW4QIJftL9iQQWNnPLGhY">
+</div>
+<div class="min-w-0">
+<p class="text-[11px] font-bold truncate">Commit: 902f1a</p>
+<p class="text-[10px] text-on-surface-variant line-clamp-2">Updated internal middleware schemas.</p>
+</div>
+</div>
+</div>
+<div class="mt-auto p-4 border-t border-outline-variant bg-surface-container-lowest/50">
+<button class="w-full text-center text-[10px] font-bold text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[14px]">tune</span>
+                                CONFIGURE SOURCES
+                            </button>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<script>
+    // Micro-interaction: Dynamic Log Feed
+    const logContainer = document.getElementById('log-container');
+    const logs = [
+        "[12:45:01] Processing pipeline scaled +1 instance.",
+        "[12:45:12] Token usage optimized (Savings: 14%).",
+        "[12:45:18] Slack bridge re-syncing #dev-ops history...",
+        "[12:45:32] DOC_POL_112 validated and ready for review.",
+        "[12:45:45] Latency check: 182ms. Connection: EXCELLENT.",
+        "[12:46:02] AI Engine completed entity extraction for DOC_SEC_482."
+    ];
+    let currentLog = 0;
+
+    setInterval(() => {
+        const p = document.createElement('p');
+        const isHighlight = Math.random() > 0.8;
+        if (isHighlight) p.className = Math.random() > 0.5 ? 'text-primary' : 'text-secondary';
+        p.textContent = logs[currentLog];
+        logContainer.appendChild(p);
+        logContainer.scrollTop = logContainer.scrollHeight;
+        currentLog = (currentLog + 1) % logs.length;
+        
+        if (logContainer.children.length > 15) {
+            logContainer.removeChild(logContainer.firstChild);
+        }
+    }, 5000);
+
+    // Sidebar Hover Interaction
+    const navLinks = document.querySelectorAll('aside nav a');
+    navLinks.forEach(link => {
+        link.addEventListener('mouseenter', () => {
+            if(!link.classList.contains('bg-primary-container')) {
+                link.classList.add('translate-x-1');
+            }
+        });
+        link.addEventListener('mouseleave', () => {
+            link.classList.remove('translate-x-1');
+        });
+    });
+</script>
+
+
+</body></html>

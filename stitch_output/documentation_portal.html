@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Draftly Portal | Documentation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #464554; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #908fa0; }
+        
+        .glass-card {
+            background: rgba(23, 31, 51, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(144, 143, 160, 0.1);
+        }
+        
+        .code-block {
+            background: #060e20;
+            border-left: 4px solid #8083ff;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #c0c1ff 0%, #4edea3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 24px Background Grid */
+        .grid-bg {
+            background-image: linear-gradient(rgba(144, 143, 160, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(144, 143, 160, 0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+<!-- Include the provided Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error": "#ffb4ab",
+                      "on-surface-variant": "#c7c4d7",
+                      "tertiary-fixed": "#ffdadb",
+                      "surface-bright": "#31394d",
+                      "outline": "#908fa0",
+                      "on-tertiary-fixed-variant": "#92002a",
+                      "error-container": "#93000a",
+                      "secondary-container": "#00a572",
+                      "surface-container-high": "#222a3d",
+                      "tertiary-container": "#ff516a",
+                      "surface-container": "#171f33",
+                      "on-primary-container": "#0d0096",
+                      "surface-tint": "#c0c1ff",
+                      "inverse-primary": "#494bd6",
+                      "on-error": "#690005",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "on-tertiary-container": "#5b0017",
+                      "secondary-fixed-dim": "#4edea3",
+                      "on-primary": "#1000a9",
+                      "primary-fixed": "#e1e0ff",
+                      "tertiary-fixed-dim": "#ffb2b7",
+                      "tertiary": "#ffb2b7",
+                      "surface-container-low": "#131b2e",
+                      "primary-container": "#8083ff",
+                      "surface-variant": "#2d3449",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "on-secondary": "#003824",
+                      "surface-container-lowest": "#060e20",
+                      "primary": "#c0c1ff",
+                      "surface": "#0b1326",
+                      "on-background": "#dae2fd",
+                      "on-secondary-container": "#00311f",
+                      "on-secondary-fixed": "#002113",
+                      "on-tertiary-fixed": "#40000d",
+                      "on-tertiary": "#67001b",
+                      "surface-container-highest": "#2d3449",
+                      "secondary": "#4edea3",
+                      "on-surface": "#dae2fd",
+                      "on-error-container": "#ffdad6",
+                      "surface-dim": "#0b1326",
+                      "inverse-surface": "#dae2fd",
+                      "inverse-on-surface": "#283044",
+                      "outline-variant": "#464554",
+                      "secondary-fixed": "#6ffbbe",
+                      "background": "#0b1326",
+                      "on-primary-fixed": "#07006c",
+                      "on-secondary-fixed-variant": "#005236"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "margin-desktop": "32px",
+                      "panel-split": "1px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-xl": ["Inter"],
+                      "code-md": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "label-sm": ["JetBrains Mono"],
+                      "headline-lg-mobile": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "code-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-on-primary-container grid-bg">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 z-50 bg-background/80 backdrop-blur-md fixed top-0 border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="text-headline-lg font-headline-lg font-bold text-primary tracking-tighter cursor-pointer">Draftly</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Editor</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Settings</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-label-sm text-label-sm" href="#">Portal</a>
+</nav>
+</div>
+<!-- Search Centered (Request specific: Top Center) -->
+<div class="absolute left-1/2 -translate-x-1/2 w-full max-w-md hidden lg:block">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container border border-outline-variant rounded-full py-2 pl-10 pr-4 text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search documentation..." type="text"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-50">
+<kbd class="px-1.5 py-0.5 rounded border border-outline-variant text-[10px] bg-surface-container-high">⌘</kbd>
+<kbd class="px-1.5 py-0.5 rounded border border-outline-variant text-[10px] bg-surface-container-high">K</kbd>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-transform active:scale-90" data-icon="notifications">notifications</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a software engineer with soft cinematic lighting, warm amber tones, and a clean minimalist background that matches a premium tech aesthetic. The style is modern, sharp, and high-contrast, featuring deep indigo shadows and subtle mint green accents that align with the brand's sophisticated digital identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVE6G2VWYYk2ZVKSnBtLPhOZecA_zMgc3B1-dDomCmOHdum-vFmqIZJ-Jnggn2MQ_ZvMuI0gVnki-OepfQh6HUSGZRiFgEPQ6IaJI6zQpITtF8eTTILTWKjQlWjNbJY4ZvQbP5IKHivR_5edUNO95wrw_FNdr57S__d-MwoLOhE6uYP03oJYWhj80jH3-tn-EWEoeeoYwuuTszMkDYqspytMnjFywOWfK1R-cq8oHEzr_ML_IwfVOmRS2cGUI77ffEoOyxKBT7maM"/>
+</div>
+</div>
+</header>
+<div class="flex pt-16 min-h-screen">
+<!-- SideNavBar (Portal Navigation Hierarchy) -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 border-r border-outline-variant bg-surface-container-low p-6 overflow-y-auto hidden md:flex flex-col gap-8">
+<div>
+<h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-4">Getting Started</h3>
+<ul class="space-y-2">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary-container text-on-primary-container font-bold text-label-sm" href="#"><span class="material-symbols-outlined text-sm" data-icon="rocket_launch">rocket_launch</span>Introduction</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-all text-label-sm" href="#"><span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>Quick Start</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-all text-label-sm" href="#"><span class="material-symbols-outlined text-sm" data-icon="developer_board">developer_board</span>Installation</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-4">API Reference</h3>
+<ul class="space-y-2">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-all text-label-sm" href="#"><span class="material-symbols-outlined text-sm" data-icon="link">link</span>Endpoints</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-all text-label-sm" href="#"><span class="material-symbols-outlined text-sm" data-icon="key">key</span>Authentication</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-all text-label-sm" href="#"><span class="material-symbols-outlined text-sm" data-icon="error">error</span>Error Codes</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-4">Tutorials</h3>
+<ul class="space-y-2">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-all text-label-sm" href="#"><span class="material-symbols-outlined text-sm" data-icon="auto_stories">auto_stories</span>Building an SDK</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-all text-label-sm" href="#"><span class="material-symbols-outlined text-sm" data-icon="hub">hub</span>Webhooks Guide</a></li>
+</ul>
+</div>
+<div class="mt-auto pt-6 border-t border-outline-variant">
+<div class="flex items-center gap-3 p-3 glass-card rounded-xl border border-secondary/20">
+<div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+<span class="text-label-sm font-code-md text-secondary">V2.4.0-STABLE</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 p-8 md:p-16 lg:px-24">
+<!-- Documentation Article -->
+<article class="max-w-4xl mx-auto">
+<nav class="flex items-center gap-2 text-label-sm text-on-surface-variant mb-8 font-code-md">
+<a class="hover:text-primary transition-colors" href="#">Documentation</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary">Introduction</span>
+</nav>
+<h1 class="text-headline-xl font-headline-xl text-on-surface mb-6">Introduction to Draftly Engine</h1>
+<p class="text-body-md text-on-surface-variant mb-12 leading-relaxed max-w-3xl">
+                    Draftly Engine is a high-performance orchestration layer designed to transform raw technical specifications into production-ready documentation. Built with the <span class="text-secondary font-semibold">Digital Loom</span> metaphor in mind, it weaves together your code, metadata, and design system tokens to create unified, beautiful end-user portals in real-time.
+                </p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+<div class="p-6 glass-card rounded-xl hover:shadow-[0_0_20px_rgba(192,193,255,0.1)] transition-all group">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+</div>
+<h4 class="text-headline-lg font-headline-lg text-on-surface mb-2 !text-xl">Blazing Fast</h4>
+<p class="text-body-md text-on-surface-variant">Global edge delivery ensures your documentation loads in under 100ms anywhere in the world.</p>
+</div>
+<div class="p-6 glass-card rounded-xl hover:shadow-[0_0_20px_rgba(78,222,163,0.1)] transition-all group">
+<div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<h4 class="text-headline-lg font-headline-lg text-on-surface mb-2 !text-xl">AI-Driven</h4>
+<p class="text-body-md text-on-surface-variant">Automatically infer API structures and generate human-readable examples using our neural engine.</p>
+</div>
+</div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-6 border-b border-outline-variant pb-4">Getting Started</h2>
+<p class="text-body-md text-on-surface-variant mb-6">To begin weaving your documentation, you'll need to install the Draftly CLI and authenticate your workspace.</p>
+<!-- Code Block Section -->
+<div class="mb-10 group relative">
+<div class="absolute right-4 top-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded bg-surface-container-high text-on-surface-variant hover:text-primary" title="Copy code">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<div class="rounded-xl overflow-hidden code-block shadow-2xl">
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-highest border-b border-outline-variant">
+<div class="flex gap-1.5">
+<div class="w-3 h-3 rounded-full bg-error/40"></div>
+<div class="w-3 h-3 rounded-full bg-secondary/40"></div>
+<div class="w-3 h-3 rounded-full bg-primary/40"></div>
+</div>
+<span class="text-label-sm font-code-md text-on-surface-variant ml-2">bash — install.sh</span>
+</div>
+<pre class="p-6 font-code-md text-code-md overflow-x-auto"><code class="text-secondary"># Install the Draftly CLI</code>
+<code class="text-on-surface">npm install -g @draftly/cli</code>
+
+<code class="text-secondary"># Initialize your project</code>
+<code class="text-on-surface">draftly init --template loom-modern</code>
+
+<code class="text-secondary"># Start the orchestration engine</code>
+<code class="text-on-surface">draftly weave --watch</code></pre>
+</div>
+</div>
+<div class="p-6 bg-primary/10 border-l-4 border-primary rounded-r-xl mb-12">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-primary" data-icon="info">info</span>
+<div>
+<h5 class="text-on-surface font-bold mb-1">Expert Tip</h5>
+<p class="text-body-md text-on-surface-variant">You can use the <code>--deep-scan</code> flag to allow Draftly to automatically traverse your entire codebase for undocumented endpoints.</p>
+</div>
+</div>
+</div>
+<!-- Footer Call to Action -->
+<div class="mt-20 border-t border-outline-variant pt-12">
+<div class="flex flex-col md:flex-row items-center justify-between gap-8 p-10 bg-gradient-to-br from-surface-container to-surface-container-low rounded-3xl border border-outline-variant overflow-hidden relative">
+<div class="relative z-10">
+<h3 class="text-headline-lg font-headline-lg text-on-surface mb-2">Need a custom loom?</h3>
+<p class="text-body-md text-on-surface-variant">Our enterprise solutions offer dedicated support and custom styling tokens.</p>
+</div>
+<button class="relative z-10 px-8 py-3 bg-primary text-on-primary font-bold rounded-lg hover:shadow-[0_0_20px_rgba(192,193,255,0.4)] transition-all active:scale-95">Contact Sales</button>
+<!-- Decorative background element -->
+<div class="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/10 blur-[100px] rounded-full"></div>
+</div>
+</div>
+</article>
+<!-- Page Footer -->
+<footer class="mt-24 py-12 border-t border-outline-variant text-center flex flex-col items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="text-headline-lg font-headline-lg font-bold text-on-surface tracking-tighter opacity-40">Draftly</span>
+<div class="h-4 w-px bg-outline-variant"></div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">DOC_ID: DXP-2024</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 rounded-full border border-outline-variant text-label-sm text-on-surface-variant font-code-md">
+<span>Generated by</span>
+<span class="gradient-text font-bold">Draftly AI</span>
+<span class="material-symbols-outlined text-sm" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<p class="text-label-sm text-on-surface-variant opacity-50">© 2024 Draftly Systems Inc. All rights reserved.</p>
+</footer>
+</main>
+<!-- Inspector Pane (Right Side - Floating Table of Contents) -->
+<aside class="hidden xl:block w-72 h-[calc(100vh-64px)] sticky top-16 p-8 border-l border-outline-variant">
+<h4 class="text-label-sm font-label-sm text-on-surface uppercase tracking-widest mb-6">On this page</h4>
+<nav class="space-y-4">
+<a class="block text-body-md text-primary font-medium border-l-2 border-primary pl-4" href="#">Introduction</a>
+<a class="block text-body-md text-on-surface-variant hover:text-on-surface pl-4 transition-colors" href="#">Core Features</a>
+<a class="block text-body-md text-on-surface-variant hover:text-on-surface pl-4 transition-colors" href="#">Getting Started</a>
+<a class="block text-body-md text-on-surface-variant hover:text-on-surface pl-4 transition-colors" href="#">Expert Tips</a>
+<a class="block text-body-md text-on-surface-variant hover:text-on-surface pl-4 transition-colors" href="#">Enterprise</a>
+</nav>
+<div class="mt-12 p-6 glass-card rounded-2xl border-primary/20">
+<h5 class="text-label-sm font-bold text-on-surface mb-3">Helpful?</h5>
+<div class="flex gap-4">
+<button class="flex-1 py-2 rounded bg-surface-container hover:bg-surface-variant text-on-surface-variant flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="thumb_up">thumb_up</span> Yes
+                    </button>
+<button class="flex-1 py-2 rounded bg-surface-container hover:bg-surface-variant text-on-surface-variant flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="thumb_down">thumb_down</span> No
+                    </button>
+</div>
+</div>
+</aside>
+</div>
+<!-- Mobile Navigation Toggle (FAB Meta-implementation) -->
+<button class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center z-[100] active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<script>
+        // Simple Interaction: Command+K Focus
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                document.querySelector('input').focus();
+            }
+        });
+
+        // Mock syntax highlighting effect
+        const codeLines = document.querySelectorAll('code');
+        codeLines.forEach(line => {
+            line.addEventListener('mouseenter', () => {
+                line.style.textShadow = '0 0 8px rgba(192, 193, 255, 0.4)';
+            });
+            line.addEventListener('mouseleave', () => {
+                line.style.textShadow = 'none';
+            });
+        });
+    </script>
+</body></html>

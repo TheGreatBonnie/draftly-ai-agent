@@ -54,11 +54,11 @@ export function Sidebar() {
             to={link.to}
             end={link.to === "/dashboard"}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all duration-200 text-sm ${
-                isActive
-                  ? "bg-primary-container text-on-primary-container font-semibold"
-                  : "text-on-surface-variant hover:bg-surface-container"
-              }`
+               `flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all duration-200 text-sm ${
+                 isActive
+                   ? "bg-primary-container text-on-primary-container font-bold"
+                   : "text-on-surface-variant hover:bg-surface-variant"
+               }`
             }
           >
             <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
@@ -86,7 +86,7 @@ export function Sidebar() {
           <NavLink
             key={link.to}
             to={link.to}
-            className="flex items-center gap-3 px-3.5 py-2 text-on-surface-variant hover:bg-surface-container rounded-lg transition-all duration-200 text-sm"
+            className="flex items-center gap-3 px-3.5 py-2 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200 text-sm"
           >
             <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
             <span>{link.label}</span>

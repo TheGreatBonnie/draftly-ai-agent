@@ -19,26 +19,48 @@
   /* Primary — Indigo */
   --color-primary: #c0c1ff;
   --color-primary-container: #8083ff;
+  --color-on-primary: #1000a9;
   --color-on-primary-container: #0d0096;
+  --color-primary-fixed: #e1e0ff;
+  --color-primary-fixed-dim: #c0c1ff;
+  --color-on-primary-fixed: #07006c;
+  --color-on-primary-fixed-variant: #2f2ebe;
 
   /* Secondary — Cyber Mint */
   --color-secondary: #4edea3;
   --color-secondary-container: #00a572;
+  --color-on-secondary: #003824;
   --color-on-secondary-container: #00311f;
+  --color-secondary-fixed: #6ffbbe;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-secondary-fixed: #002113;
+  --color-on-secondary-fixed-variant: #005236;
 
   /* Tertiary — Rose */
   --color-tertiary: #ffb2b7;
   --color-tertiary-container: #ff516a;
+  --color-on-tertiary: #67001b;
   --color-on-tertiary-container: #5b0017;
+  --color-tertiary-fixed: #ffdadb;
+  --color-tertiary-fixed-dim: #ffb2b7;
+  --color-on-tertiary-fixed: #40000d;
+  --color-on-tertiary-fixed-variant: #92002a;
 
   /* Utility */
   --color-outline: #908fa0;
   --color-outline-variant: #464554;
   --color-error: #ffb4ab;
   --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
   --color-background: #0b1326;
   --color-on-background: #dae2fd;
   --color-surface-variant: #2d3449;
+
+  /* Inverse */
+  --color-inverse-primary: #494bd6;
+  --color-inverse-surface: #dae2fd;
+  --color-inverse-on-surface: #283044;
 
   /* Border radius */
   --radius-card: 0.5rem;
@@ -120,16 +142,18 @@ body {
 }
 
 .scanline {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, rgba(192, 193, 255, 0.15), transparent);
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(255,255,255,0.02) 50%,
-    transparent 100%
-  );
-  background-size: 100% 4px;
+  top: 0;
+  animation: scanline-move 4s linear infinite;
   pointer-events: none;
+}
+
+@keyframes scanline-move {
+  0% { top: 0%; }
+  100% { top: 100%; }
 }
 
 @keyframes spin-slow {

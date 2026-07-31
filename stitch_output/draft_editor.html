@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Draftly | Active Drafts Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-primary {
+            box-shadow: 0 0 15px rgba(192, 193, 255, 0.2);
+        }
+        .grid-bg {
+            background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1326;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #464554;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #908fa0;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error": "#ffb4ab",
+                      "on-surface-variant": "#c7c4d7",
+                      "tertiary-fixed": "#ffdadb",
+                      "surface-bright": "#31394d",
+                      "outline": "#908fa0",
+                      "on-tertiary-fixed-variant": "#92002a",
+                      "error-container": "#93000a",
+                      "secondary-container": "#00a572",
+                      "surface-container-high": "#222a3d",
+                      "tertiary-container": "#ff516a",
+                      "surface-container": "#171f33",
+                      "on-primary-container": "#0d0096",
+                      "surface-tint": "#c0c1ff",
+                      "inverse-primary": "#494bd6",
+                      "on-error": "#690005",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "on-tertiary-container": "#5b0017",
+                      "secondary-fixed-dim": "#4edea3",
+                      "on-primary": "#1000a9",
+                      "primary-fixed": "#e1e0ff",
+                      "tertiary-fixed-dim": "#ffb2b7",
+                      "tertiary": "#ffb2b7",
+                      "surface-container-low": "#131b2e",
+                      "primary-container": "#8083ff",
+                      "surface-variant": "#2d3449",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "on-secondary": "#003824",
+                      "surface-container-lowest": "#060e20",
+                      "primary": "#c0c1ff",
+                      "surface": "#0b1326",
+                      "on-background": "#dae2fd",
+                      "on-secondary-container": "#00311f",
+                      "on-secondary-fixed": "#002113",
+                      "on-tertiary-fixed": "#40000d",
+                      "on-tertiary": "#67001b",
+                      "surface-container-highest": "#2d3449",
+                      "secondary": "#4edea3",
+                      "on-surface": "#dae2fd",
+                      "on-error-container": "#ffdad6",
+                      "surface-dim": "#0b1326",
+                      "inverse-surface": "#dae2fd",
+                      "inverse-on-surface": "#283044",
+                      "outline-variant": "#464554",
+                      "secondary-fixed": "#6ffbbe",
+                      "background": "#0b1326",
+                      "on-primary-fixed": "#07006c",
+                      "on-secondary-fixed-variant": "#005236"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "margin-desktop": "32px",
+                      "panel-split": "1px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-xl": ["Inter"],
+                      "code-md": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "label-sm": ["JetBrains Mono"],
+                      "headline-lg-mobile": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "code-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary/30 grid-bg min-h-screen overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 z-50 bg-background/80 backdrop-blur-md fixed top-0 border-b border-outline-variant dark:border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="text-headline-lg font-headline-lg font-bold text-primary dark:text-primary tracking-tighter">Draftly</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Dashboard</a>
+<a class="text-primary dark:text-primary border-b-2 border-primary pb-1 text-label-sm font-label-sm" href="#">Editor</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Settings</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Portal</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container border border-outline-variant rounded-full py-1.5 pl-10 pr-4 text-body-md focus:outline-none focus:border-primary transition-all w-64" placeholder="Search threads..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-transform scale-95 active:scale-90" data-icon="notifications">notifications</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border border-primary/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a software engineer in a high-tech office environment, with soft cinematic lighting and a shallow depth of field. The background shows hints of dual monitor setups and warm ambient lighting, maintaining a premium SaaS brand aesthetic with subtle blue and indigo tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJCewa99VW1T20pKKcuHFh-bDu4IUvjFjAW3R1m4ILMyfpt6fHRD4A0stYU5rC6JTDxQnDHRcKaOtKMaAnOEHFnfQxei1yJsaRPsy0buuSl8HJfOUy2YVtbWUJIM_JO9LjtGztcHLJJbrfoieo2loyZANtRkbrXjwGNj0nc-0DEkQnPJZNhqEy8Xf7pyGAmkrHQtT5iMPfMhYEpn1nkk37BbNHeg5sqtg-UbRWq409cGWITJpb-fJhTB1wUZpYUPMnIYtupegSoQg"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen flex flex-col p-4 gap-4 z-40 bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant dark:border-outline-variant w-64 pt-20">
+<div class="flex flex-col gap-1 mb-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+<span class="text-headline-lg font-headline-lg font-black text-on-surface tracking-tighter leading-none">DRAFTLY_ENGINE</span>
+</div>
+<span class="text-label-sm font-label-sm text-secondary opacity-70">STATUS: WATCHING</span>
+</div>
+<button class="bg-primary text-on-primary font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:glow-primary shadow-[0_0_8px_rgba(192,193,255,0.3)] transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+            New Draft
+        </button>
+<nav class="flex flex-col gap-1 flex-grow">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="text-label-sm font-label-sm">Command Center</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-primary-container text-on-primary-container rounded-lg font-bold transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="text-label-sm font-label-sm">Drafts</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+<span class="text-label-sm font-label-sm">Integrations</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+<span class="text-label-sm font-label-sm">Documentation</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-outline-variant flex flex-col gap-1">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-label-sm font-label-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="text-label-sm font-label-sm">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 pt-16 h-screen flex flex-col overflow-hidden">
+<!-- Toolbar -->
+<div class="h-14 border-b border-outline-variant bg-surface flex items-center justify-between px-6 shrink-0">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-container-highest rounded-full border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Review Required</span>
+</div>
+<div class="h-4 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-1 text-on-surface-variant text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+<span>Last synced 2m ago</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-outline text-on-surface-variant hover:bg-surface-variant transition-all text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-sm" data-icon="sync">sync</span>
+                    Sync with Source
+                </button>
+<button class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary text-on-primary font-bold hover:glow-primary transition-all text-label-sm font-label-sm active:scale-95">
+<span class="material-symbols-outlined text-sm" data-icon="publish">publish</span>
+                    Publish to Portal
+                </button>
+</div>
+</div>
+<!-- Editor Split Pane -->
+<div class="flex-grow flex overflow-hidden">
+<!-- Left Pane: Source Conversation -->
+<div class="w-1/3 flex flex-col border-r border-outline-variant bg-surface-container-low overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-surface-container flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="chat_bubble">chat_bubble</span>
+<h2 class="font-bold text-on-surface">Source Conversation</h2>
+</div>
+<span class="text-code-md font-code-md text-secondary bg-secondary/10 px-2 py-0.5 rounded">#dev-help</span>
+</div>
+<div class="flex-grow overflow-y-auto p-4 space-y-6">
+<!-- Thread Message 1 -->
+<div class="flex gap-3 group">
+<div class="w-10 h-10 rounded bg-surface-variant shrink-0 flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="person">person</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-2">
+<span class="font-bold text-on-surface">alex_dev</span>
+<span class="text-xs text-outline font-label-sm">10:42 AM</span>
+</div>
+<p class="text-on-surface-variant text-body-md bg-surface-container rounded-lg p-3 border border-transparent group-hover:border-outline-variant transition-colors">
+                                How do we handle the rate-limiting on the new Webhook endpoint? I'm seeing 429s in the staging logs but the documentation doesn't specify the threshold.
+                            </p>
+</div>
+</div>
+<!-- Thread Message 2 (Response) -->
+<div class="flex gap-3 group">
+<div class="w-10 h-10 rounded bg-primary-container shrink-0 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-2">
+<span class="font-bold text-primary">Draftly_AI</span>
+<span class="text-xs text-outline font-label-sm">10:43 AM</span>
+</div>
+<div class="text-on-surface-variant text-body-md bg-surface-container rounded-lg p-3 border border-primary/20 group-hover:border-primary/40 transition-colors">
+<p class="mb-2">The current threshold is 1,000 requests per minute per API key. We implement a sliding window algorithm.</p>
+<div class="bg-surface-container-lowest p-2 rounded border border-outline-variant font-code-md text-sm text-secondary">
+                                    X-RateLimit-Limit: 1000<br/>
+                                    X-RateLimit-Remaining: 999
+                                </div>
+</div>
+</div>
+</div>
+<!-- Thread Message 3 -->
+<div class="flex gap-3 group">
+<div class="w-10 h-10 rounded bg-surface-variant shrink-0 flex items-center justify-center border border-outline-variant">
+<img class="w-full h-full object-cover rounded" data-alt="A close-up high-resolution portrait of a senior developer with glasses, looking focused. The lighting is cold, reminiscent of a server room environment, with blue and charcoal grey tones dominating the frame. Professional, high-end tech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsFmaPHfFCLrWom0w8ZkkI4_3FNod3s2SyPl-3zVRWQw6GUYHr__bW7NOu24D_rqjSYsF-VWnI2CYkl9Rqj717BkUeI5O-ggxlf3n255pgc4mIOaYFhp95xm96CYUJZGL8oIzyVy-ZAAGWvZ1AExSkT6glhIQV2rx180tmA3qxW20fbW0RGTkTGgeWV4SroftpiJxqfdHbrF0gTU0Wrxi7jXF_14HLS7wA5DJasIp11zvJ70ow9CdkNUxihj1jbw-TOccRj8-umgw"/>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-2">
+<span class="font-bold text-on-surface">sarah_ops</span>
+<span class="text-xs text-outline font-label-sm">11:05 AM</span>
+</div>
+<p class="text-on-surface-variant text-body-md bg-surface-container rounded-lg p-3 border border-transparent group-hover:border-outline-variant transition-colors">
+                                Thanks for clarifying. Can we also mention that headers are case-insensitive? We had a customer complain that `x-ratelimit-limit` wasn't working but it turned out to be a casing issue on their side.
+                            </p>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface">
+<div class="flex gap-2 p-2 bg-surface-container border border-outline-variant rounded-lg">
+<input class="bg-transparent border-none focus:ring-0 flex-grow text-body-md text-on-surface" placeholder="Reply to thread..." type="text"/>
+<button class="material-symbols-outlined text-primary" data-icon="send">send</button>
+</div>
+</div>
+</div>
+<!-- Right Pane: AI-Generated Markdown -->
+<div class="flex-grow flex flex-col bg-surface overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-surface flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="description">description</span>
+<h2 class="font-bold text-on-surface uppercase tracking-widest text-sm">Draft: API_Rate_Limiting.md</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-1">
+<button class="p-1.5 hover:bg-surface-variant rounded transition-colors text-on-surface-variant" title="Bold"><span class="material-symbols-outlined text-sm">format_bold</span></button>
+<button class="p-1.5 hover:bg-surface-variant rounded transition-colors text-on-surface-variant" title="Code"><span class="material-symbols-outlined text-sm">code</span></button>
+<button class="p-1.5 hover:bg-surface-variant rounded transition-colors text-on-surface-variant" title="Link"><span class="material-symbols-outlined text-sm">link</span></button>
+</div>
+<div class="h-4 w-px bg-outline-variant"></div>
+<span class="text-code-md font-code-md text-outline">v2.4.0-rc</span>
+</div>
+</div>
+<div class="flex-grow overflow-y-auto p-12 max-w-4xl mx-auto w-full">
+<div class="prose prose-invert prose-indigo max-w-none">
+<div class="border-l-4 border-primary pl-4 mb-8">
+<span class="text-code-md font-code-md text-primary block mb-2">DOC_ID: API_RL_001</span>
+<h1 class="text-headline-xl font-headline-xl text-on-surface mb-2">API Rate Limiting &amp; Quotas</h1>
+<p class="text-on-surface-variant text-body-md">Guidelines and thresholds for managing request density on the Draftly Public API.</p>
+</div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface mt-10 mb-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="speed">speed</span>
+                            Standard Limits
+                        </h2>
+<p class="text-on-surface-variant mb-4">
+                            To ensure system stability, all API requests are governed by a sliding-window rate limiting algorithm. Limits are applied per API Key.
+                        </p>
+<div class="bg-surface-container p-6 rounded-xl border border-outline-variant mb-6">
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-bold">Threshold:</span> 1,000 requests / minute
+                                </li>
+<li class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-bold">Algorithm:</span> Sliding Window Log
+                                </li>
+<li class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-bold">Error Code:</span> 429 Too Many Requests
+                                </li>
+</ul>
+</div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface mt-10 mb-4">Response Headers</h2>
+<p class="text-on-surface-variant mb-4">
+                            Each response includes headers indicating your current usage. <span class="text-primary font-bold">Note: Headers are case-insensitive.</span>
+</p>
+<pre class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant font-code-md text-sm text-secondary overflow-x-auto border-l-4 border-secondary/50"><span class="text-outline"># Example Response Headers</span>
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 942
+X-RateLimit-Reset: 1625097600</pre>
+<div class="mt-12 p-4 bg-tertiary/10 border border-tertiary/20 rounded-lg flex gap-4 items-start animate-pulse">
+<span class="material-symbols-outlined text-tertiary" data-icon="auto_awesome">auto_awesome</span>
+<div>
+<p class="text-tertiary font-bold mb-1">AI Recommendation</p>
+<p class="text-on-surface-variant text-sm">Add a section on "Exponential Backoff" to help developers handle 429 errors more gracefully in high-concurrency environments.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Metadata/Inspector Pane -->
+<div class="w-72 bg-surface-container-low border-l border-outline-variant flex flex-col p-4 shrink-0 hidden xl:flex">
+<h3 class="text-label-sm font-label-sm text-outline uppercase tracking-wider mb-4">Inspector</h3>
+<div class="space-y-6">
+<div class="space-y-2">
+<label class="text-xs text-on-surface-variant font-bold">DRAFT PROGRESS</label>
+<div class="w-full bg-surface-variant h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%] rounded-full"></div>
+</div>
+<div class="flex justify-between text-xs font-code-md text-outline">
+<span>85% complete</span>
+<span>12/14 steps</span>
+</div>
+</div>
+<div class="space-y-3">
+<label class="text-xs text-on-surface-variant font-bold">CONTRIBUTORS</label>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-primary-container flex items-center justify-center">
+<span class="text-[10px] font-bold">AI</span>
+</div>
+<img class="w-8 h-8 rounded-full border-2 border-surface object-cover" data-alt="A portrait of a male software developer in a dark room with purple neon backlight, representing a high-energy technical work environment. Modern SaaS aesthetic, professional photography style, shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPm8pSGz6jbSf2BDdSTBXLrxWJx3H1S7rNswo3HaYpghK76QO7AAUJo7_mWQG-W1n4_9nkcEwuo6Na8xxwSLHbpzqBoioKeXp56YdDM4doG5E74Vvz_4Urcs8yAzBe899wzILpMKXaHhdkWgOCZbO4TVETud5sTama3E8JrtRg-veoxnSA-hscevQsmdMVGJMefPLqNImC4uzrbBtMpRkdl-CKiAlDi2IodweydYSzGN1h7rbtncHIcnl6nBR55QFOa-hwPAjmCbI"/>
+<img class="w-8 h-8 rounded-full border-2 border-surface object-cover" data-alt="A portrait of a female UI/UX designer with creative artistic lighting, soft magenta and teal accents. High-end professional headshot, minimalist background, sleek modern tech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALADWaq15mv8ih1Nd1BHoH2G3C-0yE7W7VkhsUcbXOckKVolC8NB6F0mYhlAjaJPIRVIhzPbnz05tBtIEiJADJsX8EiPvNm5fB3ZJKrK1zmBYn3mpiGrwyvuMKRmKpIxb4noNawrzSs5Jp4aPO9jwYCqEYTKwFpIHCm1-hkTJ_aBv9CEsyS0vVtJJv8Fg4njKzMjdjhZmlvqB5Tk6Im9kjURwZrhyqeQwfB6VZJBrdh2uiAairkUm81r-tLCGzVJ9twWSr8cB7lZE"/>
+</div>
+</div>
+<div class="pt-4 border-t border-outline-variant space-y-4">
+<label class="text-xs text-on-surface-variant font-bold">METADATA</label>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-label-sm text-outline">Draft Type</span>
+<span class="text-label-sm text-on-surface bg-surface-variant px-2 py-0.5 rounded">Tech Doc</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-label-sm text-outline">Words</span>
+<span class="text-label-sm text-on-surface">1,420</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-label-sm text-outline">Read Time</span>
+<span class="text-label-sm text-on-surface">4 mins</span>
+</div>
+</div>
+</div>
+<div class="mt-auto space-y-3">
+<button class="w-full py-2 px-4 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-variant text-label-sm font-label-sm transition-all">
+                            Export to PDF
+                        </button>
+<button class="w-full py-2 px-4 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-variant text-label-sm font-label-sm transition-all">
+                            Share Draft Link
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Background Decoration -->
+<div class="fixed bottom-0 right-0 p-8 pointer-events-none opacity-10">
+<span class="text-[120px] font-black text-primary leading-none select-none">LOOM</span>
+</div>
+<script>
+        // Micro-interaction for sync button
+        const syncBtn = document.querySelector('[data-icon="sync"]').parentElement;
+        syncBtn.addEventListener('click', () => {
+            const icon = syncBtn.querySelector('.material-symbols-outlined');
+            icon.classList.add('animate-spin');
+            syncBtn.classList.add('opacity-50');
+            setTimeout(() => {
+                icon.classList.remove('animate-spin');
+                syncBtn.classList.remove('opacity-50');
+            }, 1000);
+        });
+
+        // Hover effect for side nav
+        const navItems = document.querySelectorAll('aside nav a');
+        navItems.forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                if (!item.classList.contains('bg-primary-container')) {
+                    item.classList.add('translate-x-1');
+                }
+            });
+            item.addEventListener('mouseleave', () => {
+                item.classList.remove('translate-x-1');
+            });
+        });
+    </script>
+</body></html>
