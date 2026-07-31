@@ -14,30 +14,30 @@ const DOC_TYPE_ICONS: Record<string, string> = {
 
 const DOC_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   troubleshooting: {
-    bg: "var(--color-terracotta-light)",
-    text: "var(--color-terracotta)",
+    bg: "rgba(255, 178, 183, 0.12)",
+    text: "rgba(255, 178, 183, 1)",
   },
   howto: {
-    bg: "var(--color-sage-light)",
-    text: "var(--color-sage)",
+    bg: "rgba(78, 222, 163, 0.12)",
+    text: "#4edea3",
   },
   reference: {
-    bg: "var(--color-sand-light)",
-    text: "var(--color-sand)",
+    bg: "rgba(192, 193, 255, 0.08)",
+    text: "#c0c1ff",
   },
   guide: {
-    bg: "var(--color-blue-50)",
-    text: "var(--color-blue-600)",
+    bg: "rgba(192, 193, 255, 0.12)",
+    text: "#c0c1ff",
   },
   api_reference: {
-    bg: "var(--color-sage-light)",
-    text: "var(--color-sage)",
+    bg: "rgba(78, 222, 163, 0.12)",
+    text: "#4edea3",
   },
 };
 
 const DEFAULT_DOC_TYPE_COLOR = {
-  bg: "var(--color-charcoal-light)",
-  text: "var(--color-surface-alt)",
+  bg: "rgba(199, 196, 215, 0.7)",
+  text: "rgba(23, 31, 51, 1)",
 };
 
 function SlackIcon() {
@@ -106,8 +106,8 @@ export function ReviewDocCard({ doc }: ReviewDocCardProps) {
       className="glass-card group block cursor-pointer rounded-2xl p-5"
     >
       <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-white shadow-sm">
-          <span className="material-symbols-outlined text-lg text-[var(--color-muted)]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <span className="material-symbols-outlined text-[24px] text-primary">
             {icon}
           </span>
         </div>
@@ -115,32 +115,32 @@ export function ReviewDocCard({ doc }: ReviewDocCardProps) {
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex items-center gap-2">
             <span
-              className="rounded-full px-2.5 py-0.5 text-[10px] font-medium"
+              className="rounded-full px-2.5 py-0.5 text-[10px] font-mono font-bold"
               style={{ backgroundColor: bg, color: text }}
             >
               {doc.doc_type}
             </span>
             <Badge status={doc.status} />
-            <span className="text-xs text-[var(--color-muted)]">
+            <span className="text-[11px] font-mono text-on-surface-variant/60">
               {relativeTime(doc.created_at)}
             </span>
           </div>
 
-          <h3 className="mb-1 font-semibold text-[var(--color-charcoal)] group-hover:text-[var(--color-brand)] transition-colors">
+          <h3 className="mb-1 font-semibold text-on-surface group-hover:text-primary transition-colors">
             {doc.title}
           </h3>
 
           {doc.original_question && (
-            <div className="mb-2 rounded-lg border border-white/60 bg-white/40 px-3 py-2">
+            <div className="mb-2 rounded-lg bg-surface-container border border-outline-variant px-3 py-2">
               <div className="mb-1 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px] text-[var(--color-muted)]">
+                <span className="material-symbols-outlined text-[12px] text-on-surface-variant/60">
                   help
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-on-surface-variant/60">
                   Original Question
                 </span>
               </div>
-              <p className="text-sm leading-relaxed text-[var(--color-charcoal-light)]">
+              <p className="text-sm leading-relaxed text-on-surface-variant">
                 &ldquo;{truncate(doc.original_question, 140)}&rdquo;
               </p>
             </div>
@@ -149,22 +149,22 @@ export function ReviewDocCard({ doc }: ReviewDocCardProps) {
           <div className="flex items-center gap-2">
             {platform && (
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${platform.className}`}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-mono font-semibold ${platform.className}`}
               >
                 {platform.icon}
                 {platform.label}
               </span>
             )}
-            <span className="ml-auto inline-flex items-center gap-1 rounded border border-white/80 bg-white/60 px-2 py-0.5 text-[11px] font-medium">
+            <span className="ml-auto inline-flex items-center gap-1 rounded-lg bg-secondary/10 px-2.5 py-1 text-[11px] font-mono font-semibold text-secondary">
               <span className="material-symbols-outlined text-[14px]">
                 psychology
               </span>
-              {Math.round(doc.confidence_score * 100)}% confidence
+              {Math.round(doc.confidence_score * 100)}%
             </span>
           </div>
         </div>
 
-        <button className="shrink-0 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-xs font-semibold text-[var(--color-charcoal)] shadow-sm transition-all hover:border-gray-300 hover:shadow active:scale-95">
+        <button className="shrink-0 rounded-lg bg-primary text-on-primary-container px-5 py-2.5 text-xs font-mono font-bold transition-all hover:shadow-[0_0_8px_rgba(192,193,255,0.3)] active:scale-95">
           View
         </button>
       </div>

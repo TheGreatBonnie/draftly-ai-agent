@@ -51,20 +51,23 @@ Return ONLY valid JSON, no other text."""
 
 
 async def ai_review_node_hybrid(state: DocumentationState) -> dict:
-    """Review node: generates review via call_llm, then grades with rubric."""
+    """Review node: generates review via call_llm, grades with rubric, runs deterministic checks."""
     from src.agents.middleware.rubric import grade_with_rubric
     from src.agents.rubrics import (
         DOCUMENTATION_RUBRIC,
         extract_confidence_from_status,
         extract_feedback_from_rubric,
     )
+    from src.agents.verification import format_verification_feedback, run_verification_pipeline
 
     logger.info("ai_review_hybrid_started", org_id=state["org_id"])
+
+    draft_content = state.get("draft_content", "")
 
     # Generate review via LLM
     prompt = REVIEW_PROMPT.format(
         question=state["question"],
-        content=state.get("draft_content", ""),
+        content=draft_content,
         knowledge_package=json.dumps(state.get("knowledge_package", {}), indent=2),
     )
 
@@ -93,23 +96,47 @@ async def ai_review_node_hybrid(state: DocumentationState) -> dict:
                 "passed": False,
             }
 
-    # Grade with rubric
+    # Grade with rubric (Loop 2: LLM-based verification)
     rubric_result = await grade_with_rubric(
-        content=review_response,
+        content=draft_content,
         rubric=DOCUMENTATION_RUBRIC,
     )
 
     rubric_status = rubric_result["status"]
     rubric_evaluations = rubric_result["evaluations"]
 
-    # Calculate confidence from rubric status
+    # Run deterministic verification (Loop 2: deterministic checks)
+    sources = state.get("knowledge_package", {}).get("sources", [])
+    verification_result = await run_verification_pipeline(
+        content=draft_content,
+        rubric_result=rubric_result,
+        sources=sources,
+    )
+
+    # Combine rubric and deterministic feedback
+    verification_feedback = format_verification_feedback(verification_result)
+
+    # Calculate confidence from rubric status and deterministic checks
     confidence = extract_confidence_from_status(rubric_status)
 
-    # Extract feedback from last evaluation
+    # Reduce confidence if deterministic checks fail
+    if not verification_result.deterministic_passed:
+        confidence = min(confidence, 0.4)
+    if verification_result.critical_count > 0:
+        confidence = min(confidence, 0.3)
+
+    # Extract feedback from last rubric evaluation
     feedback = review.get("issues", [])
     if rubric_evaluations:
         last_eval = rubric_evaluations[-1]
         feedback = extract_feedback_from_rubric(last_eval)
+
+    # Combine feedback
+    combined_feedback = {
+        "rubric_feedback": feedback,
+        "verification_feedback": verification_feedback,
+        "deterministic_issues": verification_result.to_dict(),
+    }
 
     # Update documentation
     doc_id = state.get("doc_id")
@@ -124,16 +151,21 @@ async def ai_review_node_hybrid(state: DocumentationState) -> dict:
         "ai_review_hybrid_completed",
         confidence=confidence,
         rubric_status=rubric_status,
+        deterministic_passed=verification_result.deterministic_passed,
+        critical_issues=verification_result.critical_count,
     )
 
     return {
         "confidence_score": confidence,
         "review_result": review,
-        "review_feedback": json.dumps(feedback) if isinstance(feedback, list) else feedback,
+        "review_feedback": json.dumps(combined_feedback),
         "rubric_status": {
-            "satisfied": rubric_status == "satisfied",
-            "needs_revision": rubric_status == "needs_revision",
+            "satisfied": rubric_status == "satisfied"
+            and verification_result.deterministic_passed,
+            "needs_revision": rubric_status == "needs_revision"
+            or not verification_result.deterministic_passed,
             "research_needed": _check_research_needed(rubric_evaluations),
-            "feedback": feedback,
+            "feedback": combined_feedback,
+            "verification_passed": verification_result.passed,
         },
     }

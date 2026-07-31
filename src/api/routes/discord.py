@@ -25,18 +25,28 @@ ACTION_MAP = {
     "discord_reject": "rejected",
     "discord_revise": "needs_changes",
     "discord_feedback": "needs_changes",
+    "improvement_approve": "improvement_approved",
+    "improvement_reject": "improvement_rejected",
 }
 
 STATUS_COLOR = {
     "approved": 3066993,
     "rejected": 15158332,
     "needs_changes": 16776960,
+    "improvement_approved": 3066993,
+    "improvement_rejected": 15158332,
+    "improvement_applied": 3066993,
+    "improvement_failed": 16776960,
 }
 
 STATUS_LABEL = {
     "approved": "Approved",
     "rejected": "Rejected",
     "needs_changes": "Changes Requested",
+    "improvement_approved": "Approved",
+    "improvement_rejected": "Rejected",
+    "improvement_applied": "Applied",
+    "improvement_failed": "Apply Failed",
 }
 
 
@@ -141,16 +151,48 @@ async def handle_interactions(request: Request) -> JSONResponse:
                 },
             )
 
-        review_id = token_data.get("review_id", "")
+        proposal_id = token_data.get("review_id", "")
+
+        if action_prefix.startswith("improvement_"):
+            from src.analytics.improver import apply_improvement, update_proposal_status
+
+            try:
+                if action == "improvement_approved":
+                    await update_proposal_status(proposal_id, "approved", reviewed_by="discord")
+                    success = await apply_improvement(proposal_id)
+                    result_status = "improvement_applied" if success else "improvement_failed"
+                else:
+                    await update_proposal_status(proposal_id, "rejected", reviewed_by="discord")
+                    result_status = "improvement_rejected"
+
+                return JSONResponse(
+                    content=_build_result_response(result_status, "Improvement"),
+                )
+            except Exception as e:
+                logger.error(
+                    "discord_improvement_action_failed",
+                    proposal_id=proposal_id,
+                    error=str(e),
+                )
+                return JSONResponse(
+                    content={
+                        "type": 4,
+                        "data": {
+                            "content": "Failed to process improvement. Please use the dashboard.",
+                            "flags": 64,
+                        },
+                    },
+                )
+
         feedback = None
         if action_prefix == "discord_feedback":
             values = payload.get("data", {}).get("values", [])
             feedback = values[0] if values else ""
 
         try:
-            await complete_review(review_id=review_id, status=action, feedback=feedback)
+            await complete_review(review_id=proposal_id, status=action, feedback=feedback)
         except Exception as e:
-            logger.error("discord_review_complete_failed", review_id=review_id, error=str(e))
+            logger.error("discord_review_complete_failed", review_id=proposal_id, error=str(e))
             return JSONResponse(
                 content={
                     "type": 4,
@@ -167,12 +209,12 @@ async def handle_interactions(request: Request) -> JSONResponse:
         try:
             decision = action.split("_")[0] if "_" in action else action
             await resume_review(
-                review_id=review_id,
+                review_id=proposal_id,
                 decision=decision,
                 feedback=feedback or "",
             )
         except Exception as e:
-            logger.error("discord_graph_resume_failed", review_id=review_id, error=str(e))
+            logger.error("discord_graph_resume_failed", review_id=proposal_id, error=str(e))
 
         title = (
             payload.get("message", {})

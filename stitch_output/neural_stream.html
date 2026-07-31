@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Draftly | Neural Command</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        :root {
+            --grid-opacity: 0.03;
+        }
+        body {
+            background-color: #0b1326;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, var(--grid-opacity)) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, var(--grid-opacity)) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .glow-primary {
+            box-shadow: 0 0 30px rgba(192, 193, 255, 0.15);
+        }
+        .glow-magenta {
+            box-shadow: 0 0 30px rgba(255, 81, 106, 0.2);
+        }
+        .pulse-ring {
+            animation: pulse-animation 3s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+        .neural-blob {
+            filter: blur(40px);
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        .light-leak {
+            background: radial-gradient(circle at center, rgba(192, 193, 255, 0.15) 0%, transparent 70%);
+        }
+        .glass-panel {
+            background: rgba(23, 31, 51, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(144, 143, 160, 0.1);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#c7c4d7",
+                        "tertiary-fixed": "#ffdadb",
+                        "surface-bright": "#31394d",
+                        "outline": "#908fa0",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "error-container": "#93000a",
+                        "secondary-container": "#00a572",
+                        "surface-container-high": "#222a3d",
+                        "tertiary-container": "#ff516a",
+                        "surface-container": "#171f33",
+                        "on-primary-container": "#0d0096",
+                        "surface-tint": "#c0c1ff",
+                        "inverse-primary": "#494bd6",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#5b0017",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-primary": "#1000a9",
+                        "primary-fixed": "#e1e0ff",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "tertiary": "#ffb2b7",
+                        "surface-container-low": "#131b2e",
+                        "primary-container": "#8083ff",
+                        "surface-variant": "#2d3449",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-secondary": "#003824",
+                        "surface-container-lowest": "#060e20",
+                        "primary": "#c0c1ff",
+                        "surface": "#0b1326",
+                        "on-background": "#dae2fd",
+                        "on-secondary-container": "#00311f",
+                        "on-secondary-fixed": "#002113",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-tertiary": "#67001b",
+                        "surface-container-highest": "#2d3449",
+                        "secondary": "#4edea3",
+                        "on-surface": "#dae2fd",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#0b1326",
+                        "inverse-surface": "#dae2fd",
+                        "inverse-on-surface": "#283044",
+                        "outline-variant": "#464554",
+                        "secondary-fixed": "#6ffbbe",
+                        "background": "#0b1326",
+                        "on-primary-fixed": "#07006c",
+                        "on-secondary-fixed-variant": "#005236",
+                        "electric-purple": "#8B5CF6",
+                        "electric-magenta": "#EC4899"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "gutter": "32px",
+                        "margin-desktop": "40px",
+                        "panel-split": "1px",
+                        "base": "6px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Inter", "sans-serif"],
+                        "code-md": ["JetBrains Mono", "monospace"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["JetBrains Mono", "monospace"],
+                        "headline-lg-mobile": ["Inter", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="text-on-surface selection:bg-primary/30 selection:text-primary overflow-hidden">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-screen flex flex-col p-6 gap-6 z-40 glass-panel w-72 border-r border-white/5">
+<div class="flex flex-col gap-2 mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-electric-purple flex items-center justify-center text-on-primary shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[18px] font-bold text-on-surface tracking-tight leading-none uppercase">Neural_Core</span>
+<span class="text-[10px] font-label-sm text-secondary flex items-center gap-1.5 mt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary pulse-ring"></span>
+                    SYNCED // OPTIMIZED
+                </span>
+</div>
+</div>
+</div>
+<button class="w-full py-3.5 px-4 bg-gradient-to-r from-primary/10 to-primary/20 border border-primary/30 text-primary rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-primary/25 transition-all active:scale-95 mb-6 group">
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-90">add</span>
+        Initialize Draft
+    </button>
+<nav class="flex flex-col gap-2 flex-1">
+<a class="flex items-center gap-3.5 px-4 py-3 bg-white/5 text-primary rounded-xl font-medium transition-all duration-300 border border-white/5" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-body-md">Neural Hub</span>
+</a>
+<a class="flex items-center gap-3.5 px-4 py-3 text-on-surface-variant hover:bg-white/5 hover:text-on-surface rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="text-body-md">Draft Library</span>
+</a>
+<a class="flex items-center gap-3.5 px-4 py-3 text-on-surface-variant hover:bg-white/5 hover:text-on-surface rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined">cable</span>
+<span class="text-body-md">Neural Links</span>
+</a>
+<a class="flex items-center gap-3.5 px-4 py-3 text-on-surface-variant hover:bg-white/5 hover:text-on-surface rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-body-md">Lexicon</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 flex flex-col gap-2 border-t border-white/5">
+<a class="flex items-center gap-3.5 px-4 py-2.5 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-label-sm">Configuration</span>
+</a>
+<a class="flex items-center gap-3.5 px-4 py-2.5 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+<span class="text-label-sm">Knowledge Base</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-72 flex flex-col h-screen relative bg-surface overflow-hidden">
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-20 z-50 glass-panel border-b border-white/5">
+<div class="flex items-center gap-10">
+<span class="text-[22px] font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-electric-magenta tracking-tight">Draftly</span>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-primary font-medium border-b-2 border-primary pb-1" href="#">Overview</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-medium" href="#">Workspace</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-medium" href="#">Network</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-medium" href="#">Access</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-white/5 rounded-full px-4 py-2 border border-white/5 focus-within:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md placeholder:text-on-surface-variant/50 w-48" placeholder="Search neural patterns..." type="text"/>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-electric-magenta rounded-full shadow-[0_0_8px_#EC4899]"></span>
+</button>
+<div class="w-9 h-9 rounded-full overflow-hidden border-2 border-white/10 hover:border-primary/50 transition-colors cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGOHZEY_2kO9QDFtOu0sms1tpIA2VxDk29C0ixR5vIb28YacILqG6jrqS8SHBF4LC-ZqzIyJZbtdb-vwvMWh5wZjz7mwtaV38o2CcAVETLZMFoTL-KRq_uqtetFnTfZzUDVx7N7PMkE8crTQFOHSIrM1DB8dD-TmIBx9JOM3UiIjp_jbePXMBQ_lrS9xqM2cWqohHUopdC2XMQa0ycDUuM4MH2pnCQRDpsZ2YHWv61LiR9EHvs2bOsx3eo2VRk9lkfS8rRf5iRuyY"/>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-gutter relative custom-scrollbar">
+<!-- Background Light Leaks -->
+<div class="absolute top-0 left-1/4 w-96 h-96 light-leak pointer-events-none opacity-40"></div>
+<div class="absolute bottom-1/4 right-0 w-[500px] h-[500px] light-leak pointer-events-none opacity-30"></div>
+<div class="max-w-7xl mx-auto space-y-8 relative z-10">
+<!-- Engine Pulse Banner -->
+<section class="glass-panel rounded-2xl p-8 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
+<div class="flex flex-col gap-1">
+<span class="text-label-sm text-on-surface-variant/70 uppercase tracking-widest">Neural Pulse Status</span>
+<h2 class="text-headline-lg font-bold text-on-surface flex items-center gap-3">
+                        Active Engine Throughput
+                        <span class="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-[10px] border border-secondary/20">STABLE</span>
+</h2>
+</div>
+<div class="flex items-center gap-12 flex-wrap">
+<div class="flex flex-col">
+<span class="text-label-sm text-on-surface-variant/60">Threads</span>
+<span class="text-headline-lg font-bold text-primary">1,284 <span class="text-sm font-normal text-on-surface-variant/40">items</span></span>
+</div>
+<div class="w-px h-10 bg-white/10 hidden md:block"></div>
+<div class="flex flex-col">
+<span class="text-label-sm text-on-surface-variant/60">Coverage</span>
+<span class="text-headline-lg font-bold text-secondary">94.2% <span class="text-sm font-normal text-on-surface-variant/40">avg</span></span>
+</div>
+<div class="w-px h-10 bg-white/10 hidden md:block"></div>
+<div class="flex flex-col">
+<span class="text-label-sm text-on-surface-variant/60">Optimization</span>
+<span class="text-headline-lg font-bold text-tertiary">412.5 <span class="text-sm font-normal text-on-surface-variant/40">hrs</span></span>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-12 gap-8">
+<!-- Neural Visualization -->
+<section class="col-span-12 lg:col-span-8 glass-panel rounded-2xl min-h-[550px] relative overflow-hidden flex flex-col border border-white/5">
+<div class="absolute inset-0 bg-gradient-to-br from-surface to-surface-container-lowest/80"></div>
+<!-- Neural Visualization Background -->
+<div class="absolute inset-0 overflow-hidden pointer-events-none">
+<div class="neural-blob absolute top-1/4 left-1/3 w-64 h-64 bg-primary/20 rounded-full"></div>
+<div class="neural-blob absolute bottom-1/3 right-1/4 w-80 h-80 bg-electric-magenta/10 rounded-full" style="animation-delay: -5s;"></div>
+<div class="neural-blob absolute top-1/2 left-1/4 w-48 h-48 bg-electric-purple/15 rounded-full" style="animation-delay: -12s;"></div>
+</div>
+<div class="relative z-10 p-8 h-full flex flex-col">
+<div class="flex justify-between items-center mb-16">
+<div class="flex items-center gap-4">
+<div class="w-2 h-2 rounded-full bg-secondary pulse-ring"></div>
+<span class="font-code-md text-[12px] text-on-surface/80 tracking-widest">COGNITIVE_ARRAY::ACTIVE</span>
+</div>
+<div class="flex gap-3">
+<div class="bg-white/5 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-label-sm text-on-surface-variant flex items-center gap-2">
+<span class="w-1 h-1 rounded-full bg-primary"></span>
+                                    Latent Space: 0.04ms
+                                </div>
+</div>
+</div>
+<!-- Fluid Neural Center -->
+<div class="flex-1 flex items-center justify-center relative">
+<!-- Central Glow -->
+<div class="w-64 h-64 rounded-full bg-primary/5 blur-[80px] absolute animate-pulse"></div>
+<!-- The Core Orb -->
+<div class="w-40 h-40 rounded-full border border-white/10 flex items-center justify-center relative z-20 overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/20 via-electric-purple/20 to-electric-magenta/20 backdrop-blur-3xl"></div>
+<div class="relative w-28 h-28 rounded-full border border-white/20 flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-[48px] text-white opacity-80 group-hover:scale-110 transition-transform duration-700" style="font-variation-settings: 'wght' 200;">blur_on</span>
+</div>
+</div>
+<!-- Neural Tendrils (Floating Indicators) -->
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+<div class="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/10 shadow-2xl">
+<span class="text-label-sm text-primary font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">slack</span>
+                                        Ingesting Neural Patterns from #prod-dev
+                                    </span>
+</div>
+<div class="w-px h-12 bg-gradient-to-b from-primary/40 to-transparent"></div>
+</div>
+<div class="absolute -bottom-10 right-1/4 flex flex-col items-center gap-3">
+<div class="w-px h-12 bg-gradient-to-t from-electric-magenta/40 to-transparent"></div>
+<div class="bg-white/5 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/10 shadow-2xl">
+<span class="text-label-sm text-electric-magenta font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">draw</span>
+                                        Refining API Documentation Context
+                                    </span>
+</div>
+</div>
+</div>
+<!-- Connectivity Status Bar -->
+<div class="mt-auto grid grid-cols-4 gap-6 pt-12">
+<div class="space-y-2">
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-medium uppercase tracking-tighter">
+<span>Sync: Slack</span>
+<span class="text-secondary">82%</span>
+</div>
+<div class="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary/50 to-secondary w-[82%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-medium uppercase tracking-tighter">
+<span>Repo: GitHub</span>
+<span class="text-primary">48%</span>
+</div>
+<div class="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary/50 to-primary w-[48%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-medium uppercase tracking-tighter">
+<span>Nexus: Jira</span>
+<span class="text-electric-magenta">31%</span>
+</div>
+<div class="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-electric-magenta/50 to-electric-magenta w-[31%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-medium uppercase tracking-tighter">
+<span>AI: Think Core</span>
+<span class="text-white">96%</span>
+</div>
+<div class="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-white/30 to-white w-[96%]"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Thought Stream Feed -->
+<section class="col-span-12 lg:col-span-4 flex flex-col gap-8">
+<div class="glass-panel rounded-2xl flex flex-col h-full min-h-[550px] border border-white/5 overflow-hidden">
+<div class="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+<h2 class="text-label-sm font-bold uppercase tracking-widest text-on-surface">Stream of Thought</h2>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-on-surface-variant">REAL-TIME</span>
+<span class="w-1.5 h-1.5 rounded-full bg-electric-magenta animate-pulse shadow-[0_0_6px_#EC4899]"></span>
+</div>
+</div>
+<div class="p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar">
+<!-- Conversational Ingest Item -->
+<div class="group bg-white/5 p-4 rounded-xl border border-white/5 hover:border-primary/40 transition-all cursor-default">
+<div class="flex items-start gap-4">
+<div class="w-9 h-9 rounded-lg bg-[#4A154B]/80 flex items-center justify-center shrink-0 border border-white/10">
+<img alt="Slack" class="w-5 h-5 opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyPUctmIClo18gAlCZnPozEGNz59b4Hwnee3oUKG4rG6cIU64F8r2kJ8_86ztSUIlh7j_B4CRgg1ekTjj-o4S0WQi6XhNtdT3NGRob0K5CVMdgFoFgKOPnDzZgx2GlL1O717RhTM4cjH_HSclfkZ5raAFWUZLg-fbnGPie6nI-YD0aeVdq8V9kzN9pQ1vUQkSenliRrdlTI-qk2sfPQErON9XHV8dOEjgXgdTHnWPwMaQvzAysT32es8YCY0XDVCO_6GL2vIHJcMo"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[11px] text-primary font-medium mb-1 uppercase tracking-tight">Listening to #dev-ops</p>
+<p class="text-body-md text-on-surface-variant leading-relaxed italic line-clamp-2">"Found a legacy bucket issue in the new API route..."</p>
+<div class="mt-3 flex items-center justify-between">
+<span class="text-[10px] text-on-surface-variant/40">2m ago</span>
+<span class="text-[10px] font-bold text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">psychology</span>
+                                                ANALYIZING
+                                            </span>
+</div>
+</div>
+</div>
+</div>
+<div class="group bg-white/5 p-4 rounded-xl border border-white/5 hover:border-secondary/40 transition-all cursor-default">
+<div class="flex items-start gap-4">
+<div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
+<img alt="GitHub" class="w-5 h-5 opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFMY5UKfCMK_3LqVniSk6sYC1FQdVmqat5RL_SYD84zecoGj-2EOWZRdymedzHNA_QBF_A5rberjM4QTu-9KNDrHuZYfj584FN8sbopdXJFQ98kMhXJVe63x8IXugl0ZiGfAZXL_yzBOT2NgL1kRUA8_wzO1GCYCEPWgKHUO4Cgw12b-1EURJ0eEBi3j0BEiEllkiwP0KPck4Yo7tSg_lIhL98RcaErAEiXy6-hwLRFKE_XVUmV6z8FqaW4QIJftL9iQQWNnPLGhY"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[11px] text-secondary font-medium mb-1 uppercase tracking-tight">Code Context Synced</p>
+<p class="text-body-md text-on-surface-variant leading-relaxed italic line-clamp-2">"PR #882: Auth middleware refactor for observability."</p>
+<div class="mt-3 flex items-center justify-between">
+<span class="text-[10px] text-on-surface-variant/40">15m ago</span>
+<span class="text-[10px] font-bold text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">done_all</span>
+                                                PUBLISHED
+                                            </span>
+</div>
+</div>
+</div>
+</div>
+<div class="group bg-white/5 p-4 rounded-xl border border-white/5 hover:border-electric-magenta/40 transition-all cursor-default">
+<div class="flex items-start gap-4">
+<div class="w-9 h-9 rounded-lg bg-[#4A154B]/80 flex items-center justify-center shrink-0 border border-white/10">
+<img alt="Slack" class="w-5 h-5 opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY5Qafgv3Z17JblKATY13s5C9WnB50_CKTiNFSvIpMhChkuPw2t8yYn0pglCtp0zCzDk1OSD67JjNWtFTrX8p3xJUD4tHm1eoJ07O3xuU5_j1H3WmRtfs6CUyKwn4pgUoFwsSnI6kyp5ntgHcQZkbJecEwUR5Xu6INqKONceTKMO2VnMA7VmDujtPS0Sczuqmf9qG-ONFZ2e0iylgtMuN0pbFawcKP1mcFQImAnzZrT0s6JRXSHShXQsj7yXLAQw-Jxbh1c2PzicY"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[11px] text-electric-magenta font-medium mb-1 uppercase tracking-tight">Request Captured</p>
+<p class="text-body-md text-on-surface-variant leading-relaxed italic line-clamp-2">"Does Draftly support WebGL shader backgrounds?"</p>
+<div class="mt-3 flex items-center justify-between">
+<span class="text-[10px] text-on-surface-variant/40">45m ago</span>
+<span class="text-[10px] font-bold text-electric-magenta flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">edit_square</span>
+                                                DRAFTING
+                                            </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Thought Progression Log -->
+<section class="col-span-12">
+<div class="glass-panel rounded-2xl p-6 h-56 flex flex-col relative border border-white/5">
+<div class="flex items-center justify-between mb-5 relative z-10">
+<h2 class="text-label-sm font-bold uppercase tracking-[0.2em] text-on-surface-variant">Cognitive Progression Log</h2>
+<span class="text-[10px] font-code-md text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">V.4.2.0-STABLE</span>
+</div>
+<div class="flex-1 font-code-md text-[13px] text-on-surface-variant/70 overflow-y-auto space-y-2 relative z-10 pr-4 custom-scrollbar" id="thought-log">
+<p class="text-secondary flex items-center gap-3">
+<span class="opacity-30">09:42:12</span>
+<span class="font-bold">// Initializing neural pathways... OK</span>
+</p>
+<p class="flex items-center gap-3">
+<span class="opacity-30">09:42:15</span>
+<span>I've picked up a new conversation thread regarding S3 bucket configurations.</span>
+</p>
+<p class="text-primary flex items-center gap-3">
+<span class="opacity-30">09:42:18</span>
+<span>Understanding the user's intent: They seem worried about legacy dependencies.</span>
+</p>
+<p class="flex items-center gap-3">
+<span class="opacity-30">09:42:20</span>
+<span>Extracted key concepts: [infrastructure, security-patch, bucket-policy]</span>
+</p>
+<p class="text-electric-magenta flex items-center gap-3">
+<span class="opacity-30">09:42:22</span>
+<span>Drafting a solution document to bridge the knowledge gap.</span>
+</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<style>
+    /* Custom Scrollbar for better aesthetics */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(192, 193, 255, 0.1);
+    }
+</style>
+<script>
+    // Thought Stream Simulator
+    const logContainer = document.getElementById('thought-log');
+    const logs = [
+        "Observing a new push to the staging branch. Checking for documentation gaps...",
+        "I've noticed a pattern in support requests regarding the new auth flow. Drafting a guide.",
+        "Refining the lexicon based on the latest architectural changes.",
+        "Neural sync with #marketing-feedback complete. Identifying potential feature requests.",
+        "Optimizing the cognitive array. Throughput increased by 12%.",
+        "Synthesizing documentation for the updated <NavigationGrid> component.",
+        "Waiting for new neural inputs..."
+    ];
+    let currentLog = 0;
+
+    setInterval(() => {
+        const p = document.createElement('p');
+        p.className = "flex items-center gap-3 transition-all duration-500 opacity-0 transform translate-y-2";
+        const colorClass = Math.random() > 0.8 ? (Math.random() > 0.5 ? 'text-primary' : 'text-electric-magenta') : '';
+        if (colorClass) p.classList.add(colorClass);
+        
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
+        
+        p.innerHTML = `<span class="opacity-30">${timeStr}</span> <span>${logs[currentLog]}</span>`;
+        logContainer.appendChild(p);
+        
+        // Trigger animation
+        setTimeout(() => {
+            p.classList.remove('opacity-0', 'translate-y-2');
+        }, 100);
+
+        logContainer.scrollTop = logContainer.scrollHeight;
+        currentLog = (currentLog + 1) % logs.length;
+        
+        if (logContainer.children.length > 25) {
+            logContainer.removeChild(logContainer.firstChild);
+        }
+    }, 5000);
+
+    // Subtle parallax effect on neural blobs
+    document.addEventListener('mousemove', (e) => {
+        const blobs = document.querySelectorAll('.neural-blob');
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+        
+        blobs.forEach((blob, index) => {
+            const speed = (index + 1) * 20;
+            blob.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+        });
+    });
+</script>
+</body></html>

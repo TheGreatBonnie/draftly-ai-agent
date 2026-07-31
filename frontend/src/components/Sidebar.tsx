@@ -1,102 +1,97 @@
 import { NavLink } from "react-router";
-import {
-  Show,
-  SignInButton,
-  UserButton,
-  useAuth,
-  useOrganization,
-} from "@clerk/react";
+import { Show, UserButton, useAuth, useOrganization } from "@clerk/react";
 
-const baseLinks = [
-  { to: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { to: "/reviews", label: "Reviews", icon: "description" },
-  { to: "/knowledge", label: "Knowledge Base", icon: "library_books" },
-  { to: "/memory", label: "Memory", icon: "memory" },
-  { to: "/settings", label: "Settings", icon: "settings" },
-  { to: "/help", label: "Help Center", icon: "help_center" },
+const links = [
+  { to: "/dashboard", label: "Command Center", icon: "terminal" },
+  { to: "/reviews", label: "Drafts", icon: "edit_note" },
+  { to: "/reviewers", label: "Reviewers", icon: "group" },
+  { to: "/knowledge", label: "Documentation", icon: "auto_stories" },
+  { to: "/memory", label: "Memory", icon: "database" },
+  { to: "/improvements", label: "Improvements", icon: "trending_up" },
+  { to: "/settings", label: "Integrations", icon: "hub" },
 ];
 
-const reviewerLinks = [
-  { to: "/reviewers", label: "Reviewers", icon: "rate_review" },
+const bottomLinks = [
+  { to: "/settings", label: "Settings", icon: "settings" },
+  { to: "/help", label: "Support", icon: "help" },
 ];
 
 export function Sidebar() {
-  const { membership, organization } = useOrganization();
+  const { organization } = useOrganization();
   const { isSignedIn } = useAuth();
-  const role = membership?.role;
-  const showReviewers = role === "org:admin" || role === "org:reviewer";
-
-  const links = [...baseLinks, ...(showReviewers ? reviewerLinks : [])];
 
   return (
-    <aside className="glass-panel flex h-screen w-[280px] shrink-0 flex-col justify-between border-r border-white/80 px-4 py-6 z-20">
-      <div>
-        {/* Logo area */}
-        <div className="mb-10 flex items-center gap-3 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-mint)] text-white shadow-lg">
-            <span
-              className="material-symbols-outlined text-2xl font-bold"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              auto_awesome
+    <aside className="fixed left-0 top-0 h-screen flex flex-col z-40 bg-surface-container-low border-r border-outline-variant w-64">
+      {/* Logo */}
+      <div className="flex flex-col gap-1 px-5 pt-6 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_12px_rgba(192,193,255,0.3)]">
+            <span className="material-symbols-outlined text-on-primary-container text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-black text-on-surface tracking-tighter leading-none" style={{ fontFamily: "Inter" }}>DRAFTLY</span>
+            <span className="text-[11px] font-mono text-secondary flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary pulse-ring inline-block"></span>
+              STATUS: WATCHING
             </span>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-[var(--color-charcoal)]">
-              Draftly
-            </h1>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-              AI Documentation
-            </p>
-          </div>
         </div>
-
-        {/* Nav Links */}
-        <nav className="flex flex-col gap-2">
-          {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.to === "/dashboard"}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
-                  isActive
-                    ? "border border-white/80 bg-white/60 text-[var(--color-brand)] shadow-sm"
-                    : "text-[var(--color-muted)] hover:bg-white/40 hover:text-[var(--color-charcoal)]"
-                }`
-              }
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                {link.icon}
-              </span>
-              <span>{link.label}</span>
-            </NavLink>
-          ))}
-        </nav>
       </div>
 
-      {/* Bottom: User Profile */}
-      <div className="mt-4 border-t border-white/40 pt-4">
+      {/* New Draft Button */}
+      <div className="px-4 mb-5">
+        <button className="w-full py-2.5 px-4 bg-primary text-on-primary-container rounded-lg font-bold flex items-center justify-center gap-2 hover:glow-primary transition-all active:scale-[0.97] shadow-[0_0_8px_rgba(192,193,255,0.25)]">
+          <span className="material-symbols-outlined text-[20px]">add</span>
+          New Draft
+        </button>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex flex-col gap-0.5 px-3 flex-1">
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={link.to === "/dashboard"}
+            className={({ isActive }) =>
+               `flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all duration-200 text-sm ${
+                 isActive
+                   ? "bg-primary-container text-on-primary-container font-bold"
+                   : "text-on-surface-variant hover:bg-surface-variant"
+               }`
+            }
+          >
+            <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
+            <span>{link.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Bottom */}
+      <div className="mt-auto border-t border-outline-variant pt-3 pb-5 px-3 flex flex-col gap-0.5">
         <Show when="signed-in">
-          <div className="flex items-center gap-3 px-2">
+          <div className="flex items-center gap-3 px-3.5 py-2 mb-2">
             <UserButton />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-[var(--color-charcoal)]">
+              <p className="truncate text-sm font-semibold text-on-surface">
                 {organization?.name || "Draftly"}
               </p>
-              <p className="truncate text-xs text-[var(--color-muted)]">
+              <p className="truncate text-xs font-mono text-on-surface-variant/60">
                 {isSignedIn ? "Signed in" : "Guest"}
               </p>
             </div>
           </div>
         </Show>
-        <Show when="signed-out">
-          <SignInButton mode="modal">
-            <button className="w-full rounded-xl bg-[var(--color-brand)] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-brand-hover)]">
-              Sign In
-            </button>
-          </SignInButton>
-        </Show>
+        {bottomLinks.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className="flex items-center gap-3 px-3.5 py-2 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200 text-sm"
+          >
+            <span className="material-symbols-outlined text-[20px]">{link.icon}</span>
+            <span>{link.label}</span>
+          </NavLink>
+        ))}
       </div>
     </aside>
   );

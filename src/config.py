@@ -56,6 +56,16 @@ class Settings(BaseSettings):
     rubric_grader_model: str = "anthropic/claude-haiku-4-5"
     rubric_max_iterations: int = 3
 
+    # Hill-climbing (Loop 4)
+    analysis_model: str = "tensorx/deepseek-v4-flash"
+    trace_analysis_interval: int = 100
+    auto_apply_improvements: bool = False
+    trace_retention_days: int = 90
+
+    # Verification
+    deterministic_verification_enabled: bool = True
+    max_verification_issues_per_type: int = 10
+
     # App
     app_url: str = "http://localhost:5173"
     review_dashboard_url: str = "http://localhost:5173"
@@ -64,7 +74,7 @@ class Settings(BaseSettings):
     environment: Literal["development", "staging", "production"] = "development"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()  # type: ignore[call-arg]

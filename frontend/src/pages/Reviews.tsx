@@ -36,15 +36,15 @@ export function Reviews() {
   if (error) {
     return (
       <div className="text-center">
-        <p className="text-[var(--color-muted)]">Failed to load reviews.</p>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">{error}</p>
+        <p className="text-on-surface-variant">Failed to load reviews.</p>
+        <p className="mt-1 text-sm text-on-surface-variant">{error}</p>
         <button
           onClick={() => {
             setError(null);
             setLoading(true);
             fetchDocs();
           }}
-          className="mt-3 rounded-full bg-[var(--color-charcoal)] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+          className="mt-3 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
         >
           Retry
         </button>
@@ -58,15 +58,15 @@ export function Reviews() {
     <div>
       <header className="mb-8 flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[var(--color-charcoal)] tracking-tight mb-1">
+          <h1 className="text-headline-xl font-bold text-on-surface tracking-tight mb-1">
             Reviews
           </h1>
-          <p className="text-sm text-[var(--color-muted)]">
+          <p className="text-sm text-on-surface-variant">
             Browse and manage your AI-generated documentation.
           </p>
         </div>
         <div className="glass-card flex items-center gap-2 rounded-full px-4 py-2">
-          <span className="text-sm font-medium text-[var(--color-charcoal)]">
+          <span className="text-sm font-medium text-on-surface">
             {drafts} drafts
           </span>
         </div>

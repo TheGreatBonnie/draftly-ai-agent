@@ -66,6 +66,8 @@ def build_github_state(payload: dict, org_id: str) -> DocumentationState:
         "rubric_status": {},
         "subagent_results": {},
         "message_history": [],
+        "_node_traces": [],
+        "_trace_collected": False,
     }
 
 

@@ -63,3 +63,7 @@ class DocumentationState(TypedDict):
 
     # Conversation context
     message_history: list[dict[str, str]]
+
+    # Trace collection for hill-climbing
+    _node_traces: list  # list[NodeTrace] — populated during execution
+    _trace_collected: bool

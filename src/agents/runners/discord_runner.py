@@ -64,6 +64,8 @@ def build_discord_state(
         "investigation_plan": [],
         "rubric_status": {},
         "subagent_results": {},
+        "_node_traces": [],
+        "_trace_collected": False,
     }
 
 

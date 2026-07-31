@@ -1,38 +1,25 @@
 import { Outlet } from "react-router";
 import { AuthTokenSetter } from "./AuthTokenSetter";
 import { Sidebar } from "./Sidebar";
+import { TopNav } from "./TopNav";
 
 export function Layout() {
   return (
-    <div className="flex h-screen" style={{ backgroundColor: "#FAF8F5" }}>
+    <div className="flex h-screen bg-surface relative">
+      <div className="fixed inset-0 grid-bg opacity-40 z-0" />
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="scanline" />
+      </div>
       <AuthTokenSetter />
-
-      {/* Background orbs */}
-      <div
-        className="bg-orb"
-        style={{
-          width: 600,
-          height: 600,
-          background: "#4ECDC4",
-          top: -100,
-          left: -100,
-        }}
-      />
-      <div
-        className="bg-orb"
-        style={{
-          width: 700,
-          height: 700,
-          background: "#FF6B6B",
-          bottom: -200,
-          right: -100,
-        }}
-      />
-
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
-        <Outlet />
-      </main>
+      <div className="flex flex-1 flex-col ml-64 relative z-10">
+        <TopNav />
+        <main className="flex-1 overflow-y-auto p-8 scrollbar-thin">
+          <div className="max-w-[1600px] mx-auto">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

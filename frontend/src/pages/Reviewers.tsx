@@ -33,7 +33,7 @@ const emptySelfForm: SelfRegisterPayload = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-white/60 bg-white/40 px-3.5 py-2 text-sm text-[var(--color-charcoal)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-charcoal)] focus:outline-none";
+  "w-full rounded-lg border border-outline-variant bg-surface-container px-3.5 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none";
 
 export function Reviewers() {
   const { userId } = useAuth();
@@ -162,10 +162,10 @@ export function Reviewers() {
     <div className="mx-auto max-w-3xl">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-[var(--text-heading)] font-bold text-[var(--color-charcoal)]">
+          <h1 className="text-headline-xl font-bold text-on-surface">
             Reviewers
           </h1>
-          <p className="mt-0.5 text-sm text-[var(--color-muted)]">
+          <p className="mt-0.5 text-sm text-on-surface-variant">
             Manage who can approve and review documentation.
           </p>
         </div>
@@ -175,7 +175,7 @@ export function Reviewers() {
               setShowAdminForm(!showAdminForm);
               setShowSelfForm(false);
             }}
-            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-[var(--color-brand-hover)] hover:shadow-lg active:scale-95"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-on-primary-container shadow-md transition-all hover:opacity-90 hover:shadow-lg active:scale-95"
           >
             {showAdminForm ? "Cancel" : "+ Add Reviewer"}
           </button>
@@ -183,12 +183,12 @@ export function Reviewers() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="mb-4 rounded-xl border border-error/30 bg-error-container/20 px-4 py-3 text-sm text-error">
           {error}
           <button
             type="button"
             onClick={() => setError(null)}
-            className="ml-2 font-medium text-red-700 hover:text-red-900"
+            className="ml-2 font-medium text-error hover:underline"
           >
             Dismiss
           </button>
@@ -198,10 +198,10 @@ export function Reviewers() {
       {isReviewerRole && !isRegisteredAsReviewer && !showSelfForm && (
         <div className="glass-panel mb-6 flex items-center justify-between rounded-2xl p-5">
           <div>
-            <p className="font-semibold text-[var(--color-charcoal)]">
+            <p className="font-semibold text-on-surface">
               Register as a reviewer
             </p>
-            <p className="text-sm text-[var(--color-muted)]">
+            <p className="text-sm text-on-surface-variant">
               Add yourself as a reviewer for this organization.
             </p>
           </div>
@@ -210,7 +210,7 @@ export function Reviewers() {
               setShowSelfForm(true);
               setShowAdminForm(false);
             }}
-            className="rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-[var(--color-brand-hover)] active:scale-95"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-on-primary-container shadow-md transition-all hover:opacity-90 active:scale-95"
           >
             Register
           </button>
@@ -219,10 +219,10 @@ export function Reviewers() {
 
       {isReviewerRole && !isRegisteredAsReviewer && showSelfForm && (
         <div className="glass-panel mb-6 rounded-2xl p-6">
-          <h2 className="mb-3 text-lg font-bold text-[var(--color-charcoal)]">
+          <h2 className="mb-3 text-lg font-bold text-on-surface">
             Complete Your Registration
           </h2>
-          <p className="mb-4 text-sm text-[var(--color-muted)]">
+          <p className="mb-4 text-sm text-on-surface-variant">
             Set your notification preferences to finish registering.
           </p>
 
@@ -244,36 +244,36 @@ export function Reviewers() {
           </div>
 
           <div className="mt-3 flex gap-4">
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={selfForm.notify_slack ?? true}
                 onChange={(e) =>
                   updateSelfField("notify_slack", e.target.checked)
                 }
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Slack
             </label>
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={selfForm.notify_discord ?? false}
                 onChange={(e) =>
                   updateSelfField("notify_discord", e.target.checked)
                 }
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Discord
             </label>
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={selfForm.notify_email ?? false}
                 onChange={(e) =>
                   updateSelfField("notify_email", e.target.checked)
                 }
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Email
             </label>
@@ -282,14 +282,14 @@ export function Reviewers() {
           <div className="mt-4 flex justify-end gap-2">
             <button
               onClick={() => setShowSelfForm(false)}
-              className="rounded-full border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] hover:bg-gray-50"
+              className="rounded-full border border-outline-variant bg-surface-container-low px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container"
             >
               Cancel
             </button>
             <button
               onClick={handleSelfRegister}
               disabled={selfRegistering}
-              className="rounded-full bg-[var(--color-sage)] px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              className="rounded-full bg-secondary px-5 py-2 text-sm font-medium text-on-secondary-container hover:opacity-90 disabled:opacity-50"
             >
               {selfRegistering ? "Registering..." : "Complete Registration"}
             </button>
@@ -299,7 +299,7 @@ export function Reviewers() {
 
       {showAdminForm && isAdmin && (
         <div className="glass-panel mb-6 rounded-2xl p-6">
-          <h2 className="mb-3 text-lg font-bold text-[var(--color-charcoal)]">
+          <h2 className="mb-3 text-lg font-bold text-on-surface">
             New Reviewer
           </h2>
 
@@ -333,36 +333,36 @@ export function Reviewers() {
           </div>
 
           <div className="mt-3 flex gap-4">
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={adminForm.notify_slack ?? true}
                 onChange={(e) =>
                   updateAdminField("notify_slack", e.target.checked)
                 }
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Slack
             </label>
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={adminForm.notify_discord ?? false}
                 onChange={(e) =>
                   updateAdminField("notify_discord", e.target.checked)
                 }
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Discord
             </label>
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={adminForm.notify_email ?? false}
                 onChange={(e) =>
                   updateAdminField("notify_email", e.target.checked)
                 }
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Email
             </label>
@@ -372,7 +372,7 @@ export function Reviewers() {
             <button
               onClick={handleCreate}
               disabled={!adminForm.name.trim()}
-              className="rounded-full bg-[var(--color-sage)] px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              className="rounded-full bg-secondary px-5 py-2 text-sm font-medium text-on-secondary-container hover:opacity-90 disabled:opacity-50"
             >
               Create Reviewer
             </button>
@@ -382,7 +382,7 @@ export function Reviewers() {
 
       {editingId && (
         <div className="glass-panel mb-6 rounded-2xl p-6">
-          <h2 className="mb-3 text-lg font-bold text-[var(--color-charcoal)]">
+          <h2 className="mb-3 text-lg font-bold text-on-surface">
             Edit Reviewer
           </h2>
 
@@ -406,11 +406,11 @@ export function Reviewers() {
           {isReviewerRole && !isAdmin && (
             <div className="mb-3 grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                <label className="mb-1 block text-xs font-medium text-on-surface-variant">
                   Name
                 </label>
                 <input
-                  className={`${inputClass} bg-gray-100`}
+                  className={`${inputClass} bg-surface-variant/50`}
                   value={
                     reviewers.find((r) => r.id === editingId)?.name ?? ""
                   }
@@ -419,11 +419,11 @@ export function Reviewers() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                <label className="mb-1 block text-xs font-medium text-on-surface-variant">
                   Email
                 </label>
                 <input
-                  className={`${inputClass} bg-gray-100`}
+                  className={`${inputClass} bg-surface-variant/50`}
                   value={
                     reviewers.find((r) => r.id === editingId)?.email ?? ""
                   }
@@ -450,30 +450,30 @@ export function Reviewers() {
           </div>
 
           <div className="mt-3 flex gap-4">
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={editForm.notify_slack ?? true}
                 onChange={(e) => updateEditField("notify_slack", e.target.checked)}
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Slack
             </label>
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={editForm.notify_discord ?? false}
                 onChange={(e) => updateEditField("notify_discord", e.target.checked)}
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Discord
             </label>
-            <label className="flex items-center gap-2 text-sm text-[var(--color-charcoal)]">
+            <label className="flex items-center gap-2 text-sm text-on-surface">
               <input
                 type="checkbox"
                 checked={editForm.notify_email ?? false}
                 onChange={(e) => updateEditField("notify_email", e.target.checked)}
-                className="h-4 w-4 rounded border-[var(--color-border)]"
+                className="h-4 w-4 rounded border-outline-variant"
               />
               Notify via Email
             </label>
@@ -485,14 +485,14 @@ export function Reviewers() {
                 setEditingId(null);
                 setEditForm({});
               }}
-              className="rounded-full border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] hover:bg-gray-50"
+              className="rounded-full border border-outline-variant bg-surface-container-low px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container"
             >
               Cancel
             </button>
             <button
               onClick={handleUpdate}
               disabled={updating || (isAdmin && !editForm.name?.trim())}
-              className="rounded-full bg-[var(--color-sage)] px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              className="rounded-full bg-secondary px-5 py-2 text-sm font-medium text-on-secondary-container hover:opacity-90 disabled:opacity-50"
             >
               {updating ? "Saving..." : "Save Changes"}
             </button>
@@ -502,10 +502,10 @@ export function Reviewers() {
 
       {reviewers.length === 0 ? (
         <div className="glass-card rounded-2xl p-8 text-center">
-          <span className="material-symbols-outlined mb-3 text-4xl text-[var(--color-faint)]">
+          <span className="material-symbols-outlined mb-3 text-4xl text-on-surface-variant/40">
             rate_review
           </span>
-          <p className="text-sm text-[var(--color-muted)]">No reviewers yet.</p>
+          <p className="text-sm text-on-surface-variant">No reviewers yet.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -515,28 +515,28 @@ export function Reviewers() {
               className="glass-card flex items-center justify-between rounded-2xl p-5"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
-                  <span className="material-symbols-outlined text-lg text-[var(--color-muted)]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-low border border-outline-variant">
+                  <span className="material-symbols-outlined text-lg text-on-surface-variant">
                     person
                   </span>
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-[var(--color-charcoal)]">
+                    <span className="font-semibold text-on-surface">
                       {r.name}
                     </span>
                     {r.clerk_user_id === userId && (
-                      <span className="rounded-full bg-[var(--color-brand-light)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-brand)]">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                         You
                       </span>
                     )}
                   </div>
                   {r.email && (
-                    <p className="text-sm text-[var(--color-muted)]">
+                    <p className="text-sm text-on-surface-variant">
                       {r.email}
                     </p>
                   )}
-                  <div className="mt-1 flex gap-2 text-xs text-[var(--color-faint)]">
+                  <div className="mt-1 flex gap-2 text-xs text-on-surface-variant/40">
                     {r.slack_user_id && <span>Slack: {r.slack_user_id}</span>}
                     {r.discord_user_id && (
                       <span>Discord: {r.discord_user_id}</span>
@@ -546,17 +546,17 @@ export function Reviewers() {
               </div>
               <div className="flex items-center gap-2">
                 {r.notify_slack && (
-                  <span className="rounded-full bg-purple-50 px-2.5 py-0.5 text-[10px] font-medium text-purple-700">
+                  <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-medium text-primary">
                     Slack
                   </span>
                 )}
                 {r.notify_discord && (
-                  <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-medium text-indigo-700">
+                  <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-medium text-primary">
                     Discord
                   </span>
                 )}
                 {r.notify_email && (
-                  <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-[10px] font-medium text-green-700">
+                  <span className="rounded-full bg-secondary/15 px-2.5 py-0.5 text-[10px] font-medium text-secondary">
                     Email
                   </span>
                 )}
@@ -576,7 +576,7 @@ export function Reviewers() {
                         notify_email: r.notify_email,
                       });
                     }}
-                    className="text-sm font-medium text-[var(--color-brand)] hover:underline"
+                    className="text-sm font-medium text-primary hover:underline"
                   >
                     Edit
                   </button>
@@ -594,7 +594,7 @@ export function Reviewers() {
                         notify_email: r.notify_email,
                       });
                     }}
-                    className="text-sm font-medium text-[var(--color-brand)] hover:underline"
+                    className="text-sm font-medium text-primary hover:underline"
                   >
                     Edit Profile
                   </button>
@@ -602,7 +602,7 @@ export function Reviewers() {
                 {isAdmin && (
                   <button
                     onClick={() => handleDelete(r.id)}
-                    className="text-sm font-medium text-red-500 hover:underline"
+                    className="text-sm font-medium text-error hover:underline"
                   >
                     Delete
                   </button>

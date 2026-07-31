@@ -22,7 +22,26 @@ The LangGraph 8-node state machine drives the full documentation lifecycle from 
 | **Human-in-the-loop review** | `interrupt()` pauses execution, notifies reviewers via Slack/Discord/Email, resumes via `Command(resume=...)` | `src/agents/nodes/human.py` |
 | **Publish node** | Stores chunked embeddings, marks thread resolved, replies to originating platform (GitHub/Slack/Discord) | `src/agents/nodes/publish.py` |
 | **Rubric definitions** | 3 rubrics: DOCUMENTATION, RESEARCH, SYNTHESIS — each with grading criteria and confidence extraction | `src/agents/rubrics.py` |
-| **State definition** | `DocumentationState` TypedDict with 31 fields tracking full pipeline state | `src/agents/state.py` |
+| **State definition** | `DocumentationState` TypedDict with 33 fields tracking full pipeline state (added `_node_traces`, `_trace_collected`) | `src/agents/state.py` |
+
+---
+
+## Hill-Climbing Loop (✅ Implemented)
+
+Self-improving meta-loop that collects execution traces, analyzes them, generates improvement proposals, and applies them after human approval.
+
+| Feature | Description | Location |
+|---------|-------------|----------|
+| **Trace collection** | Node-level timing wrappers capture per-node duration + errors; `TraceCollector` buffers traces and flushes to DB on threshold | `src/analytics/traces.py`, `src/agents/graph.py` |
+| **Trace analysis** | LLM-based analysis of execution traces — identifies failure patterns, quality issues, performance bottlenecks | `src/analytics/analyzer.py` |
+| **Improvement generation** | LLM generates specific prompt rewrites, tool suggestions, and rubric adjustments from analysis | `src/analytics/improver.py` |
+| **Proposal management** | `ImprovementProposal` dataclass stored in `harness_improvements` table with pending/approved/rejected/applied status workflow | `src/analytics/improver.py` |
+| **Improvement application** | Applies approved proposals: deactivates old prompt/rubric version, inserts new version; upserts tool configs | `src/analytics/improver.py` |
+| **Hill-climbing orchestrator** | Interval-based counter triggers analysis cycle on flush: fetch traces → analyze → generate improvements → store proposals | `src/analytics/hill_climber.py` |
+| **Startup seeding** | Idempotent version 1 seeding of prompts (5 nodes) and rubrics (5 criteria) on first run | `src/analytics/seed.py` |
+| **Graph tracing wrappers** | `_wrap_node_with_tracing()` wraps all 8 pipeline nodes; `collect_trace_node()` is a terminal node reached from all end paths | `src/agents/graph.py` |
+| **Lifespan wiring** | FastAPI lifespan initializes `TraceCollector` + `HillClimber`, wires flush callback, flushes remaining traces on shutdown | `src/api/app.py` |
+| **Database schema** | 5 new tables: `agent_traces`, `harness_improvements`, `prompt_versions`, `rubric_versions`, `tool_configs` | `infrastructure/cockroachdb/migrations/013_loop_engineering.sql` |
 
 ---
 
@@ -106,6 +125,10 @@ Multi-layered memory architecture for organizational knowledge persistence.
 | `/api/slack` | POST interactivity | Slack Block Kit button handler | `src/api/routes/slack.py` |
 | `/api/discord` | POST interactions, GET invite-url, GET/POST guild-link, GET/POST trigger-channels | Discord interaction handler + settings | `src/api/routes/discord.py` |
 | `/api/clerk` | POST webhook | Clerk event handler | `src/api/routes/clerk.py` |
+| `/api/improvements` | GET pending, GET detail, POST approve, POST reject | Hill-climbing improvement proposal review | `src/api/routes/improvements.py` |
+| `/api/prompts` | GET active | Active prompt version listing | `src/api/routes/improvements.py` |
+| `/api/rubrics` | GET active | Active rubric version listing | `src/api/routes/improvements.py` |
+| `/api/tools` | GET config | Active tool configuration listing | `src/api/routes/improvements.py` |
 
 ---
 
@@ -235,6 +258,10 @@ React 19 + TypeScript + Vite 8 + TailwindCSS 4 SPA with Clerk auth.
 | `test_discord_interactions.py` | Discord interaction token mapping | `tests/integrations/` |
 | `test_discord_route.py` | Discord interaction handler + settings routes | `tests/api/` |
 | `test_discord_publish.py` | Discord publish node (multi-message chunking) | `tests/` |
+| `test_traces.py` | NodeTrace/AgentTrace dataclasses, TraceCollector buffer/flush | `tests/analytics/` |
+| `test_analyzer.py` | Trace analysis prompt, summarize, JSON parsing | `tests/analytics/` |
+| `test_improver.py` | Improvement proposal generation, storage, application | `tests/analytics/` |
+| `test_hill_climber.py` | HillClimber should_analyze counter, cycle orchestration | `tests/analytics/` |
 
 ---
 
@@ -244,6 +271,9 @@ React 19 + TypeScript + Vite 8 + TailwindCSS 4 SPA with Clerk auth.
 |---------|-------|--------|
 | **CockroachDB MCP server insights** | MCP server is configured as IDE tool only (`opencode.json`), not an application feature | ❌ Not Implemented |
 | **CI/CD production deployment** | CD pipeline exists but only staging is provisioned per PRD | ❌ Not Implemented |
+| **Loop 3: Cron/scheduled jobs** | Proactive documentation generation on schedule | ❌ Not Implemented |
+| **Loop 3: GitHub release/PR events** | Event handlers for additional GitHub event types | ❌ Not Implemented |
+| **Loop 3: Event prioritization** | Priority queue for event processing | ❌ Not Implemented |
 | **Real-time streaming documentation** | Listed as out of scope in PRD | ❌ Out of Scope |
 | **Multi-language support** | Planned for v2 per PRD | ❌ Out of Scope |
 | **Custom LLM training** | Out of scope per PRD | ❌ Out of Scope |

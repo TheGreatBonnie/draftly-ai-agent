@@ -17,35 +17,41 @@
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  LangGraph State Machine (8 nodes)              │
-│                                                                 │
-│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  │
-│  │ Ingest │─▶│Memory  │─▶│Research│─▶│Synthe- │─▶│Write   │  │
-│  │(hybrid)│  │Retrieve│  │(hybrid)│  │size    │  │Docs    │  │
-│  └────────┘  └────────┘  └────────┘  └────────┘  └───┬────┘  │
-│                                                       │        │
-│                          ┌─────── rubric grading ◀────┘        │
-│                          │                                      │
-│                          ▼                                      │
-│                   ┌────────────┐                                │
-│              ┌───▶│  AI Review │───┐                            │
-│              │    │  (rubric)  │   │                            │
-│              │    └────────────┘   │                            │
-│              │ needs_revision      │ satisfied                  │
-│              │                     ▼                            │
-│              │              ┌────────────┐                      │
-│              └──────────────│   Human    │                      │
-│                             │   Review   │                      │
-│                             │(interrupt) │                      │
-│                             └──┬───┬───┬─┘                      │
-│                           approve│   │revise   │END             │
-│                                ▼   │   ▼                        │
-│                         ┌────────┐ │ ┌────────┐                 │
-│                         │Publish │ │ │ Write  │──┐              │
-│                         └────────┘ │ │ Docs   │◀─┘              │
-│                                    │ └────────┘                  │
-└─────────────────────────────┬───────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                  LangGraph State Machine (9 nodes + tracing)             │
+│                                                                          │
+│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐            │
+│  │ Ingest │─▶│Memory  │─▶│Research│─▶│Synthe- │─▶│Write   │            │
+│  │(hybrid)│  │Retrieve│  │(hybrid)│  │size    │  │Docs    │            │
+│  └────────┘  └────────┘  └────────┘  └────────┘  └───┬────┘            │
+│                                                       │                 │
+│                          ┌─────── rubric grading ◀────┘                 │
+│                          │                                               │
+│                          ▼                                               │
+│                   ┌────────────┐                                         │
+│              ┌───▶│  AI Review │───┐                                     │
+│              │    │  (rubric)  │   │                                     │
+│              │    └────────────┘   │                                     │
+│              │ needs_revision      │ satisfied                           │
+│              │                     ▼                                     │
+│              │              ┌────────────┐                               │
+│              └──────────────│   Human    │                               │
+│                             │   Review   │                               │
+│                             │(interrupt) │                               │
+│                             └──┬───┬───┬─┘                               │
+│                     approve    │   │  revise    reject/END               │
+│                                ▼   │   ▼                                 │
+│                         ┌────────┐ │ ┌────────┐          ┌─────────────┐ │
+│                         │Publish │ │ │ Write  │──┐       │  Collect    │ │
+│                         └────┬───┘ │ │ Docs   │◀─┘       │   Trace     │ │
+│                              │     │ └────────┘           └──────┬──────┘ │
+│                              └─────┼─────────────────────────────┘        │
+│                                    └──── all terminal paths ──▶ collect──▶│
+│                                                                   trace   │
+│                                                                    │      │
+│                                                                    ▼      │
+│                                                                   END     │
+└──────────────────────────────────────────┬────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
@@ -109,6 +115,16 @@
 - Mark source thread as resolved
 - Reply to originating platform (GitHub issue comment, Slack thread, Discord thread)
 
+### 9. Collect Trace (Hill-Climbing)
+- Terminal node reached from all end paths (publish, rejected, completed)
+- Node-level timing data collected via `_wrap_node_with_tracing()` on all 8 pipeline nodes
+- Builds `AgentTrace` from state: node durations, errors, confidence, publish status
+- `TraceCollector.collect()` buffers trace in memory
+- When buffer reaches `trace_analysis_interval` threshold, flushes to `agent_traces` table
+- On flush, `HillClimber.should_analyze()` checks if analysis cycle is due
+- If yes, async task runs: fetch traces → LLM analysis → generate improvements → store proposals
+- Proposals reviewed via `/api/improvements/*` endpoints; approved proposals are applied to prompt/rubric/tool configs
+
 ## Design Patterns
 
 | Pattern | Usage |
@@ -119,12 +135,13 @@
 | Hybrid Deep-Agent | Question classification → skill selection → investigation planning |
 | Repository Pattern | Database abstraction (`src/database.py`) via asyncpg |
 | HMAC Tokens | Time-limited review tokens for Slack/email quick actions |
+| Hill-Climbing | Buffer-based trace collection → LLM analysis → improvement proposal generation → human approval → auto-apply |
 
 ## Component Architecture
 
 ### Agents (`src/agents/`)
-- `graph.py` — LangGraph state machine (`build_hybrid_graph()`, 8 nodes)
-- `state.py` — `DocumentationState(TypedDict)` with 31 fields
+- `graph.py` — LangGraph state machine (`build_hybrid_graph()`, 9 nodes + node tracing wrappers)
+- `state.py` — `DocumentationState(TypedDict)` with 33 fields
 - `rubrics.py` — 3 rubric definitions (DOCUMENTATION, RESEARCH, SYNTHESIS)
 - `nodes/` — Pipeline node implementations:
   - `ingest.py` — Thread creation, question classification, skill selection
@@ -181,8 +198,15 @@
 - `email.py` — SendGrid email with HTML templates (review notifications with action buttons)
 - `llm.py` — LLM abstraction layer (all calls routed through Requesty proxy)
 
+### Analytics (`src/analytics/`)
+- `traces.py` — `NodeTrace`/`AgentTrace` dataclasses, `TraceCollector` with buffer/flush/callback
+- `analyzer.py` — LLM-based trace analysis (`analyze_production_traces()`)
+- `improver.py` — `ImprovementProposal` dataclass, proposal generation, application logic, config loading
+- `hill_climber.py` — `HillClimber` orchestrator (interval-based analysis cycle)
+- `seed.py` — Startup seeding of version 1 prompt/rubric configs
+
 ### API (`src/api/`)
-- `app.py` — FastAPI application, DB pool lifecycle, SPA catch-all
+- `app.py` — FastAPI application, DB pool lifecycle, SPA catch-all; lifespan initializes `TraceCollector` + `HillClimber`
 - `auth.py` — Clerk JWT verification, role-based access (admin, reviewer)
 - `routes/` — API endpoints:
   - `reviews.py` — Auth'd review management (list pending, submit decision)
@@ -195,6 +219,7 @@
   - `memory.py` — Memory stats + semantic search
   - `docs.py` — Documentation listing and detail
   - `clerk.py` — Clerk webhook handler (user/org/membership events)
+  - `improvements.py` — 7 endpoints: list pending proposals, detail, approve, reject, active prompts, active rubrics, tool configs
 
 ### Frontend (`frontend/`)
 - **Stack**: React 19 + TypeScript + Vite 8 + TailwindCSS 4
@@ -228,9 +253,9 @@
 
 ### Database
 - **CockroachDB** with distributed vector index (C-SPANN)
-- 17 tables (see SCHEMA.md for full schema)
+- 22 tables (see SCHEMA.md for full schema)
 - Vector embeddings: 3072 dimensions via Requesty/OpenAI
-- 11 applied migrations (002–012)
+- 12 applied migrations (002–013)
 
 ### Deployment
 - **Docker**: Multi-stage build (Node frontend → Python runtime)
@@ -239,7 +264,7 @@
 - **Entry point**: `main.py` → uvicorn → `src.api.app:app`
 
 ### Configuration
-- `src/config.py` — Pydantic Settings: CockroachDB, Requesty, Slack, Discord, GitHub (PAT + App), Clerk, SendGrid, per-stage LLM models (research, review, rubric-grader)
+- `src/config.py` — Pydantic Settings: CockroachDB, Requesty, Slack, Discord, GitHub (PAT + App), Clerk, SendGrid, per-stage LLM models (research, review, rubric-grader), hill-climbing settings (analysis_model, trace_analysis_interval, auto_apply_improvements, trace_retention_days), verification settings (deterministic_verification_enabled, max_verification_issues_per_type). model_config includes `"extra": "ignore"` for env var overrides.
 
 ## Security Considerations
 

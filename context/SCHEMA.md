@@ -2,43 +2,50 @@
 
 ## Overview
 
-Draftly uses CockroachDB with distributed vector index for semantic search. The schema supports multi-tenant architecture with **17 tables** (15 base + 2 added via migrations). All foreign key references to the parent `organizations` table use the Clerk org ID (`clerk_org_id`) as the linkage column rather than the internal UUID primary key.
+Draftly uses CockroachDB with distributed vector index for semantic search. The schema supports multi-tenant architecture with **22 tables** (15 base + 7 added via migrations). All foreign key references to the parent `organizations` table use the Clerk org ID (`clerk_org_id`) as the linkage column rather than the internal UUID primary key.
 
 ## Entity Relationship Diagram
 
 ```
-                            ┌─────────────────┐
-                            │  clerk_users     │
-                            └────────┬────────┘
-                                     │
-                                     ▼
-┌─────────────────┐        ┌──────────────────┐
-│  organizations  │◀───────│user_organizations │
-│  (multi-tenant) │        └──────────────────┘
-└────────┬────────┘
-         │
-         ├──┬─────────────────┬─────────────────┬─────────────────┬─────────────────┬─────────────────┐
-         │  │                 │                 │                 │                 │                 │
-         ▼  ▼                 ▼                 ▼                 ▼                 ▼                 ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│   support    │  │ documentation│  │   reviewers  │  │github_       │  │ agent_memory │  │slack_        │
-│   _threads   │  │              │  │              │  │installations │  │              │  │installations │
-└──────┬───────┘  └──────┬───────┘  └──────────────┘  └──────┬───────┘  └──────────────┘  └──────┬───────┘
-       │                 │                                   │                                    │
-       │                 ▼                                   ▼                                    ▼
-       │         ┌──────────────┐                   ┌──────────────┐                     ┌──────────────┐
-       └────────▶│   review     │                   │github_       │                     │slack_        │
-                 │  _sessions   │                   │workflows     │                     │workflows     │
-                 └──────────────┘                   └──────────────┘                     └──────────────┘
+                             ┌─────────────────┐
+                             │  clerk_users     │
+                             └────────┬────────┘
+                                      │
+                                      ▼
+ ┌─────────────────┐        ┌──────────────────┐
+ │  organizations  │◀───────│user_organizations │
+ │  (multi-tenant) │        └──────────────────┘
+ └────────┬────────┘
+          │
+          ├──┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┐
+          │  │      │      │      │      │      │      │      │      │
+          ▼  ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼
+ ┌──────────┐ ┌──────┐ ┌────────┐ ┌──────┐ ┌────────┐ ┌──────┐ ┌────────┐ ┌────────┐ ┌────────┐
+ │  support │ │ docs │ │review- │ │github│ │ agent  │ │slack-│ │ agent  │ │harness │ │ tool   │
+ │  _threads│ │      │ │ers     │ │inst. │ │_memory │ │inst. │ │_traces │ │_improv.│ │configs │
+ └─────┬────┘ └──┬───┘ └────────┘ └──┬───┘ └────────┘ └──┬───┘ └────────┘ └────────┘ └────────┘
+       │         │                   │                    │          │            │
+       │         ▼                   ▼                    ▼          │            │
+       │  ┌──────────┐     ┌──────────────┐     ┌────────────┐      │            │
+       └─▶│  review  │     │github_       │     │slack_      │      │            │
+          │_sessions │     │workflows     │     │workflows   │      │            │
+          └──────────┘     └──────────────┘     └─────┬──────┘      │            │
+                                                      │             │            │
+                                                      ▼             ▼            ▼
+                                                ┌──────────┐ ┌──────────┐ ┌──────────┐
+                                                │  slack   │ │  prompt  │ │  rubric  │
+                                                │_conversat│ │_versions │ │_versions │
+                                                └──────────┘ └──────────┘ └──────────┘
 
-┌──────────────┐
-│  audit_logs  │
-└──────────────┘
+ ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+ │  audit_logs  │   │  embeddings  │   │agent_workflow│
+ │              │   │  (vectors)   │   │     s        │
+ └──────────────┘   └──────────────┘   └──────────────┘
 
-┌──────────────┐  ┌──────────────┐
-│  embeddings  │  │agent_workflow│
-│  (vectors)   │  │     s        │
-└──────────────┘  └──────────────┘
+ ┌──────────────┐
+ │discord_      │
+ │workflows     │
+ └──────────────┘
 ```
 
 ## Tables
@@ -367,6 +374,101 @@ Tracks LangGraph pipeline runs triggered by Discord @mention messages. Links to 
 - `idx_discord_workflows_status` ON (status)
 - `idx_discord_workflows_message` ON (discord_message_id)
 
+### 18. agent_traces (Hill-Climbing Execution Traces)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY DEFAULT gen_random_uuid() |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| workflow_id | STRING | NOT NULL |
+| trace_data | JSONB | NOT NULL |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+
+Stores serialized `AgentTrace` data (question, source, nodes_executed, durations, rubric results, verification results, confidence). Used by the hill-climbing analysis loop to identify improvement opportunities.
+
+**Indexes:**
+- `idx_agent_traces_org_created` ON (org_id, created_at)
+- `idx_agent_traces_workflow` ON (workflow_id)
+
+### 19. harness_improvements (Improvement Proposals)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY DEFAULT gen_random_uuid() |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| improvement_type | STRING | NOT NULL |
+| proposed_changes | JSONB | NOT NULL |
+| rationale | STRING | |
+| status | STRING | DEFAULT 'pending' |
+| reviewed_by | STRING | |
+| reviewed_at | TIMESTAMPTZ | |
+| review_reason | STRING | |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| updated_at | TIMESTAMPTZ | DEFAULT now() |
+
+Stores LLM-generated improvement proposals for prompts, rubrics, or tools. Status workflow: pending → approved/rejected → applied/failed.
+
+**Indexes:**
+- `idx_harness_improvements_org_status` ON (org_id, status)
+
+### 20. prompt_versions (Versioned Prompt Config)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY DEFAULT gen_random_uuid() |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| node_name | STRING | NOT NULL |
+| prompt_text | STRING | NOT NULL |
+| version | INT | NOT NULL |
+| is_active | BOOLEAN | DEFAULT false |
+| performance_score | FLOAT | |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| updated_at | TIMESTAMPTZ | DEFAULT now() |
+
+Stores versioned prompt configurations per graph node. Version 1 is seeded on startup via `seed.py`. Active flag tracks the current live prompt per node.
+
+**Indexes:**
+- `idx_prompt_versions_org_node` ON (org_id, node_name)
+
+### 21. rubric_versions (Versioned Rubric Config)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY DEFAULT gen_random_uuid() |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| criterion_name | STRING | NOT NULL |
+| criterion_text | STRING | NOT NULL |
+| version | INT | NOT NULL |
+| is_active | BOOLEAN | DEFAULT false |
+| performance_score | FLOAT | |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| updated_at | TIMESTAMPTZ | DEFAULT now() |
+
+Stores versioned rubric criterion texts. Version 1 is seeded on startup. Improvements create new versions; the active version is what the review node uses.
+
+**Indexes:**
+- `idx_rubric_versions_org_criterion` ON (org_id, criterion_name)
+
+### 22. tool_configs (Dynamic Tool Registry)
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY DEFAULT gen_random_uuid() |
+| org_id | STRING | NOT NULL FK → organizations(clerk_org_id), ON DELETE CASCADE |
+| name | STRING | NOT NULL |
+| description | STRING | NOT NULL |
+| implementation_type | STRING | NOT NULL |
+| config | JSONB | NOT NULL |
+| enabled | BOOLEAN | DEFAULT true |
+| version | INT | NOT NULL DEFAULT 1 |
+| created_at | TIMESTAMPTZ | DEFAULT now() |
+| updated_at | TIMESTAMPTZ | DEFAULT now() |
+
+Stores dynamic tool configurations for the research node. Allows registering new tools (HTTP GET, etc.) via improvement proposals.
+
+**Indexes:**
+- `idx_tool_configs_org_name` ON (org_id, name)
+
 ## Migrations
 
 Applied migrations in order:
@@ -384,3 +486,4 @@ Applied migrations in order:
 | 010_add_slack_conversations | Creates `slack_conversations` table for thread-aware bot conversation memory |
 | 011_add_discord_workflows | Creates `discord_workflows` table for Discord pipeline run tracking |
 | 012_add_discord_trigger_channels | Adds `discord_trigger_channels` JSONB column to `organizations` for configurable @mention channel gating |
+| 013_loop_engineering | Creates 5 hill-climbing tables: `agent_traces`, `harness_improvements`, `prompt_versions`, `rubric_versions`, `tool_configs` — all with FK references to `organizations(clerk_org_id)` and ON DELETE CASCADE |
