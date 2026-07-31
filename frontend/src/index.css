@@ -44,25 +44,6 @@
   --radius-card: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-
-  /* Typography scale */
-  --text-headline-xl: 40px;
-  --text-headline-xl--line-height: 48px;
-  --text-headline-xl--letter-spacing: -0.02em;
-  --text-headline-xl--font-weight: 700;
-  --text-headline-lg: 30px;
-  --text-headline-lg--line-height: 38px;
-  --text-headline-lg--letter-spacing: -0.01em;
-  --text-headline-lg--font-weight: 600;
-  --text-body-md: 16px;
-  --text-body-md--line-height: 24px;
-  --text-body-md--font-weight: 400;
-  --text-code-md: 14px;
-  --text-code-md--line-height: 20px;
-  --text-code-md--font-weight: 400;
-  --text-label-sm: 12px;
-  --text-label-sm--line-height: 16px;
-  --text-label-sm--font-weight: 500;
 }
 
 /* ── Background Grid ── */
