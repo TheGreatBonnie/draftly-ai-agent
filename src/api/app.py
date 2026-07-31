@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from src.analytics.events import configure_logging, start_flusher, stop_flusher
 from src.api.routes import (
     activity,
     clerk,
@@ -24,6 +25,8 @@ from src.api.routes import (
 )
 from src.database import close_pool, get_pool
 
+configure_logging()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -36,6 +39,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from src.integrations.discord_gateway import gateway
 
     await get_pool()
+    await start_flusher()
 
     # Initialize trace collection
     trace_collector = TraceCollector(
@@ -68,6 +72,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await gateway.stop()
     if discord_task:
         discord_task.cancel()
+
+    # Flush remaining events on shutdown
+    await stop_flusher()
 
     await close_pool()
 

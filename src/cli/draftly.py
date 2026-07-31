@@ -8,14 +8,18 @@ import structlog
 from langchain_cockroachdb import AsyncCockroachDBSaver
 
 from src.agents.graph import build_hybrid_graph
+from src.analytics.events import configure_logging, start_flusher, stop_flusher
 from src.config import settings
 from src.database import close_pool, get_pool
 
 logger = structlog.get_logger()
 
+configure_logging()
+
 
 async def run_workflow(question: str, source: str = "cli", org_id: str | None = None):
     await get_pool()
+    await start_flusher()
 
     if org_id is None:
         print("Error: --org-id is required. Create an org via Clerk first.")
@@ -73,6 +77,8 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         print(f"Human Decision: {result['human_decision']}")
 
     print(f"\n📄 Draft:\n{result.get('draft_content', 'N/A')[:500]}...")
+
+    await stop_flusher()
 
     await close_pool()
     return result
