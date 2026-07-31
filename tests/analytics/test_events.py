@@ -198,3 +198,24 @@ async def test_stop_flusher_flushes_pending():
         await events_module.stop_flusher()
 
     mock_store.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_start_flusher_restarts_after_task_completion():
+    import asyncio
+
+    from src.analytics import events as events_module
+
+    await events_module.stop_flusher()
+    await events_module.start_flusher()
+    first = events_module._flush_task
+    assert first is not None
+    first.cancel()
+    try:
+        await first
+    except asyncio.CancelledError:
+        pass
+    await events_module.start_flusher()
+    assert events_module._flush_task is not None
+    assert events_module._flush_task is not first
+    await events_module.stop_flusher()

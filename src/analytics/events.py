@@ -4,6 +4,9 @@ A structlog processor snapshots every structured log event into an
 in-memory buffer; a background asyncio task drains the buffer into the
 ``agent_events`` table in batches. The pipeline never blocks on or fails
 because of analytics — capture is best-effort, fire-and-forget telemetry.
+On shutdown, a flush already in flight when cancellation arrives may lose its
+drained batch (best-effort telemetry); buffered events are always flushed by
+``stop_flusher``.
 """
 from __future__ import annotations
 
@@ -168,13 +171,16 @@ def configure_logging() -> None:
 async def _flush_loop(interval_seconds: float) -> None:
     while True:
         await asyncio.sleep(interval_seconds)
-        await collector.flush()
+        try:
+            await collector.flush()
+        except Exception:
+            logger.error("event_flush_loop_failed")
 
 
 async def start_flusher() -> None:
     """Start the background drain task (idempotent)."""
     global _flush_task
-    if _flush_task is not None:
+    if _flush_task is not None and not _flush_task.done():
         return
     _flush_task = asyncio.create_task(_flush_loop(settings.event_flush_interval_seconds))
 
