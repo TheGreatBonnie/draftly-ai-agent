@@ -54,13 +54,13 @@ jobs:
         image: cockroachdb/cockroach:latest
         ports:
           - 26258:26258
+        env:
+          COCKROACH_ARGS: start-single-node --insecure --sql-addr=0.0.0.0:26258
         options: >-
-          --health-cmd "cockroach sql --insecure --host=localhost:26258 -e 'SELECT 1'"
+          --health-cmd "curl -f http://localhost:8080/health?ready=1"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
-        env:
-          COCKROACHDB_URL: postgresql://root@cockroachdb:26258/defaultdb?sslmode=disable
 
     env:
       COCKROACHDB_URL: postgresql://root@localhost:26258/defaultdb?sslmode=disable
