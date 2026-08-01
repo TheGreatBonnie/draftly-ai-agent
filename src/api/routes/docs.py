@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/")
-async def list_docs(token: dict = Depends(get_verified_token)) -> list:
+async def list_docs(token: dict = Depends(get_verified_token)) -> list[dict]:
     from src.database import fetch_all
 
     org_id = token.get("org_id")

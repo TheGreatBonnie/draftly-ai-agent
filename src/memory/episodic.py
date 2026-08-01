@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import cast
 
 import structlog
 
@@ -12,7 +12,7 @@ from src.database import execute, fetch_all, fetch_one
 logger = structlog.get_logger()
 
 
-def _serialize_row(row: Any) -> dict:
+def _serialize_row(row: dict) -> dict:
     return {
         k: str(v) if isinstance(v, uuid.UUID)
         else v.isoformat() if isinstance(v, datetime)
@@ -45,9 +45,10 @@ async def create_thread(
         question_summary,
         json.dumps(participants or []),
     )
-    assert row is not None
+    if row is None:
+        raise RuntimeError("thread row missing after insert")
     logger.info("thread_created", id=row["id"], source=source)
-    return str(row["id"])
+    return cast(str, row["id"])
 
 
 async def get_thread(thread_id: str) -> dict | None:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import structlog
 
 from src.agents.state import DocumentationState
@@ -275,7 +277,7 @@ async def publish_node(state: DocumentationState) -> dict:
     # 7. Reply to original source
     source = state.get("source", "cli")
     metadata = state.get("source_metadata", {})
-    published_urls = [{"platform": "draftly", "doc_id": doc_id}]
+    published_urls: list[dict[str, Any]] = [{"platform": "draftly", "doc_id": doc_id}]
     reply_errors = []
 
     try:

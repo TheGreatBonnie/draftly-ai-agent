@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import cast
 
 import structlog
 
@@ -12,7 +12,7 @@ from src.database import execute, fetch_all, fetch_one
 logger = structlog.get_logger()
 
 
-def _serialize_row(row: Any) -> dict:
+def _serialize_row(row: dict) -> dict:
     return {
         k: str(v) if isinstance(v, uuid.UUID) else v.isoformat() if isinstance(v, datetime) else v
         for k, v in dict(row).items()
@@ -36,9 +36,10 @@ async def create_review_session(
         confidence_before,
         graph_thread_id,
     )
-    assert row is not None
+    if row is None:
+        raise RuntimeError("review session row missing after insert")
     logger.info("review_created", id=row["id"], doc_id=doc_id)
-    return str(row["id"])
+    return cast(str, row["id"])
 
 
 async def complete_review(

@@ -68,7 +68,8 @@ async def list_org_members(token: dict = Depends(require_admin_role)) -> dict:
 
 @router.post("/assign-role")
 async def assign_role(
-    request: AssignRoleRequest, token: dict = Depends(require_admin_role)
+    request: AssignRoleRequest,
+    token: dict = Depends(require_admin_role),
 ) -> dict:
     """Assign a role to an org member via Clerk (admin only)."""
     org_id = token.get("org_id")

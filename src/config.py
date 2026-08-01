@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     cockroachdb_url: str
 
     # Requesty (OpenAI-compatible API)
-    requesty_api_key: str
+    requesty_api_key: str = ""
     requesty_base_url: str = "https://api.requesty.ai/v1"
     llm_model: str = "tensorx/deepseek-v4-flash"
     embedding_model: str = "azure/openai/text-embedding-3-large@francecentral"
@@ -83,5 +83,5 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
-settings = Settings()  # type: ignore[call-arg]
+settings = Settings()  # type: ignore[call-arg]  # required fields come from .env
 

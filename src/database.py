@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
-import asyncpg
+import asyncpg  # type: ignore[import-untyped]
 import structlog
 
 from src.config import settings
@@ -33,19 +33,22 @@ async def close_pool() -> None:
         logger.info("cockroachdb_pool_closed")
 
 
-async def fetch_one(query: str, *args: Any) -> asyncpg.Record | None:
+async def fetch_one(query: str, *args: Any) -> dict[str, Any] | None:
     pool = await get_pool()
-    return await pool.fetchrow(query, *args)
+    row = await pool.fetchrow(query, *args)
+    return cast(dict[str, Any] | None, row)
 
 
-async def fetch_all(query: str, *args: Any) -> list[asyncpg.Record]:
+async def fetch_all(query: str, *args: Any) -> list[dict[str, Any]]:
     pool = await get_pool()
-    return await pool.fetch(query, *args)  # type: ignore[no-any-return]
+    rows = await pool.fetch(query, *args)
+    return cast(list[dict[str, Any]], rows)
 
 
 async def execute(query: str, *args: Any) -> str:
     pool = await get_pool()
-    return await pool.execute(query, *args)  # type: ignore[no-any-return]
+    result = await pool.execute(query, *args)
+    return cast(str, result)
 
 
 async def fetch_val(query: str, *args: Any) -> Any | None:

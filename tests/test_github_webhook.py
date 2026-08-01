@@ -141,18 +141,18 @@ class TestGithubWebhook:
         assert response.status_code == 400
 
     @patch("src.memory.organizations.store_github_installation", new_callable=AsyncMock)
-    @patch("src.memory.organizations.get_or_create_org", new_callable=AsyncMock)
+    @patch("src.memory.organizations.get_org_by_github", new_callable=AsyncMock)
     @patch("src.api.routes.github.verify_webhook_signature")
     def test_webhook_installation_created(
         self,
         mock_verify,
-        mock_get_or_create_org,
+        mock_get_org,
         mock_store_installation,
         client,
     ):
         """Test webhook handles installation created event."""
         mock_verify.return_value = True
-        mock_get_or_create_org.return_value = "org-123"
+        mock_get_org.return_value = {"id": "org-123"}
 
         payload = {
             "action": "created",

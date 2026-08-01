@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal
 
@@ -21,11 +22,18 @@ class VerificationIssue:
     details: dict | None = None
 
 
+def _source_url(source: dict | str) -> str:
+    """Extract a URL from a source that may be a dict or a bare string."""
+    if isinstance(source, dict):
+        return str(source.get("url", "")).strip()
+    return source.strip()
+
+
 class DeterministicVerifier:
     """Runs deterministic checks on documentation content."""
 
     async def verify_all(
-        self, content: str, sources: list[dict] | None = None
+        self, content: str, sources: Sequence[dict | str] | None = None
     ) -> list[VerificationIssue]:
         """Run all deterministic verification checks."""
         issues: list[VerificationIssue] = []
@@ -130,7 +138,9 @@ class DeterministicVerifier:
 
         return issues
 
-    def verify_citations(self, content: str, sources: list[dict]) -> list[VerificationIssue]:
+    def verify_citations(
+        self, content: str, sources: Sequence[dict | str]
+    ) -> list[VerificationIssue]:
         """Check that claims have supporting sources when required."""
         issues: list[VerificationIssue] = []
 
@@ -162,7 +172,7 @@ class DeterministicVerifier:
                         )
 
         if sources:
-            source_urls = {s.get("url", "") for s in sources if s.get("url")}
+            source_urls = {url for s in sources if (url := _source_url(s))}
             unreferenced = source_urls - citation_urls
             if unreferenced:
                 issues.append(

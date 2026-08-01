@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import uuid
+from typing import cast
 
 import structlog
-from langchain_cockroachdb import (
+from langchain_cockroachdb import (  # type: ignore[import-untyped]
     AsyncCockroachDBVectorStore,
     CockroachDBEngine,
     CSPANNIndex,
@@ -44,9 +45,9 @@ async def get_vector_store() -> AsyncCockroachDBVectorStore:
         vector_dimension=3072,
     )
 
-    embeddings = OpenAIEmbeddings(
-        openai_api_key=settings.requesty_api_key,  # type: ignore[call-arg]
-        openai_api_base=settings.requesty_base_url,  # type: ignore[call-arg]
+    embeddings = OpenAIEmbeddings(  # type: ignore[call-arg]
+        openai_api_key=settings.requesty_api_key,
+        openai_api_base=settings.requesty_base_url,
         model=settings.embedding_model,
     )
 
@@ -71,7 +72,7 @@ async def get_vector_store() -> AsyncCockroachDBVectorStore:
 
 async def embed_text(text: str) -> list[float]:
     store = await get_vector_store()
-    return await store.embeddings.aembed_query(text)  # type: ignore[no-any-return]
+    return cast(list[float], await store.embeddings.aembed_query(text))
 
 
 async def store_embedding(
@@ -96,7 +97,8 @@ async def store_embedding(
     # Use parameterized INSERT via engine directly — the library's
     # _insert_batch uses text() with string interpolation which breaks
     # when content contains %(name)s patterns (SQLAlchemy bind params).
-    assert _engine is not None
+    if _engine is None:
+        raise RuntimeError("vector store engine not initialized")
     async with _engine.engine.begin() as conn:
         await conn.execute(
             text(

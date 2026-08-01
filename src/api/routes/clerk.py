@@ -32,7 +32,7 @@ def verify_svix_signature(payload: bytes, headers: dict[str, str]) -> bool:
     svix_timestamp = headers.get("svix-timestamp")
     svix_signature = headers.get("svix-signature")
 
-    if not all([svix_id, svix_timestamp, svix_signature]):
+    if not svix_id or not svix_timestamp or not svix_signature:
         return False
 
     raw_secret = settings.clerk_signing_secret.get_secret_value()

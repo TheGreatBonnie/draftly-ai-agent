@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import cast
 
 import httpx
 import structlog
@@ -33,10 +33,10 @@ async def send_slack_message(
             json=payload,
             timeout=10,
         )
-        result: dict[str, Any] = resp.json()
+        result = resp.json()
         if not result.get("ok"):
             logger.error("slack_send_failed", error=result.get("error"))
-        return result
+        return cast(dict, result)
 
 
 async def send_dm(user_id: str, text: str) -> dict:
@@ -51,7 +51,7 @@ async def send_dm(user_id: str, text: str) -> dict:
             json=payload,
             timeout=10,
         )
-        return dict(resp.json())
+        return cast(dict, resp.json())
 
 
 async def add_reaction(channel: str, timestamp: str, emoji: str) -> dict:
@@ -69,7 +69,7 @@ async def add_reaction(channel: str, timestamp: str, emoji: str) -> dict:
             json=payload,
             timeout=10,
         )
-        result: dict[str, Any] = resp.json()
+        result = resp.json()
         if not result.get("ok"):
             logger.warning("slack_reaction_failed", error=result.get("error"), channel=channel)
-        return result
+        return cast(dict, result)

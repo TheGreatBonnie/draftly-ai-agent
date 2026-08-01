@@ -24,7 +24,7 @@ DECISION_TO_STATUS = {
 
 
 @router.get("")
-async def get_all(token: dict = Depends(get_verified_token)):
+async def get_all(token: dict = Depends(get_verified_token)) -> list[dict]:
     from src.memory.reviewer import get_all_reviews
 
     org_id = token.get("org_id")
@@ -34,7 +34,7 @@ async def get_all(token: dict = Depends(get_verified_token)):
 
 
 @router.get("/pending")
-async def get_pending(token: dict = Depends(get_verified_token)) -> list:
+async def get_pending(token: dict = Depends(get_verified_token)) -> list[dict]:
     from src.memory.reviewer import get_pending_reviews
 
     org_id = token.get("org_id")

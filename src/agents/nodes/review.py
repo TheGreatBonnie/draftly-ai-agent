@@ -106,7 +106,13 @@ async def ai_review_node_hybrid(state: DocumentationState) -> dict:
     rubric_evaluations = rubric_result["evaluations"]
 
     # Run deterministic verification (Loop 2: deterministic checks)
-    sources = state.get("knowledge_package", {}).get("sources", [])
+    knowledge_package = state.get("knowledge_package", {})
+    raw_sources = (
+        knowledge_package.get("sources", []) if isinstance(knowledge_package, dict) else []
+    )
+    sources = [
+        {"url": s} if isinstance(s, str) else s for s in raw_sources if isinstance(s, (dict, str))
+    ]
     verification_result = await run_verification_pipeline(
         content=draft_content,
         rubric_result=rubric_result,

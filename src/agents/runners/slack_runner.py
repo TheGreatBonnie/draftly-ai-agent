@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import structlog
-from langchain_cockroachdb import AsyncCockroachDBSaver
+from langchain_cockroachdb import AsyncCockroachDBSaver  # type: ignore[import-untyped]
+from langchain_core.runnables import RunnableConfig
 
 from src.agents.graph import build_hybrid_graph
 from src.agents.state import DocumentationState
@@ -47,6 +48,7 @@ def build_slack_state(
         "human_decision": "",
         "human_feedback": "",
         "published_urls": [],
+        "reply_errors": [],
         "support_thread_id": "",
         "workflow_id": "",
         "doc_id": "",
@@ -59,8 +61,7 @@ def build_slack_state(
             "user_id": user,
         },
         "message_history": message_history or [],
-        "reply_errors": [],
-        "question_type": "simple",
+        "question_type": "unknown",
         "research_skill": {},
         "investigation_plan": [],
         "rubric_status": {},
@@ -133,7 +134,9 @@ async def run_slack_pipeline(
         )
         # MCP client is cached in slack_mcp module, not stored in state
         # (not msgpack-serializable for the LangGraph checkpointer)
-        config = {"configurable": {"thread_id": state["graph_thread_id"]}}
+        config: RunnableConfig = {
+            "configurable": {"thread_id": state["graph_thread_id"]}
+        }
 
         from uuid import uuid4
 
@@ -161,7 +164,7 @@ async def run_slack_pipeline(
             graph = build_hybrid_graph().compile(checkpointer=checkpointer)
             structlog.contextvars.bind_contextvars(workflow_id=workflow_id, org_id=org_id)
             try:
-                result = await graph.ainvoke(state, config)  # type: ignore[call-overload]
+                result = await graph.ainvoke(state, config)
 
                 if result.get("draft_content"):
                     await conversation_store.add_message(
@@ -192,7 +195,7 @@ async def run_slack_pipeline(
                 structlog.contextvars.clear_contextvars()
 
     except Exception as e:
-        logger.error("slack_pipeline_failed", error=str(e))
+        logger.error("slack_pipeline_failed", error=str(e), exc_info=True)
         try:
             from src.integrations.slack import send_slack_message
 

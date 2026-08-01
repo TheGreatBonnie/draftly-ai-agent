@@ -59,7 +59,7 @@ async def search_memory(
     q: str = "",
     type: str = "all",
     token: dict = Depends(get_verified_token),
-) -> list:
+) -> list[dict]:
     if not q:
         return []
     from src.memory.vector_store import search_similar

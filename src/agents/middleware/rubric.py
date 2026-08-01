@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 
 import structlog
 
@@ -82,7 +83,7 @@ async def grade_with_rubric(
 def _parse_grading_response(response: str, iteration: int) -> dict:
     """Parse the grader LLM response into a structured evaluation."""
     try:
-        evaluation = json.loads(response)
+        evaluation: dict[str, Any] = json.loads(response)
     except json.JSONDecodeError:
         json_match = re.search(r"\{[\s\S]*\}", response)
         if json_match:

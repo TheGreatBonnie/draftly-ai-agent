@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import structlog
-from langchain_cockroachdb import AsyncCockroachDBSaver
+from langchain_cockroachdb import AsyncCockroachDBSaver  # type: ignore[import-untyped]
+from langchain_core.runnables import RunnableConfig
 
 from src.agents.graph import build_hybrid_graph
 from src.agents.state import DocumentationState
@@ -46,6 +47,7 @@ def build_discord_state(
         "human_decision": "",
         "human_feedback": "",
         "published_urls": [],
+        "reply_errors": [],
         "support_thread_id": "",
         "workflow_id": "",
         "doc_id": "",
@@ -58,8 +60,7 @@ def build_discord_state(
             "user_id": user_id,
         },
         "message_history": [],
-        "reply_errors": [],
-        "question_type": "simple",
+        "question_type": "unknown",
         "research_skill": {},
         "investigation_plan": [],
         "rubric_status": {},
@@ -116,7 +117,7 @@ async def run_discord_pipeline(
         state = build_discord_state(
             guild_id, channel_id, message_id, thread_id, text, user_id, org_id
         )
-        config = {"configurable": {"thread_id": state["graph_thread_id"]}}
+        config: RunnableConfig = {"configurable": {"thread_id": state["graph_thread_id"]}}
 
         from uuid import uuid4
 
@@ -146,7 +147,7 @@ async def run_discord_pipeline(
             graph = build_hybrid_graph().compile(checkpointer=checkpointer)
             structlog.contextvars.bind_contextvars(workflow_id=workflow_id, org_id=org_id)
             try:
-                result = await graph.ainvoke(state, config)  # type: ignore[call-overload]
+                result = await graph.ainvoke(state, config)
 
                 if result.get("human_decision") == "":
                     await update_discord_workflow_status(workflow_id, "pending")
@@ -172,7 +173,7 @@ async def run_discord_pipeline(
                 structlog.contextvars.clear_contextvars()
 
     except Exception as e:
-        logger.error("discord_pipeline_failed", error=str(e))
+        logger.error("discord_pipeline_failed", error=str(e), exc_info=True)
         try:
             from src.integrations.discord import send_discord_message
 
