@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from string import Template
+from typing import Any
 
 import structlog
 
@@ -107,7 +109,7 @@ async def send_email(to: str, subject: str, html_content: str) -> dict:
 async def send_review_notification(
     to: str,
     reviewer_name: str,
-    state: dict,
+    state: Mapping[str, Any],
     review_id: str,
     token: str,
 ) -> dict:

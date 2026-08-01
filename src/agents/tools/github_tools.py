@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import httpx
 from langchain_core.tools import tool
 
@@ -12,7 +14,7 @@ async def search_github_issues(query: str, org: str = "", limit: int = 5) -> str
     token = settings.github_token.get_secret_value() if settings.github_token else None
     headers = {"Authorization": f"token {token}"} if token else {}
     search_url = "https://api.github.com/search/issues"
-    params = {"q": f"{query} is:issue", "per_page": limit}
+    params: dict[str, Any] = {"q": f"{query} is:issue", "per_page": limit}
     if org:
         params["q"] += f" org:{org}"
 

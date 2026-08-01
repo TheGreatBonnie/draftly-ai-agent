@@ -243,7 +243,7 @@ class TriggerChannelsRequest(BaseModel):
 
 
 @router.get("/invite-url")
-async def discord_invite_url():
+async def discord_invite_url() -> dict:
     """Return the Discord bot invite URL with required permissions."""
     app_id = settings.discord_app_id
     if not app_id:
@@ -263,7 +263,7 @@ async def discord_invite_url():
 async def link_discord(
     request: LinkDiscordRequest,
     token: dict = Depends(get_verified_token),
-):
+) -> dict:
     """Link a Discord guild to the current Clerk organization."""
     org_id = token.get("org_id")
     if not org_id:
@@ -279,7 +279,7 @@ async def link_discord(
 
 
 @router.get("/status")
-async def discord_status(token: dict = Depends(get_verified_token)):
+async def discord_status(token: dict = Depends(get_verified_token)) -> dict:
     """Return the Discord connection status for the current org."""
     org_id = token.get("org_id")
     if not org_id:
@@ -327,11 +327,11 @@ async def discord_channels(token: dict = Depends(get_verified_token)) -> dict:
         channels = resp.json()
 
     # Filter to text channels only (type 0 = text, type 5 = announcement, type 15 = forum)
-    TEXT_CHANNEL_TYPES = {0, 5, 15}
+    text_channel_types = {0, 5, 15}
     result = [
         {"id": ch["id"], "name": ch["name"], "type": ch["type"]}
         for ch in channels
-        if ch.get("type") in TEXT_CHANNEL_TYPES
+        if ch.get("type") in text_channel_types
     ]
     return {"channels": result}
 

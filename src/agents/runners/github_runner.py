@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import structlog
-from langchain_cockroachdb import AsyncCockroachDBSaver
+from langchain_cockroachdb import AsyncCockroachDBSaver  # type: ignore[import-untyped]
+from langchain_core.runnables import RunnableConfig
 
 from src.agents.graph import build_hybrid_graph
 from src.agents.state import DocumentationState
@@ -50,6 +51,7 @@ def build_github_state(payload: dict, org_id: str) -> DocumentationState:
         "human_decision": "",
         "human_feedback": "",
         "published_urls": [],
+        "reply_errors": [],
         "support_thread_id": "",
         "workflow_id": "",
         "doc_id": "",
@@ -60,6 +62,12 @@ def build_github_state(payload: dict, org_id: str) -> DocumentationState:
             "repo": repo["name"],
             "issue_number": issue["number"],
         },
+        "message_history": [],
+        "question_type": "unknown",
+        "research_skill": {},
+        "investigation_plan": [],
+        "rubric_status": {},
+        "subagent_results": {},
         "_node_traces": [],
         "_trace_collected": False,
     }
@@ -120,7 +128,9 @@ async def run_github_pipeline(payload: dict, installation_token: str) -> None:
 
         state = build_github_state(payload=payload, org_id=org_id)
 
-        config = {"configurable": {"thread_id": f"github-{repo['id']}-{issue['number']}"}}
+        config: RunnableConfig = {
+            "configurable": {"thread_id": f"github-{repo['id']}-{issue['number']}"}
+        }
 
         async with AsyncCockroachDBSaver.from_conn_string(settings.cockroachdb_url) as checkpointer:
             await checkpointer.setup()

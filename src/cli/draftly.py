@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from typing import Literal
 from uuid import uuid4
 
 import structlog
-from langchain_cockroachdb import AsyncCockroachDBSaver
+from langchain_cockroachdb import AsyncCockroachDBSaver  # type: ignore[import-untyped]
+from langchain_core.runnables import RunnableConfig
 
 from src.agents.graph import build_hybrid_graph
+from src.agents.state import DocumentationState
 from src.analytics.events import (
     configure_logging,
     start_flusher,
@@ -23,7 +26,11 @@ logger = structlog.get_logger()
 configure_logging()
 
 
-async def run_workflow(question: str, source: str = "cli", org_id: str | None = None):
+async def run_workflow(
+    question: str,
+    source: Literal["slack", "discord", "github", "cli"] = "cli",
+    org_id: str | None = None,
+) -> dict:
     if org_id is None:
         print("Error: --org-id is required. Create an org via Clerk first.")
         sys.exit(1)
@@ -35,7 +42,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
     graph_thread_id = f"cli-{hash(question)}"
     workflow_id = str(uuid4())
 
-    initial_state = {
+    initial_state: DocumentationState = {
         "org_id": org_id,
         "source": source,
         "channel_id": "cli",
@@ -59,13 +66,22 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         "human_decision": "",
         "human_feedback": "",
         "published_urls": [],
+        "reply_errors": [],
         "workflow_id": workflow_id,
         "doc_id": "",
         "messages": [],
         "source_metadata": {},
+        "question_type": "unknown",
+        "research_skill": {},
+        "investigation_plan": [],
+        "rubric_status": {},
+        "subagent_results": {},
+        "message_history": [],
+        "_node_traces": [],
+        "_trace_collected": False,
     }
 
-    config = {"configurable": {"thread_id": graph_thread_id}}
+    config: RunnableConfig = {"configurable": {"thread_id": graph_thread_id}}
 
     async with AsyncCockroachDBSaver.from_conn_string(settings.cockroachdb_url) as checkpointer:
         await checkpointer.setup()
@@ -101,7 +117,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
     return result
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         print("Usage: python -m src.cli.draftly 'your question here' --org-id <clerk_org_id>")
         sys.exit(1)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import secrets
+from typing import Any
 
 from src.integrations.discord_interactions import store_interaction_token
 
@@ -27,7 +28,7 @@ def build_discord_review_card(
     """Build a Discord embed payload with interactive action components."""
     truncated_draft = _truncate_draft(draft_content)
 
-    embed = {
+    embed: dict[str, Any] = {
         "title": "Documentation Review Required",
         "description": (
             f"**Title:** {title}\n"

@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import structlog
-from langchain_cockroachdb import AsyncCockroachDBSaver
+from langchain_cockroachdb import AsyncCockroachDBSaver  # type: ignore[import-untyped]
+from langchain_core.runnables import RunnableConfig
 
 from src.agents.graph import build_hybrid_graph
 from src.agents.state import DocumentationState
@@ -46,6 +47,7 @@ def build_discord_state(
         "human_decision": "",
         "human_feedback": "",
         "published_urls": [],
+        "reply_errors": [],
         "support_thread_id": "",
         "workflow_id": "",
         "doc_id": "",
@@ -58,6 +60,11 @@ def build_discord_state(
             "user_id": user_id,
         },
         "message_history": [],
+        "question_type": "unknown",
+        "research_skill": {},
+        "investigation_plan": [],
+        "rubric_status": {},
+        "subagent_results": {},
         "_node_traces": [],
         "_trace_collected": False,
     }
@@ -110,7 +117,7 @@ async def run_discord_pipeline(
         state = build_discord_state(
             guild_id, channel_id, message_id, thread_id, text, user_id, org_id
         )
-        config = {"configurable": {"thread_id": state["graph_thread_id"]}}
+        config: RunnableConfig = {"configurable": {"thread_id": state["graph_thread_id"]}}
 
         from uuid import uuid4
 

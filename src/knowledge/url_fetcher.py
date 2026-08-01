@@ -94,7 +94,7 @@ def _title_from_markdown(text: str) -> str:
 
 
 def _extract_pdf(pdf_bytes: bytes) -> tuple[str, str]:
-    import fitz
+    import fitz  # type: ignore[import-untyped]
 
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     title = doc.metadata.get("title", "") if doc.metadata else ""

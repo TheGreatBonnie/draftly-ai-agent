@@ -15,7 +15,7 @@ router = APIRouter()
 async def get_activity(
     limit: int = Query(10, ge=1, le=50),
     token: dict = Depends(get_verified_token),
-):
+) -> list[dict]:
     org_id = token.get("org_id")
     if not org_id:
         return []
@@ -40,7 +40,7 @@ async def get_activity(
 async def get_latest_activity(
     after: str = Query("", description="ISO timestamp — return events after this time"),
     token: dict = Depends(get_verified_token),
-):
+) -> list[dict]:
     org_id = token.get("org_id")
     if not org_id or not after:
         return []

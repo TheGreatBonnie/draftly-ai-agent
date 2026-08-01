@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import structlog
-from langchain_cockroachdb import AsyncCockroachDBSaver
+from langchain_cockroachdb import AsyncCockroachDBSaver  # type: ignore[import-untyped]
+from langchain_core.runnables import RunnableConfig
 
 from src.agents.graph import build_hybrid_graph
 from src.agents.state import DocumentationState
@@ -47,6 +48,7 @@ def build_slack_state(
         "human_decision": "",
         "human_feedback": "",
         "published_urls": [],
+        "reply_errors": [],
         "support_thread_id": "",
         "workflow_id": "",
         "doc_id": "",
@@ -59,6 +61,11 @@ def build_slack_state(
             "user_id": user,
         },
         "message_history": message_history or [],
+        "question_type": "unknown",
+        "research_skill": {},
+        "investigation_plan": [],
+        "rubric_status": {},
+        "subagent_results": {},
         "_node_traces": [],
         "_trace_collected": False,
     }
@@ -127,7 +134,9 @@ async def run_slack_pipeline(
         )
         # MCP client is cached in slack_mcp module, not stored in state
         # (not msgpack-serializable for the LangGraph checkpointer)
-        config = {"configurable": {"thread_id": state["graph_thread_id"]}}
+        config: RunnableConfig = {
+            "configurable": {"thread_id": state["graph_thread_id"]}
+        }
 
         from uuid import uuid4
 

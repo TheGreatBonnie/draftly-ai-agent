@@ -66,6 +66,8 @@ async def write_docs_node(state: DocumentationState) -> dict:
         state.get("doc_type", "howto"),
         state.get("support_thread_id"),
     )
+    if row is None:
+        raise RuntimeError("Failed to persist documentation draft")
     doc_id = row["id"]
 
     logger.info("write_docs_completed", doc_id=doc_id, title=title, content_length=len(content))

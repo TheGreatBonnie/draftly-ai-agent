@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-import asyncpg
+from typing import cast
+
+import asyncpg  # type: ignore[import-untyped]
 import structlog
 
 from src.database import execute, fetch_all, fetch_one
@@ -49,7 +51,7 @@ async def store_github_installation(
             json.dumps(repositories or []),
             installation_id,
         )
-        return existing["id"]
+        return cast(str, existing["id"])
 
     row = await fetch_one(
         """INSERT INTO github_installations (org_id, installation_id, github_org, repositories)
@@ -65,7 +67,9 @@ async def store_github_installation(
         installation_id=installation_id,
         github_org=github_org,
     )
-    return row["id"]
+    if row is None:
+        raise RuntimeError("github installation row missing after insert")
+    return cast(str, row["id"])
 
 
 async def remove_github_installation(installation_id: int) -> None:
@@ -86,7 +90,7 @@ async def get_or_create_org_by_clerk(clerk_org_id: str, name: str) -> str:
         clerk_org_id,
     )
     if existing:
-        return existing["clerk_org_id"]
+        return cast(str, existing["clerk_org_id"])
 
     existing = await fetch_one(
         "SELECT clerk_org_id FROM organizations WHERE clerk_org_name = $1",
@@ -112,10 +116,14 @@ async def get_or_create_org_by_clerk(clerk_org_id: str, name: str) -> str:
             "SELECT clerk_org_id FROM organizations WHERE clerk_org_id = $1",
             clerk_org_id,
         )
-        return existing["clerk_org_id"]
+        if existing is None:
+            raise RuntimeError("organization missing after unique violation")
+        return cast(str, existing["clerk_org_id"])
 
     logger.info("org_created_from_clerk", name=name, clerk_org_id=clerk_org_id)
-    return row["clerk_org_id"]
+    if row is None:
+        raise RuntimeError("organization row missing after insert")
+    return cast(str, row["clerk_org_id"])
 
 
 async def list_github_installations() -> list[dict]:
@@ -166,7 +174,9 @@ async def store_github_workflow(
         repo=repo,
         issue=issue_number,
     )
-    return row["id"]
+    if row is None:
+        raise RuntimeError("github workflow row missing after insert")
+    return cast(str, row["id"])
 
 
 async def get_github_workflow_by_issue(owner: str, repo: str, issue_number: int) -> dict | None:
@@ -233,7 +243,9 @@ async def store_slack_workflow(
         thread_ts,
     )
     logger.info("slack_workflow_stored", org_id=org_id, workflow_id=workflow_id)
-    return row["id"]
+    if row is None:
+        raise RuntimeError("slack workflow row missing after insert")
+    return cast(str, row["id"])
 
 
 async def update_slack_workflow_status(workflow_id: str, status: str) -> None:
@@ -313,7 +325,9 @@ async def store_discord_workflow(
         source_message,
     )
     logger.info("discord_workflow_stored", org_id=org_id, workflow_id=workflow_id)
-    return row["id"]
+    if row is None:
+        raise RuntimeError("discord workflow row missing after insert")
+    return cast(str, row["id"])
 
 
 async def update_discord_workflow_status(workflow_id: str, status: str) -> None:

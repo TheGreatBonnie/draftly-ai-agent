@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import structlog
-from langchain_cockroachdb import AsyncCockroachDBSaver
+from langchain_cockroachdb import AsyncCockroachDBSaver  # type: ignore[import-untyped]
+from langchain_core.runnables import RunnableConfig
 from langgraph.types import Command
 
 from src.agents.graph import build_hybrid_graph
@@ -22,7 +25,7 @@ async def resume_review(review_id: str, decision: str, feedback: str = "") -> di
     if not thread_id:
         raise ValueError(f"No thread_id found for review {review_id}")
 
-    config = {"configurable": {"thread_id": thread_id}}
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
 
     async with AsyncCockroachDBSaver.from_conn_string(settings.cockroachdb_url) as checkpointer:
         await checkpointer.setup()
@@ -47,4 +50,4 @@ async def resume_review(review_id: str, decision: str, feedback: str = "") -> di
         final_node="publish" if result.get("published_urls") else "end",
     )
 
-    return result
+    return cast(dict[str, Any], result)

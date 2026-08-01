@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 from src.config import settings
 
@@ -39,6 +40,6 @@ def verify_review_token(token: str) -> dict | None:
         payload = json.loads(base64.urlsafe_b64decode(data))
         if datetime.fromisoformat(payload["expires_at"]) < datetime.now(UTC):
             return None
-        return payload
+        return cast(dict, payload)
     except Exception:
         return None

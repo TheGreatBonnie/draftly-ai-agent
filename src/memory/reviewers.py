@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 import structlog
 
@@ -10,7 +11,7 @@ from src.database import execute, fetch_all, fetch_one
 logger = structlog.get_logger()
 
 
-def _serialize_row(row) -> dict:
+def _serialize_row(row: dict) -> dict:
     return {
         k: str(v) if isinstance(v, uuid.UUID)
         else v.isoformat() if isinstance(v, datetime)
@@ -49,6 +50,8 @@ async def create_reviewer(
         notify_email,
         clerk_user_id,
     )
+    if row is None:
+        raise RuntimeError("reviewer row missing after insert")
     logger.info("reviewer_created", id=row["id"], org_id=org_id, name=name)
     return _serialize_row(row)
 
@@ -81,7 +84,7 @@ async def get_reviewer_by_id(reviewer_id: str) -> dict | None:
 
 async def update_reviewer(
     reviewer_id: str,
-    **kwargs,
+    **kwargs: Any,
 ) -> dict:
     """Update a reviewer."""
     allowed_fields = {
@@ -111,6 +114,8 @@ async def update_reviewer(
         """,
         *values,
     )
+    if row is None:
+        raise RuntimeError("reviewer row missing after update")
     logger.info("reviewer_updated", id=reviewer_id, fields=list(updates.keys()))
     return _serialize_row(row)
 

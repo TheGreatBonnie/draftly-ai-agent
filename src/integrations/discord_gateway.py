@@ -6,6 +6,7 @@ import json
 
 import structlog
 import websockets
+from websockets.asyncio.client import ClientConnection
 from websockets.exceptions import ConnectionClosed
 
 from src.config import settings
@@ -22,7 +23,7 @@ class DiscordGateway:
     """Maintains a persistent WebSocket connection to the Discord Gateway."""
 
     def __init__(self) -> None:
-        self._ws: websockets.WebSocketClientProtocol | None = None
+        self._ws: ClientConnection | None = None
         self._heartbeat_task: asyncio.Task[None] | None = None
         self._sequence: int | None = None
         self._session_id: str | None = None
@@ -63,7 +64,7 @@ class DiscordGateway:
                     self._reconnect_delay * 2, MAX_RECONNECT_DELAY
                 )
 
-    async def _handle_connection(self, ws: websockets.WebSocketClientProtocol) -> None:
+    async def _handle_connection(self, ws: ClientConnection) -> None:
         """Handle a single Gateway connection lifecycle."""
         async for raw in ws:
             msg = json.loads(raw)
@@ -119,7 +120,7 @@ class DiscordGateway:
             else:
                 logger.warning("discord_gateway_unhandled_opcode", op=op, event=event)
 
-    async def _send_identify(self, ws: websockets.WebSocketClientProtocol) -> None:
+    async def _send_identify(self, ws: ClientConnection) -> None:
         """Send the Identify payload to authenticate with the Gateway."""
         token = settings.discord_bot_token.get_secret_value()
         identify = {
@@ -139,7 +140,7 @@ class DiscordGateway:
 
     async def _heartbeat_loop(
         self,
-        ws: websockets.WebSocketClientProtocol,
+        ws: ClientConnection,
         interval: float,
     ) -> None:
         """Send heartbeats at the interval specified by the Gateway."""
@@ -150,7 +151,7 @@ class DiscordGateway:
         except asyncio.CancelledError:
             pass
 
-    async def _send_heartbeat(self, ws: websockets.WebSocketClientProtocol) -> None:
+    async def _send_heartbeat(self, ws: ClientConnection) -> None:
         """Send a heartbeat payload."""
         heartbeat = {"op": 1, "d": self._sequence}
         await ws.send(json.dumps(heartbeat))

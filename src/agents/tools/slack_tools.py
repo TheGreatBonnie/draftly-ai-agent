@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import httpx
 from langchain_core.tools import tool
 
@@ -11,7 +13,7 @@ async def search_slack_messages(query: str, channel: str = "", limit: int = 5) -
     """Search Slack messages for relevant support conversations."""
     token = settings.slack_bot_token.get_secret_value() if settings.slack_bot_token else ""
     headers = {"Authorization": f"Bearer {token}"}
-    params = {"query": query, "count": limit}
+    params: dict[str, Any] = {"query": query, "count": limit}
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(

@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/stats")
-async def memory_stats(token: dict = Depends(get_verified_token)):
+async def memory_stats(token: dict = Depends(get_verified_token)) -> dict:
     from src.database import fetch_all, fetch_one
 
     org_id = token.get("org_id")
@@ -59,12 +59,14 @@ async def search_memory(
     q: str = "",
     type: str = "all",
     token: dict = Depends(get_verified_token),
-):
+) -> list[dict]:
     if not q:
         return []
     from src.memory.vector_store import search_similar
 
     org_id = token.get("org_id")
+    if not org_id:
+        return []
     return await search_similar(
         org_id=org_id,
         query_text=q,
