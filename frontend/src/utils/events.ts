@@ -51,3 +51,16 @@ export function formatEventTime(iso: string | null): string {
     second: "2-digit",
   });
 }
+
+const DETAIL_SUMMARY_KEYS = ["question", "title", "message", "summary", "node", "source"];
+
+export function eventDetailSummary(details: Record<string, unknown> | null | undefined): string | null {
+  if (!details) return null;
+  for (const key of DETAIL_SUMMARY_KEYS) {
+    const value = details[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.slice(0, 80);
+    }
+  }
+  return null;
+}

@@ -1,9 +1,15 @@
 import { useDashboardData } from "../hooks/useDashboardData";
+import { useAgentEvents } from "../hooks/useAgentEvents";
 import { MetricCard } from "../components/MetricCard";
 import { EngineViz } from "../components/EngineViz";
-import { IngestFeedItem } from "../components/IngestFeedItem";
 import { KernelLog } from "../components/KernelLog";
 import { PendingReviewCard } from "../components/PendingReviewCard";
+import {
+  eventDetailSummary,
+  eventTypeLabel,
+  formatEventTime,
+  levelTone,
+} from "../utils/events";
 
 const sampleTime = () => new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
 
@@ -26,6 +32,8 @@ export function Dashboard() {
     slackConnected, githubConnected, discordConnected,
     loading, error, refetch,
   } = useDashboardData();
+
+  const { events } = useAgentEvents();
 
   const totalVectors = memoryStats
     ? (memoryStats.support_threads ?? 0) + (memoryStats.documentation ?? 0) + (memoryStats.embeddings ?? 0) +
@@ -146,36 +154,40 @@ export function Dashboard() {
         <div className="lg:col-span-1 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col min-h-0 relative inner-glow-top lg:max-h-[520px]">
           <div className="scanline opacity-10"></div>
           <div className="px-6 py-4 border-b border-outline-variant/40 flex items-center justify-between relative z-10 shrink-0">
-            <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-on-surface font-sans">Ingest Feed</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-on-surface font-sans">Pipeline Activity</h2>
             <span className="w-1.5 h-1.5 rounded-full bg-secondary pulse-ring inline-block"></span>
           </div>
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 scrollbar-thin min-h-0">
-            {feed.length === 0 && (
-              <p className="text-xs text-on-surface-variant/50 text-center py-8">No recent activity</p>
+            {events.length === 0 && (
+              <p className="text-xs text-on-surface-variant/50 text-center py-8">Waiting for agent activity...</p>
             )}
-            {feed.map((item) => {
-              const platform = (item.platform === "slack" || item.platform === "github" || item.platform === "discord")
-                ? item.platform
-                : "github";
-              const status = item.action.includes("publish") ? "published" as const
-                : item.action.includes("ingest") ? "analyzing" as const
-                : "drafting" as const;
+            {events.map((event, idx) => {
+              const tone = levelTone(event.level);
+              const summary = eventDetailSummary(event.details);
               return (
-                <IngestFeedItem
-                  key={item.id}
-                  platform={platform}
-                  channel={item.channel ?? item.source}
-                  timestamp={new Date(item.created_at).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
-                  quote={item.summary}
-                  status={status}
-                />
+                <div key={`${event.created_at}-${idx}`} className="flex items-start gap-3">
+                  <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${tone.dot}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline gap-2">
+                      <span className={`text-[10px] uppercase font-mono px-1.5 py-px rounded shrink-0 ${tone.badge}`}>
+                        {eventTypeLabel(event.event_type)}
+                      </span>
+                      <span className="text-[10px] font-mono text-on-surface-variant/60 shrink-0">{formatEventTime(event.created_at)}</span>
+                    </div>
+                    {summary && (
+                      <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-2 mt-1 font-sans">
+                        {summary}
+                      </p>
+                    )}
+                  </div>
+                </div>
               );
             })}
           </div>
         </div>
       </div>
 
-      <KernelLog initialEntries={feed.slice(0, 15)} />
+      <KernelLog />
 
       {pending.length > 0 && (
         <section>
