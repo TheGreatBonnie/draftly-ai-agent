@@ -26,6 +26,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
     await start_flusher()
 
     graph_thread_id = f"cli-{hash(question)}"
+    workflow_id = str(uuid4())
 
     initial_state = {
         "org_id": org_id,
@@ -51,7 +52,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         "human_decision": "",
         "human_feedback": "",
         "published_urls": [],
-        "workflow_id": "",
+        "workflow_id": workflow_id,
         "doc_id": "",
         "messages": [],
         "source_metadata": {},
@@ -65,7 +66,16 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
 
         print(f"\n🔄 Processing: {question}\n")
 
-        result = await graph.ainvoke(initial_state, config)
+        structlog.contextvars.bind_contextvars(workflow_id=workflow_id, org_id=org_id)
+        try:
+            result = await graph.ainvoke(initial_state, config)
+        finally:
+            structlog.contextvars.clear_contextvars()
+
+    if result.get("doc_id"):
+        from src.memory.organizations import link_workflow_to_document
+
+        await link_workflow_to_document(workflow_id, result["doc_id"])
 
     print("\n✅ Completed!")
     print(f"Title: {result.get('draft_title', 'N/A')}")

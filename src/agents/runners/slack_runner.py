@@ -79,6 +79,7 @@ async def run_slack_pipeline(
     from src.integrations.slack_store import installation_store
     from src.memory.organizations import (
         get_org_by_slack,
+        link_workflow_to_document,
         store_slack_workflow,
         update_slack_workflow_status,
     )
@@ -131,6 +132,7 @@ async def run_slack_pipeline(
         from uuid import uuid4
 
         workflow_id = str(uuid4())
+        state["workflow_id"] = workflow_id
         await store_slack_workflow(
             org_id=org_id,
             workflow_id=workflow_id,
@@ -151,30 +153,37 @@ async def run_slack_pipeline(
         ) as checkpointer:
             await checkpointer.setup()
             graph = build_hybrid_graph().compile(checkpointer=checkpointer)
-            result = await graph.ainvoke(state, config)
+            structlog.contextvars.bind_contextvars(workflow_id=workflow_id, org_id=org_id)
+            try:
+                result = await graph.ainvoke(state, config)
 
-        if result.get("draft_content"):
-            await conversation_store.add_message(
-                channel, thread_ts, "assistant", result["draft_content"][:2000]
-            )
+                if result.get("draft_content"):
+                    await conversation_store.add_message(
+                        channel, thread_ts, "assistant", result["draft_content"][:2000]
+                    )
 
-        if result.get("human_decision") == "":
-            await update_slack_workflow_status(workflow_id, "pending")
-            logger.info(
-                "slack_pipeline_paused",
-                workflow_id=workflow_id,
-                team_id=team_id,
-                channel=channel,
-                thread_ts=thread_ts,
-            )
-        else:
-            await update_slack_workflow_status(workflow_id, "completed")
-            logger.info(
-                "slack_pipeline_completed",
-                workflow_id=workflow_id,
-                team_id=team_id,
-                channel=channel,
-            )
+                if result.get("human_decision") == "":
+                    await update_slack_workflow_status(workflow_id, "pending")
+                    logger.info(
+                        "slack_pipeline_paused",
+                        workflow_id=workflow_id,
+                        team_id=team_id,
+                        channel=channel,
+                        thread_ts=thread_ts,
+                    )
+                else:
+                    await update_slack_workflow_status(workflow_id, "completed")
+                    logger.info(
+                        "slack_pipeline_completed",
+                        workflow_id=workflow_id,
+                        team_id=team_id,
+                        channel=channel,
+                    )
+
+                if result.get("doc_id"):
+                    await link_workflow_to_document(workflow_id, result["doc_id"])
+            finally:
+                structlog.contextvars.clear_contextvars()
 
     except Exception as e:
         logger.error("slack_pipeline_failed", error=str(e))

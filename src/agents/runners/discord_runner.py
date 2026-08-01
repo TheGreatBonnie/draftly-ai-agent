@@ -76,6 +76,7 @@ async def run_discord_pipeline(
     from src.integrations.discord import send_discord_message
     from src.memory.organizations import (
         get_org_by_discord,
+        link_workflow_to_document,
         store_discord_workflow,
         update_discord_workflow_status,
     )
@@ -114,6 +115,7 @@ async def run_discord_pipeline(
         from uuid import uuid4
 
         workflow_id = str(uuid4())
+        state["workflow_id"] = workflow_id
         await store_discord_workflow(
             org_id=org_id,
             workflow_id=workflow_id,
@@ -136,25 +138,32 @@ async def run_discord_pipeline(
         ) as checkpointer:
             await checkpointer.setup()
             graph = build_hybrid_graph().compile(checkpointer=checkpointer)
-            result = await graph.ainvoke(state, config)
+            structlog.contextvars.bind_contextvars(workflow_id=workflow_id, org_id=org_id)
+            try:
+                result = await graph.ainvoke(state, config)
 
-        if result.get("human_decision") == "":
-            await update_discord_workflow_status(workflow_id, "pending")
-            logger.info(
-                "discord_pipeline_paused",
-                workflow_id=workflow_id,
-                guild_id=guild_id,
-                channel_id=channel_id,
-                message_id=message_id,
-            )
-        else:
-            await update_discord_workflow_status(workflow_id, "completed")
-            logger.info(
-                "discord_pipeline_completed",
-                workflow_id=workflow_id,
-                guild_id=guild_id,
-                channel_id=channel_id,
-            )
+                if result.get("human_decision") == "":
+                    await update_discord_workflow_status(workflow_id, "pending")
+                    logger.info(
+                        "discord_pipeline_paused",
+                        workflow_id=workflow_id,
+                        guild_id=guild_id,
+                        channel_id=channel_id,
+                        message_id=message_id,
+                    )
+                else:
+                    await update_discord_workflow_status(workflow_id, "completed")
+                    logger.info(
+                        "discord_pipeline_completed",
+                        workflow_id=workflow_id,
+                        guild_id=guild_id,
+                        channel_id=channel_id,
+                    )
+
+                if result.get("doc_id"):
+                    await link_workflow_to_document(workflow_id, result["doc_id"])
+            finally:
+                structlog.contextvars.clear_contextvars()
 
     except Exception as e:
         logger.error("discord_pipeline_failed", error=str(e))

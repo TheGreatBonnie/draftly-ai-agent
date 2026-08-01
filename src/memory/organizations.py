@@ -3,9 +3,18 @@ from __future__ import annotations
 import asyncpg
 import structlog
 
-from src.database import fetch_all, fetch_one
+from src.database import execute, fetch_all, fetch_one
 
 logger = structlog.get_logger()
+
+
+async def link_workflow_to_document(workflow_id: str, doc_id: str) -> None:
+    """Backfill the workflow_id on a documentation row if it is still unset."""
+    await execute(
+        "UPDATE documentation SET workflow_id = $1 WHERE id = $2 AND workflow_id IS NULL",
+        workflow_id,
+        doc_id,
+    )
 
 
 async def get_org_by_github(github_org: str) -> dict | None:
