@@ -21,4 +21,31 @@ wheels/
 # Git worktrees
 .worktrees/
 
+# macOS
+.DS_Store
+
+# Python tooling
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Kilo Code worktrees/state
+.kilo/
+.kilocode/
+
+# Logs
+*.log
+
+# Stitch design tool output
+stitch_output/
+
+# Superpowers brainstorm session scratch data
+.superpowers/brainstorm/
+
+# Opencode local tooling
+.opencode/node_modules/
+.opencode/package.json
+.opencode/package-lock.json
+
 private-key.pem
