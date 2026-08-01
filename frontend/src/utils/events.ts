@@ -1,4 +1,4 @@
-import type { EventLevel } from "../api/types";
+import type { AgentEvent, EventLevel } from "../api/types";
 
 const PREFIX_LABELS: Array<[string, string]> = [
   ["ingest_", "Ingest"],
@@ -63,4 +63,31 @@ export function eventDetailSummary(details: Record<string, unknown> | null | und
     }
   }
   return null;
+}
+
+const CURRENT_TASK_PREFIXES = ["ingest_", "research_"];
+
+export function deriveEngineTasks(
+  events: AgentEvent[],
+): { currentTask: string; nextTask: string | null } {
+  const current = events.find(
+    (event) =>
+      event.event_type === "workflow_created" ||
+      CURRENT_TASK_PREFIXES.some((prefix) => event.event_type.startsWith(prefix)),
+  );
+  if (!current) {
+    return { currentTask: "Waiting for activity...", nextTask: null };
+  }
+  const summary = eventDetailSummary(current.details);
+  const currentTask = summary
+    ? `${eventTypeLabel(current.event_type)}: ${summary}`
+    : eventTypeLabel(current.event_type);
+  const next = events.find(
+    (event) => event !== current && event.event_type !== current.event_type,
+  );
+  const nextSummary = next ? eventDetailSummary(next.details) : null;
+  return {
+    currentTask,
+    nextTask: next ? (nextSummary ? eventTypeLabel(next.event_type) : null) : null,
+  };
 }

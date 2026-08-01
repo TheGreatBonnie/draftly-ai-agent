@@ -6,6 +6,7 @@ import { EngineViz } from "../components/EngineViz";
 import { KernelLog } from "../components/KernelLog";
 import { PendingReviewCard } from "../components/PendingReviewCard";
 import {
+  deriveEngineTasks,
   eventDetailSummary,
   eventTypeLabel,
   formatEventTime,
@@ -43,6 +44,13 @@ export function Dashboard() {
   const warnings24h = summary.last_24h.warning ?? 0;
   const systemStatus = errors1h > 0 ? { label: "ERRORS", tone: "text-error" as const } : { label: "NOMINAL", tone: "text-secondary" as const };
 
+  const { currentTask, nextTask } = events.length > 0
+    ? deriveEngineTasks(events)
+    : getEngineAnnotations(
+        feed.slice(0, 5).map((f) => ({ platform: f.platform, summary: f.summary })),
+        activeWorkflows,
+      );
+
   const totalVectors = memoryStats
     ? (memoryStats.support_threads ?? 0) + (memoryStats.documentation ?? 0) + (memoryStats.embeddings ?? 0) +
       (memoryStats.review_sessions ?? 0) + (memoryStats.agent_memory ?? 0) + (memoryStats.audit_logs ?? 0)
@@ -63,11 +71,6 @@ export function Dashboard() {
   // Engine load heuristic
   const loadPercent = `${activeWorkflows * 8 + (pendingCount > 0 ? 5 : 0) + (totalActivity > 0 ? 10 : 0)}%`;
   const threadsPerMin = `${Math.max(1, Math.round((totalThreads / 24) * (activeWorkflows + 1)))}/min`;
-
-  const { currentTask, nextTask } = getEngineAnnotations(
-    feed.slice(0, 5).map((f) => ({ platform: f.platform, summary: f.summary })),
-    activeWorkflows,
-  );
 
   if (loading) {
     return (
