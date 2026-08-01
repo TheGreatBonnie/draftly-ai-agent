@@ -8,7 +8,13 @@ import structlog
 from langchain_cockroachdb import AsyncCockroachDBSaver
 
 from src.agents.graph import build_hybrid_graph
-from src.analytics.events import configure_logging, start_flusher, stop_flusher
+from src.analytics.events import (
+    configure_logging,
+    start_flusher,
+    start_retention,
+    stop_flusher,
+    stop_retention,
+)
 from src.config import settings
 from src.database import close_pool, get_pool
 
@@ -24,6 +30,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
 
     await get_pool()
     await start_flusher()
+    await start_retention()
 
     graph_thread_id = f"cli-{hash(question)}"
     workflow_id = str(uuid4())
@@ -88,6 +95,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
     print(f"\n📄 Draft:\n{result.get('draft_content', 'N/A')[:500]}...")
 
     await stop_flusher()
+    await stop_retention()
 
     await close_pool()
     return result

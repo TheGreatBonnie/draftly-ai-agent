@@ -243,3 +243,113 @@ async def test_start_flusher_restarts_after_task_completion():
         assert events_module._flush_task is not None
         assert events_module._flush_task is not first
         await events_module.stop_flusher()
+
+
+@pytest.mark.asyncio
+async def test_run_retention_once_deletes_expired_events():
+    from src.analytics import events as events_module
+
+    deleted_rows = [object(), object()]
+    with (
+        patch(
+            "src.analytics.events.fetch_all",
+            new_callable=AsyncMock,
+            return_value=deleted_rows,
+        ) as mock_fetch,
+        patch.object(events_module.settings, "event_retention_days", 90),
+    ):
+        count = await events_module._run_retention_once()
+
+    assert count == 2
+    sql, days = mock_fetch.await_args.args
+    assert "DELETE FROM agent_events" in sql
+    assert "created_at <" in sql
+    assert days == 90
+
+
+@pytest.mark.asyncio
+async def test_run_retention_once_no_rows():
+    from src.analytics import events as events_module
+
+    with (
+        patch("src.analytics.events.fetch_all", new_callable=AsyncMock, return_value=[]),
+        patch.object(events_module.settings, "event_retention_days", 90),
+    ):
+        count = await events_module._run_retention_once()
+
+    assert count == 0
+
+
+@pytest.mark.asyncio
+async def test_retention_loop_runs_once_and_stops():
+    import asyncio
+
+    from src.analytics import events as events_module
+
+    stop_event = asyncio.Event()
+    with (
+        patch(
+            "src.analytics.events._run_retention_once",
+            new_callable=AsyncMock,
+            return_value=3,
+        ) as mock_run,
+        patch(
+            "src.analytics.events.asyncio.Event",
+            return_value=stop_event,
+        ),
+        patch("src.analytics.events.logger") as mock_logger,
+    ):
+        stop_event.set()
+        await events_module._retention_loop(interval_hours=0.0, stop_event=stop_event)
+
+    mock_run.assert_awaited_once()
+    mock_logger.info.assert_called_once()
+    assert mock_logger.info.call_args.args[0] == "agent_event_retention"
+    assert mock_logger.info.call_args.kwargs["deleted"] == 3
+
+
+@pytest.mark.asyncio
+async def test_retention_loop_logs_failure():
+    import asyncio
+
+    from src.analytics import events as events_module
+
+    stop_event = asyncio.Event()
+    with (
+        patch(
+            "src.analytics.events._run_retention_once",
+            side_effect=Exception("DB down"),
+        ),
+        patch("src.analytics.events.logger") as mock_logger,
+    ):
+        stop_event.set()
+        await events_module._retention_loop(interval_hours=0.0, stop_event=stop_event)
+    mock_logger.error.assert_called_once()
+    assert mock_logger.error.call_args.args[0] == "agent_event_retention_failed"
+
+
+@pytest.mark.asyncio
+async def test_start_retention_idempotent():
+    from src.analytics import events as events_module
+
+    await events_module.stop_retention()
+    with patch(
+        "src.analytics.events._run_retention_once", new_callable=AsyncMock
+    ):
+        await events_module.start_retention()
+        first = events_module._retention_task
+        assert first is not None
+        await events_module.start_retention()
+        assert events_module._retention_task is first
+        await events_module.stop_retention()
+        assert events_module._retention_task is None
+
+
+@pytest.mark.asyncio
+async def test_processor_skips_retention_self_telemetry():
+    collector = make_collector()
+    collector.processor(None, "info", {"event": "agent_event_retention", "deleted": 3})
+    collector.processor(
+        None, "error", {"event": "agent_event_retention_failed", "error": "DB down"}
+    )
+    assert len(collector._buffer) == 0

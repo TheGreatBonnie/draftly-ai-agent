@@ -19,12 +19,18 @@ from typing import Any
 import structlog
 
 from src.config import settings
-from src.database import get_pool
+from src.database import fetch_all, get_pool
 
 _MAX_STRING_LEN = 2000
 _MAX_DETAILS_BYTES = 50_000
 _RESERVED_KEYS = {"logger", "timestamp", "exc_info", "stack_info", "record"}
-_SELF_TELEMETRY_EVENTS = {"events_flushed", "event_flush_failed", "event_flush_loop_failed"}
+_SELF_TELEMETRY_EVENTS = {
+    "events_flushed",
+    "event_flush_failed",
+    "event_flush_loop_failed",
+    "agent_event_retention",
+    "agent_event_retention_failed",
+}
 
 logger = structlog.get_logger()
 
@@ -196,3 +202,51 @@ async def stop_flusher() -> None:
             pass
         _flush_task = None
     await collector.flush()
+
+
+async def _run_retention_once() -> int:
+    """Delete agent_events older than the retention window; returns count."""
+    deleted = await fetch_all(
+        "DELETE FROM agent_events "
+        "WHERE created_at < now() - make_interval(days => $1) RETURNING id",
+        settings.event_retention_days,
+    )
+    return len(deleted)
+
+
+async def _retention_loop(
+    interval_hours: float = 24.0,
+    stop_event: asyncio.Event | None = None,
+) -> None:
+    while True:
+        await asyncio.sleep(interval_hours * 3600)
+        try:
+            deleted = await _run_retention_once()
+            logger.info("agent_event_retention", deleted=deleted)
+        except Exception:
+            logger.error("agent_event_retention_failed")
+        if stop_event is not None and stop_event.is_set():
+            return
+
+
+_retention_task: asyncio.Task[None] | None = None
+
+
+async def start_retention() -> None:
+    """Start the background retention task (idempotent)."""
+    global _retention_task
+    if _retention_task is not None and not _retention_task.done():
+        return
+    _retention_task = asyncio.create_task(_retention_loop())
+
+
+async def stop_retention() -> None:
+    """Cancel the background retention task."""
+    global _retention_task
+    if _retention_task is not None:
+        _retention_task.cancel()
+        try:
+            await _retention_task
+        except asyncio.CancelledError:
+            pass
+        _retention_task = None

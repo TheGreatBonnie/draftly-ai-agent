@@ -8,7 +8,13 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.analytics.events import configure_logging, start_flusher, stop_flusher
+from src.analytics.events import (
+    configure_logging,
+    start_flusher,
+    start_retention,
+    stop_flusher,
+    stop_retention,
+)
 from src.api.routes import (
     activity,
     clerk,
@@ -40,6 +46,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     await get_pool()
     await start_flusher()
+    await start_retention()
 
     # Initialize trace collection
     trace_collector = TraceCollector(
@@ -75,6 +82,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # Flush remaining events on shutdown
     await stop_flusher()
+    await stop_retention()
 
     await close_pool()
 

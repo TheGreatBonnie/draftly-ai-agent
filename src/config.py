@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     event_capture_enabled: bool = True
     event_flush_interval_seconds: float = 5.0
     event_buffer_size: int = 500
+    event_retention_days: int = 90
 
     # Verification
     deterministic_verification_enabled: bool = True
