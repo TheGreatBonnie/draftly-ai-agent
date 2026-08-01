@@ -1,5 +1,6 @@
 import { useDashboardData } from "../hooks/useDashboardData";
 import { useAgentEvents } from "../hooks/useAgentEvents";
+import { useEventSummary } from "../hooks/useEventSummary";
 import { MetricCard } from "../components/MetricCard";
 import { EngineViz } from "../components/EngineViz";
 import { KernelLog } from "../components/KernelLog";
@@ -34,6 +35,13 @@ export function Dashboard() {
   } = useDashboardData();
 
   const { events } = useAgentEvents();
+  const { summary } = useEventSummary();
+
+  const errors1h = summary.last_1h.error ?? 0;
+  const warnings1h = summary.last_1h.warning ?? 0;
+  const errors24h = summary.last_24h.error ?? 0;
+  const warnings24h = summary.last_24h.warning ?? 0;
+  const systemStatus = errors1h > 0 ? { label: "ERRORS", tone: "text-error" as const } : { label: "NOMINAL", tone: "text-secondary" as const };
 
   const totalVectors = memoryStats
     ? (memoryStats.support_threads ?? 0) + (memoryStats.documentation ?? 0) + (memoryStats.embeddings ?? 0) +
@@ -102,7 +110,7 @@ export function Dashboard() {
           <h1 className="text-[28px] font-bold tracking-tight text-on-surface font-sans">Command Center</h1>
           <p className="text-sm text-on-surface-variant/70 font-mono mt-1">
             T: {sampleTime()} UTC — System Status:{" "}
-            <span className="text-secondary font-semibold">NOMINAL</span>
+            <span className={`${systemStatus.tone} font-semibold`}>{systemStatus.label}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -112,6 +120,24 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {(errors1h > 0 || warnings1h > 0) && (
+        <div className="flex items-center gap-3 text-xs font-mono">
+          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-error/10 border border-error/20 text-error font-semibold">
+            <span className="material-symbols-outlined text-sm">error</span>
+            {errors1h} errors / 1h
+          </span>
+          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/10 border border-warning/20 text-warning font-semibold">
+            <span className="material-symbols-outlined text-sm">warning</span>
+            {warnings1h} warnings / 1h
+          </span>
+          {(errors24h > 0 || warnings24h > 0) && (
+            <span className="text-on-surface-variant/50">
+              24h: {errors24h} errors · {warnings24h} warnings
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <MetricCard
