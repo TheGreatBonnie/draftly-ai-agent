@@ -11,7 +11,6 @@ wheels/
 
 # Environment files
 .env
-uv.lock
 
 # Ruff
 .ruff_cache/
