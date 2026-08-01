@@ -66,24 +66,75 @@ async def get_latest_activity(
 @router.get("/events")
 async def get_agent_events(
     limit: int = Query(50, ge=1, le=200),
+    workflow_id: str | None = Query(None, description="Filter by workflow id"),
+    level: str | None = Query(None, description="Filter by level (info|warning|error)"),
+    after: str = Query("", description="ISO timestamp — return events after this time"),
     token: dict = Depends(get_verified_token),
 ) -> list[dict]:
     org_id = token.get("org_id")
     if not org_id:
         return []
 
+    params: list[object] = [org_id]
+    where = ["org_id = $1"]
+    if workflow_id:
+        params.append(workflow_id)
+        where.append(f"workflow_id = ${len(params)}")
+    if level:
+        params.append(level)
+        where.append(f"level = ${len(params)}")
+    if after:
+        params.append(datetime.fromisoformat(after))
+        where.append(f"created_at > ${len(params)}")
+
+    params.append(limit)
     rows = await fetch_all(
-        """
-        SELECT event_type, level, details, created_at
+        f"""
+        SELECT event_type, level, workflow_id, details, created_at
         FROM agent_events
-        WHERE org_id = $1
+        WHERE {" AND ".join(where)}
         ORDER BY created_at DESC
-        LIMIT $2
+        LIMIT ${len(params)}
         """,
-        org_id,
-        limit,
+        *params,
     )
     return [_serialize_event(row) for row in rows]
+
+
+@router.get("/events/summary")
+async def get_event_summary(
+    workflow_id: str | None = Query(None, description="Filter by workflow id"),
+    token: dict = Depends(get_verified_token),
+) -> dict:
+    org_id = token.get("org_id")
+    if not org_id:
+        return {"last_1h": {}, "last_24h": {}}
+
+    params: list[object] = [org_id]
+    where = ["org_id = $1"]
+    if workflow_id:
+        params.append(workflow_id)
+        where.append(f"workflow_id = ${len(params)}")
+
+    def _query(interval: str) -> str:
+        return f"""
+            SELECT level, count(*)::int AS count
+            FROM agent_events
+            WHERE {" AND ".join(where)} AND created_at > now() - interval '{interval}'
+            GROUP BY level
+        """
+
+    rows_1h = await fetch_all(_query("1 hour"), *params)
+    rows_24h = await fetch_all(_query("24 hours"), *params)
+
+    return {
+        "last_1h": _serialize_summary(rows_1h),
+        "last_24h": _serialize_summary(rows_24h),
+    }
+
+
+def _serialize_summary(rows: list) -> dict:
+    return {row["level"]: row["count"] for row in rows}
 
 
 def _serialize_event(row: dict) -> dict:
@@ -100,6 +151,7 @@ def _serialize_event(row: dict) -> dict:
     return {
         "event_type": row["event_type"],
         "level": row["level"],
+        "workflow_id": row.get("workflow_id"),
         "details": details if isinstance(details, dict) else {},
         "created_at": row["created_at"].isoformat() if row["created_at"] else None,
     }
