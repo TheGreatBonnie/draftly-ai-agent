@@ -81,6 +81,7 @@ async def get_review(review_id: str, token: dict = Depends(get_verified_token)):
 
     row = await fetch_one(
         "SELECT rs.*, rs.id::text as id, d.title, d.content, d.doc_type, d.confidence_score, "
+        "d.workflow_id, "
         "st.question_summary as original_question, st.source as platform "
         "FROM review_sessions rs "
         "JOIN documentation d ON d.id = rs.doc_id "
