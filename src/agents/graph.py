@@ -20,7 +20,6 @@ logger = structlog.get_logger()
 
 _trace_collector: TraceCollector | None = None
 
-
 def set_trace_collector(collector: TraceCollector) -> None:
     global _trace_collector
     _trace_collector = collector
