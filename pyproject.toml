@@ -40,6 +40,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "cryptography>=49.0.0",
     "mcp>=1.0.0",
+    "langchain-nvidia-ai-endpoints>=1.4.3",
 ]
 
 [project.optional-dependencies]
@@ -65,7 +66,7 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["slack_bolt.*", "slack_sdk.*", "discord.*", "mcp.*", "asyncpg.*", "fitz.*", "langchain_cockroachdb.*", "websockets.*"]
+module = ["slack_bolt.*", "slack_sdk.*", "discord.*", "mcp.*", "asyncpg.*", "fitz.*", "langchain_cockroachdb.*", "langchain_nvidia_ai_endpoints.*", "websockets.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

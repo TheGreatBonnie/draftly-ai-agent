@@ -11,7 +11,7 @@ import structlog
 
 from src.config import settings
 from src.database import execute, fetch_all, fetch_one
-from src.integrations.llm import call_llm
+from src.integrations.llm import call_llm, stage_llm_kwargs
 
 logger = structlog.get_logger()
 
@@ -74,7 +74,7 @@ async def generate_improvements(analysis: dict, current_config: dict) -> dict:
                 "You are an expert at optimizing AI agent systems."
                 " Generate specific, actionable improvements."
             ),
-            model=settings.analysis_model,
+            **stage_llm_kwargs("analysis"),
         )
         return _parse_json_response(response)
     except Exception as e:

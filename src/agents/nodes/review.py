@@ -5,9 +5,8 @@ import json
 import structlog
 
 from src.agents.state import DocumentationState
-from src.config import settings
 from src.database import execute
-from src.integrations.llm import call_llm
+from src.integrations.llm import call_llm, stage_llm_kwargs
 
 logger = structlog.get_logger()
 
@@ -77,7 +76,7 @@ async def ai_review_node_hybrid(state: DocumentationState) -> dict:
             "You are a documentation reviewer. Evaluate the quality of documentation "
             "against the provided rubric criteria. Be thorough, accurate, and constructive."
         ),
-        model=settings.review_model,
+        **stage_llm_kwargs("review"),
     )
 
     # Parse review from response

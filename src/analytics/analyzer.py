@@ -7,8 +7,7 @@ from typing import Any
 import structlog
 
 from src.analytics.traces import AgentTrace
-from src.config import settings
-from src.integrations.llm import call_llm
+from src.integrations.llm import call_llm, stage_llm_kwargs
 
 logger = structlog.get_logger()
 
@@ -115,7 +114,7 @@ async def analyze_production_traces(traces: list[AgentTrace]) -> dict[str, Any]:
                 "You are an expert at analyzing AI agent performance."
                 " Be specific and actionable."
             ),
-            model=settings.analysis_model,
+            **stage_llm_kwargs("analysis"),
         )
         analysis = _parse_json_response(response)
     except Exception as e:

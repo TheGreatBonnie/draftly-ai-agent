@@ -12,8 +12,7 @@ async def research_node_hybrid(state: DocumentationState) -> dict:
     from src.agents.planners.investigation import create_investigation_plan
     from src.agents.skills import get_skill_for_question
     from src.agents.tools.web_tools import search_web
-    from src.config import settings
-    from src.integrations.llm import call_llm
+    from src.integrations.llm import call_llm, stage_llm_kwargs
 
     question = state["question"]
     org_id = state["org_id"]
@@ -104,7 +103,7 @@ async def research_node_hybrid(state: DocumentationState) -> dict:
             "into a comprehensive research summary with key findings, source URLs, "
             "and confidence assessment."
         ),
-        model=settings.research_model,
+        **stage_llm_kwargs("research"),
     )
 
     logger.info(

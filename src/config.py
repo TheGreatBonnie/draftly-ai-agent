@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings
 
 
@@ -13,6 +13,28 @@ class Settings(BaseSettings):
     requesty_base_url: str = "https://api.requesty.ai/v1"
     llm_model: str = "tensorx/deepseek-v4-flash"
     embedding_model: str = "azure/openai/text-embedding-3-large@francecentral"
+
+    # NVIDIA (per-stage provider switch; models aliased to dotted .env names)
+    nvidia_api_key: SecretStr = SecretStr("")
+    nvidia_glm_model: str = Field(
+        default="z-ai/glm-5.2", validation_alias=AliasChoices("GLM_5.2_MODEL", "nvidia_glm_model")
+    )
+    nvidia_deepseek_v4_pro: str = Field(
+        default="deepseek-ai/deepseek-v4-pro",
+        validation_alias=AliasChoices("DEEPSEEK_V4_PRO_MODEL", "nvidia_deepseek_v4_pro"),
+    )
+    nvidia_deepseek_v4_flash: str = Field(
+        default="deepseek-ai/deepseek-v4-flash",
+        validation_alias=AliasChoices("DEEPSEEK_V4_FLASH_MODEL", "nvidia_deepseek_v4_flash"),
+    )
+    nvidia_minimax_m3: str = Field(
+        default="minimax-ai/minimax-m3",
+        validation_alias=AliasChoices("MINIMAX_M3_MODEL", "nvidia_minimax_m3"),
+    )
+    nvidia_kimi_k2_6: str = Field(
+        default="moonshotai/kimi-k2.6",
+        validation_alias=AliasChoices("KIMI_K2.6_MODEL", "nvidia_kimi_k2_6"),
+    )
 
     # Slack
     slack_bot_token: SecretStr = SecretStr("")
@@ -55,6 +77,17 @@ class Settings(BaseSettings):
     review_model: str = "anthropic/claude-sonnet-4-6"
     rubric_grader_model: str = "anthropic/claude-haiku-4-5"
     rubric_max_iterations: int = 3
+
+    # Per-stage provider routing (requesty | nvidia). When *_nvidia_model is
+    # empty, the stage falls back to the corresponding named model field above.
+    research_provider: Literal["requesty", "nvidia"] = "requesty"
+    review_provider: Literal["requesty", "nvidia"] = "requesty"
+    rubric_grader_provider: Literal["requesty", "nvidia"] = "requesty"
+    analysis_provider: Literal["requesty", "nvidia"] = "requesty"
+    research_nvidia_model: str = ""
+    review_nvidia_model: str = ""
+    rubric_grader_nvidia_model: str = ""
+    analysis_nvidia_model: str = ""
 
     # Hill-climbing (Loop 4)
     analysis_model: str = "tensorx/deepseek-v4-flash"

@@ -7,7 +7,7 @@ from typing import Any
 import structlog
 
 from src.config import settings
-from src.integrations.llm import call_llm
+from src.integrations.llm import call_llm, stage_llm_kwargs
 
 logger = structlog.get_logger()
 
@@ -51,7 +51,7 @@ async def grade_with_rubric(
                 "Evaluate the output against the provided rubric criteria. "
                 "Be strict but fair. Provide specific feedback for failing criteria."
             ),
-            model=settings.rubric_grader_model,
+            **stage_llm_kwargs("rubric_grader"),
         )
 
         # Parse evaluation
