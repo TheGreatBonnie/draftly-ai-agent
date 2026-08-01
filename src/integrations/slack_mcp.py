@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
 import structlog
 
 logger = structlog.get_logger()
@@ -32,14 +33,19 @@ class SlackMCPClient:
         self._session: Any = None
         self._streams: Any = None
         self._cleanup: Any = None
+        self._http_client: httpx.AsyncClient | None = None
         self.tool_names: list[str] = []
 
     async def connect(self) -> None:
         """Connect to the MCP server, initialize a session, and discover tools."""
         from mcp import ClientSession
-        from mcp.client.streamable_http import streamablehttp_client
+        from mcp.client.streamable_http import streamable_http_client
 
-        streams_cm = streamablehttp_client(url=self.url, headers=self.headers)
+        self._http_client = httpx.AsyncClient(headers=self.headers)
+        streams_cm = streamable_http_client(
+            url=self.url,
+            http_client=self._http_client,
+        )
         self._streams = await streams_cm.__aenter__()
         read_stream, write_stream, get_session_id = self._streams
 
@@ -82,6 +88,8 @@ class SlackMCPClient:
                 await self._session.__aexit__(None, None, None)
             if self._cleanup:
                 await self._cleanup.__aexit__(None, None, None)
+            if self._http_client:
+                await self._http_client.aclose()
         except Exception:
             pass
 
