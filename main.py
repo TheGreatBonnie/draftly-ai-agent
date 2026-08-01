@@ -6,7 +6,10 @@ import structlog
 import uvicorn
 from pydantic_settings import BaseSettings
 
+from src.analytics.events import configure_logging
 from src.integrations.slack_socket import should_use_socket_mode
+
+configure_logging()
 
 logger = structlog.get_logger()
 

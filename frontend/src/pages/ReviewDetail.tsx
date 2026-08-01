@@ -5,11 +5,13 @@ import remarkGfm from "remark-gfm";
 import { getDoc } from "../api/docs";
 import { getReview, decideReview } from "../api/reviews";
 import type { Doc } from "../api/types";
+import { useAgentEvents } from "../hooks/useAgentEvents";
 import { DocTOC } from "../components/DocTOC";
 import { DocMetadata } from "../components/DocMetadata";
 import { ReviewForm } from "../components/ReviewForm";
 import { ConfidenceComparison } from "../components/ConfidenceComparison";
 import { formatDate } from "../utils/format";
+import { eventDetailSummary, eventTypeLabel, formatEventTime, levelTone } from "../utils/events";
 
 interface DetailData {
   title: string;
@@ -18,6 +20,7 @@ interface DetailData {
   confidence_score: number;
   original_question: string | null;
   platform: string | null;
+  workflow_id?: string | null;
   version?: number;
   updated_at?: string;
   created_at?: string;
@@ -45,6 +48,13 @@ export function ReviewDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const workflowId = data?.workflow_id ?? null;
+  const { events: traceEvents } = useAgentEvents(
+    workflowId ? { workflowId, limit: 100 } : undefined,
+    3000,
+    Boolean(workflowId),
+  );
 
   useEffect(() => {
     return () => {
@@ -231,6 +241,52 @@ export function ReviewDetail() {
             <Markdown remarkPlugins={[remarkGfm]}>{data.content}</Markdown>
           </article>
         </div>
+
+        {workflowId && (
+          <div className="glass-card mb-6 rounded-2xl p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/40">
+                  Workflow Trace
+                </h2>
+                <p className="mt-0.5 font-mono text-[10px] text-on-surface-variant/50">
+                  {workflowId.slice(0, 12)}…
+                </p>
+              </div>
+              <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-[10px] font-mono font-semibold text-secondary">
+                {traceEvents.length} events
+              </span>
+            </div>
+            {traceEvents.length === 0 ? (
+              <p className="text-xs text-on-surface-variant/60">
+                No workflow events recorded yet.
+              </p>
+            ) : (
+              <ol className="relative ml-2 border-l border-outline-variant/50">
+                {traceEvents.map((event, idx) => {
+                  const tone = levelTone(event.level);
+                  const summary = eventDetailSummary(event.details);
+                  return (
+                    <li key={`${event.created_at}-${idx}`} className="mb-4 ml-4">
+                      <span className={`absolute -left-1 mt-1 h-2 w-2 rounded-full ${tone.dot}`} />
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className={`text-[10px] uppercase font-mono px-1.5 py-px rounded ${tone.badge}`}>
+                          {eventTypeLabel(event.event_type)}
+                        </span>
+                        <span className="text-[10px] font-mono text-on-surface-variant/50">
+                          {formatEventTime(event.created_at)}
+                        </span>
+                      </div>
+                      {summary && (
+                        <p className="mt-1 text-xs text-on-surface-variant">{summary}</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+        )}
 
         {isReviewSession && data.status === "pending" && (
           <div className="mt-8">

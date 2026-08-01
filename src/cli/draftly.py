@@ -8,21 +8,32 @@ import structlog
 from langchain_cockroachdb import AsyncCockroachDBSaver
 
 from src.agents.graph import build_hybrid_graph
+from src.analytics.events import (
+    configure_logging,
+    start_flusher,
+    start_retention,
+    stop_flusher,
+    stop_retention,
+)
 from src.config import settings
 from src.database import close_pool, get_pool
 
 logger = structlog.get_logger()
 
+configure_logging()
+
 
 async def run_workflow(question: str, source: str = "cli", org_id: str | None = None) -> dict:
-    await get_pool()
-
     if org_id is None:
         print("Error: --org-id is required. Create an org via Clerk first.")
-        await close_pool()
         sys.exit(1)
 
+    await get_pool()
+    await start_flusher()
+    await start_retention()
+
     graph_thread_id = f"cli-{hash(question)}"
+    workflow_id = str(uuid4())
 
     initial_state = {
         "org_id": org_id,
@@ -48,7 +59,7 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         "human_decision": "",
         "human_feedback": "",
         "published_urls": [],
-        "workflow_id": "",
+        "workflow_id": workflow_id,
         "doc_id": "",
         "messages": [],
         "source_metadata": {},
@@ -69,7 +80,16 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
 
         print(f"\n🔄 Processing: {question}\n")
 
-        result = await graph.ainvoke(initial_state, config)  # type: ignore[call-overload]
+        structlog.contextvars.bind_contextvars(workflow_id=workflow_id, org_id=org_id)
+        try:
+            result = await graph.ainvoke(initial_state, config)  # type: ignore[call-overload]
+        finally:
+            structlog.contextvars.clear_contextvars()
+
+    if result.get("doc_id"):
+        from src.memory.organizations import link_workflow_to_document
+
+        await link_workflow_to_document(workflow_id, result["doc_id"])
 
     print("\n✅ Completed!")
     print(f"Title: {result.get('draft_title', 'N/A')}")
@@ -80,6 +100,9 @@ async def run_workflow(question: str, source: str = "cli", org_id: str | None = 
         print(f"Human Decision: {result['human_decision']}")
 
     print(f"\n📄 Draft:\n{result.get('draft_content', 'N/A')[:500]}...")
+
+    await stop_flusher()
+    await stop_retention()
 
     await close_pool()
     return dict(result)

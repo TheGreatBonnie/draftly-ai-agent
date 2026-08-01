@@ -92,6 +92,7 @@ export interface Doc {
   version: number;
   status: string;
   source_thread_id: string | null;
+  workflow_id: string | null;
   confidence_score: number;
   published_to: unknown;
   created_at: string;
@@ -252,4 +253,19 @@ export interface PlatformCounts {
   cli?: number;
   system?: number;
   [key: string]: number | undefined;
+}
+
+export type EventLevel = "info" | "warning" | "error";
+
+export interface AgentEvent {
+  event_type: string;
+  level: EventLevel;
+  workflow_id: string | null;
+  details: Record<string, unknown>;
+  created_at: string | null;
+}
+
+export interface EventSummary {
+  last_1h: Partial<Record<EventLevel, number>>;
+  last_24h: Partial<Record<EventLevel, number>>;
 }

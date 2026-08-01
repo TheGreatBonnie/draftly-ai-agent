@@ -1,57 +1,16 @@
 import { useEffect, useRef } from "react";
-import { getLatestActivity } from "../api/activity";
-import type { ActivityEvent } from "../api/types";
+import { useAgentEvents } from "../hooks/useAgentEvents";
+import { eventTypeLabel, formatEventTime, levelTone } from "../utils/events";
 
-interface KernelLogProps {
-  initialEntries?: Pick<ActivityEvent, "id" | "actor" | "action" | "platform" | "summary" | "created_at">[];
-}
-
-export function KernelLog({ initialEntries = [] }: KernelLogProps) {
+export function KernelLog() {
+  const { events } = useAgentEvents();
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastTimestampRef = useRef<string>("");
 
-  // Track the latest timestamp from initial entries
   useEffect(() => {
-    if (initialEntries.length > 0) {
-      lastTimestampRef.current = initialEntries[0].created_at;
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
-  }, [initialEntries]);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (!containerRef.current || !lastTimestampRef.current) return;
-      try {
-        const newEntries = await getLatestActivity(lastTimestampRef.current);
-        if (newEntries.length > 0 && containerRef.current) {
-          lastTimestampRef.current = newEntries[0].created_at;
-          for (const entry of newEntries.reverse()) {
-            const p = document.createElement("p");
-            const actorClass =
-              entry.actor === "agent" ? "text-primary" :
-              entry.actor === "human" ? "text-secondary" :
-              "text-on-surface-variant/50";
-            p.className = actorClass;
-            const time = new Date(entry.created_at).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
-            p.textContent = `[${time}] — ${entry.summary}`;
-            containerRef.current.appendChild(p);
-            containerRef.current.scrollTop = containerRef.current.scrollHeight;
-          }
-          // Cap at 30 entries
-          while (containerRef.current.children.length > 30) {
-            containerRef.current.removeChild(containerRef.current.firstChild!);
-          }
-        }
-      } catch {
-        // silent — polling is best-effort
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const formatTime = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
-  };
+  }, [events]);
 
   return (
     <div className="bg-surface-container-lowest border border-outline-variant rounded-xl inner-glow-top overflow-hidden relative">
@@ -67,17 +26,19 @@ export function KernelLog({ initialEntries = [] }: KernelLogProps) {
         </div>
       </div>
       <div ref={containerRef} className="px-6 py-4 font-mono text-xs leading-relaxed text-on-surface-variant/70 overflow-y-auto relative z-10 max-h-40 scrollbar-thin">
-        {initialEntries.length === 0 && (
-          <p className="text-on-surface-variant/50">[--:--:--] — Waiting for activity...</p>
+        {events.length === 0 && (
+          <p className="text-on-surface-variant/50">[--:--:--] — Waiting for agent activity...</p>
         )}
-        {initialEntries.slice().reverse().map((entry) => {
-          const actorClass =
-            entry.actor === "agent" ? "text-primary" :
-            entry.actor === "human" ? "text-secondary" :
-            "text-on-surface-variant/50";
+        {events.map((event, idx) => {
+          const tone = levelTone(event.level);
           return (
-            <p key={entry.id} className={actorClass}>
-              [{formatTime(entry.created_at)}] — {entry.summary}
+            <p key={`${event.created_at}-${idx}`} className="flex items-center gap-2">
+              <span className="text-on-surface-variant/50 shrink-0">{formatEventTime(event.created_at)}</span>
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${tone.dot}`} />
+              <span className={`text-[10px] uppercase font-mono px-1.5 py-px rounded shrink-0 ${tone.badge}`}>
+                {event.level}
+              </span>
+              <span>{eventTypeLabel(event.event_type)}</span>
             </p>
           );
         })}

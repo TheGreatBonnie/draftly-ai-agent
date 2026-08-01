@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from src.agents.runners.github_runner import build_github_state
 
 
@@ -100,3 +104,69 @@ class TestBuildGithubState:
             "repo": "myrepo",
             "issue_number": 42,
         }
+
+
+@pytest.mark.asyncio
+async def test_run_github_pipeline_propagates_workflow_id() -> None:
+    """Runner sets state.workflow_id, binds contextvars, and backfills doc link."""
+    import structlog
+
+    captured: dict = {}
+    mock_result = {"draft_content": "Draft docs", "human_decision": "approved", "doc_id": "doc-1"}
+    payload = _make_payload()
+
+    async def fake_ainvoke(state, config):
+        captured["state"] = state
+        captured["ctx"] = structlog.contextvars.get_contextvars()
+        return mock_result
+
+    with (
+        patch("src.database.get_pool", new_callable=AsyncMock),
+        patch("src.database.close_pool", new_callable=AsyncMock),
+        patch(
+            "src.agents.runners.github_runner.get_org_by_github",
+            new_callable=AsyncMock,
+        ) as mock_get_org,
+        patch(
+            "src.agents.runners.github_runner.store_github_installation",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "src.agents.runners.github_runner.store_github_workflow",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "src.agents.runners.github_runner.update_github_workflow_status",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "src.agents.runners.github_runner.link_workflow_to_document",
+            new_callable=AsyncMock,
+        ) as mock_link,
+        patch(
+            "src.agents.runners.github_runner.AsyncCockroachDBSaver",
+        ) as MockSaver,
+        patch("src.agents.runners.github_runner.build_hybrid_graph") as mock_build,
+    ):
+        mock_get_org.return_value = {"id": "org-1", "name": "Test Org"}
+
+        mock_checkpointer = AsyncMock()
+        mock_checkpointer.setup = AsyncMock()
+        mock_graph = AsyncMock()
+        mock_graph.ainvoke = fake_ainvoke
+        mock_saver_instance = AsyncMock()
+        mock_saver_instance.__aenter__ = AsyncMock(return_value=mock_checkpointer)
+        mock_saver_instance.__aexit__ = AsyncMock(return_value=False)
+        MockSaver.from_conn_string.return_value = mock_saver_instance
+        mock_build.return_value.compile.return_value = mock_graph
+
+        from src.agents.runners.github_runner import run_github_pipeline
+
+        await run_github_pipeline(payload, "test-token")
+
+    assert captured["state"]["workflow_id"] != ""
+    assert captured["ctx"].get("workflow_id") == captured["state"]["workflow_id"]
+    assert captured["ctx"].get("org_id") == "org-1"
+    mock_link.assert_awaited_once()
+    assert mock_link.await_args.args == (captured["state"]["workflow_id"], "doc-1")
+    assert "workflow_id" not in structlog.contextvars.get_contextvars()

@@ -129,3 +129,79 @@ async def test_run_discord_pipeline_calls_graph() -> None:
 
         # Runner should NOT send draft reply — publish_node handles that
         mock_reply.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_run_discord_pipeline_propagates_workflow_id() -> None:
+    """Runner sets state.workflow_id, binds contextvars, and backfills doc link."""
+    import structlog
+
+    captured: dict = {}
+    mock_result = {
+        "draft_content": "Draft docs",
+        "human_decision": "approved",
+        "doc_id": "doc-1",
+    }
+
+    async def fake_ainvoke(state, config):
+        captured["state"] = state
+        captured["ctx"] = structlog.contextvars.get_contextvars()
+        return mock_result
+
+    with (
+        patch("src.database.get_pool", new_callable=AsyncMock),
+        patch(
+            "src.memory.organizations.get_org_by_discord",
+            new_callable=AsyncMock,
+        ) as mock_get_org,
+        patch(
+            "src.memory.organizations.store_discord_workflow",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "src.memory.organizations.update_discord_workflow_status",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "src.memory.organizations.link_workflow_to_document",
+            new_callable=AsyncMock,
+        ) as mock_link,
+    ):
+        mock_get_org.return_value = {"id": "org1", "name": "Test Org"}
+
+        mock_checkpointer = AsyncMock()
+        mock_checkpointer.setup = AsyncMock()
+        mock_graph = AsyncMock()
+        mock_graph.ainvoke = fake_ainvoke
+
+        with (
+            patch(
+                "src.agents.runners.discord_runner.AsyncCockroachDBSaver"
+            ) as MockSaver,
+            patch("src.agents.runners.discord_runner.build_hybrid_graph") as mock_build,
+        ):
+            mock_saver_instance = AsyncMock()
+            mock_saver_instance.__aenter__ = AsyncMock(
+                return_value=mock_checkpointer
+            )
+            mock_saver_instance.__aexit__ = AsyncMock(return_value=False)
+            MockSaver.from_conn_string.return_value = mock_saver_instance
+            mock_build.return_value.compile.return_value = mock_graph
+
+            from src.agents.runners.discord_runner import run_discord_pipeline
+
+            await run_discord_pipeline(
+                guild_id="g1",
+                channel_id="ch1",
+                message_id="msg1",
+                thread_id="thread1",
+                text="How do I reset?",
+                user_id="user1",
+            )
+
+    assert captured["state"]["workflow_id"] != ""
+    assert captured["ctx"].get("workflow_id") == captured["state"]["workflow_id"]
+    assert captured["ctx"].get("org_id") == "org1"
+    mock_link.assert_awaited_once()
+    assert mock_link.await_args.args == (captured["state"]["workflow_id"], "doc-1")
+    assert "workflow_id" not in structlog.contextvars.get_contextvars()

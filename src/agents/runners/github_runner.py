@@ -9,6 +9,7 @@ from src.config import settings
 from src.integrations.github_app import post_issue_comment
 from src.memory.organizations import (
     get_org_by_github,
+    link_workflow_to_document,
     store_github_installation,
     store_github_workflow,
     update_github_workflow_status,
@@ -135,6 +136,7 @@ async def run_github_pipeline(payload: dict, installation_token: str) -> None:
             from uuid import uuid4
 
             workflow_id = str(uuid4())
+            state["workflow_id"] = workflow_id
             await store_github_workflow(
                 org_id=org_id,
                 workflow_id=workflow_id,
@@ -146,18 +148,25 @@ async def run_github_pipeline(payload: dict, installation_token: str) -> None:
 
             await update_github_workflow_status(workflow_id, "running")
 
-            result = await graph.ainvoke(state, config)  # type: ignore[call-overload]
+            structlog.contextvars.bind_contextvars(workflow_id=workflow_id, org_id=org_id)
+            try:
+                result = await graph.ainvoke(state, config)  # type: ignore[call-overload]
 
-            if result.get("human_decision") == "":
-                await update_github_workflow_status(workflow_id, "pending")
-                logger.info(
-                    "github_pipeline_paused",
-                    owner=owner,
-                    repo=repo_name,
-                    issue=issue["number"],
-                )
-            else:
-                await update_github_workflow_status(workflow_id, "completed")
+                if result.get("human_decision") == "":
+                    await update_github_workflow_status(workflow_id, "pending")
+                    logger.info(
+                        "github_pipeline_paused",
+                        owner=owner,
+                        repo=repo_name,
+                        issue=issue["number"],
+                    )
+                else:
+                    await update_github_workflow_status(workflow_id, "completed")
+
+                if result.get("doc_id"):
+                    await link_workflow_to_document(workflow_id, result["doc_id"])
+            finally:
+                structlog.contextvars.clear_contextvars()
 
     except Exception as e:
         logger.error("github_pipeline_failed", error=str(e))
