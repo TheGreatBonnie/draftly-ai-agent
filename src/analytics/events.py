@@ -74,8 +74,8 @@ class EventCollector:
         return event_dict
 
     def _build_record(self, event_dict: dict[str, Any]) -> dict[str, Any]:
-        org_id = _as_optional_str(event_dict.pop("org_id", None))
-        workflow_id = _as_optional_str(event_dict.pop("workflow_id", None))
+        org_id = _as_optional_str(event_dict.pop("org_id", None)) or None
+        workflow_id = _as_optional_str(event_dict.pop("workflow_id", None)) or None
         event_type = str(event_dict.pop("event", "unknown"))
         level = str(event_dict.pop("level", "info"))
         details = self._sanitize(

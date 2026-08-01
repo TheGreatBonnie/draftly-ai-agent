@@ -80,6 +80,16 @@ def test_processor_does_not_mutate_event_dict():
     assert event_dict == {"event": "e", "level": "info", "org_id": "org-1", "question": "How?"}
 
 
+def test_processor_coerces_empty_org_id_to_none():
+    collector = make_collector()
+    collector.processor(
+        None, "info", {"event": "e", "level": "info", "org_id": "", "workflow_id": ""}
+    )
+    record = collector._buffer[0]
+    assert record["org_id"] is None
+    assert record["workflow_id"] is None
+
+
 @pytest.mark.asyncio
 async def test_processor_respects_capture_disabled():
     collector = make_collector()
@@ -166,31 +176,38 @@ def test_configure_logging_installs_processor():
 
     from src.analytics import events as events_module
 
-    events_module.configure_logging()
-    processors = structlog.get_config()["processors"]
-    assert processors[-2] == events_module.collector.processor
-    assert isinstance(processors[-1], structlog.dev.ConsoleRenderer)
+    prev_config = structlog.get_config()
+    try:
+        events_module.configure_logging()
+        processors = structlog.get_config()["processors"]
+        assert processors[-2] == events_module.collector.processor
+        assert isinstance(processors[-1], structlog.dev.ConsoleRenderer)
+    finally:
+        structlog.configure(**prev_config)
 
 
 @pytest.mark.asyncio
 async def test_start_flusher_idempotent():
     from src.analytics import events as events_module
 
-    await events_module.stop_flusher()
-    await events_module.start_flusher()
-    first = events_module._flush_task
-    assert first is not None
-    await events_module.start_flusher()
-    assert events_module._flush_task is first
-    await events_module.stop_flusher()
-    assert events_module._flush_task is None
+    with (
+        patch.object(events_module, "collector", EventCollector(max_buffer_size=10)),
+        patch("src.analytics.events._store_events", new_callable=AsyncMock),
+    ):
+        await events_module.stop_flusher()
+        await events_module.start_flusher()
+        first = events_module._flush_task
+        assert first is not None
+        await events_module.start_flusher()
+        assert events_module._flush_task is first
+        await events_module.stop_flusher()
+        assert events_module._flush_task is None
 
 
 @pytest.mark.asyncio
 async def test_stop_flusher_flushes_pending():
     from src.analytics import events as events_module
 
-    await events_module.stop_flusher()
     pending = EventCollector(max_buffer_size=10)
     pending.processor(None, "info", {"event": "e1", "level": "info"})
 
@@ -209,16 +226,20 @@ async def test_start_flusher_restarts_after_task_completion():
 
     from src.analytics import events as events_module
 
-    await events_module.stop_flusher()
-    await events_module.start_flusher()
-    first = events_module._flush_task
-    assert first is not None
-    first.cancel()
-    try:
-        await first
-    except asyncio.CancelledError:
-        pass
-    await events_module.start_flusher()
-    assert events_module._flush_task is not None
-    assert events_module._flush_task is not first
-    await events_module.stop_flusher()
+    with (
+        patch.object(events_module, "collector", EventCollector(max_buffer_size=10)),
+        patch("src.analytics.events._store_events", new_callable=AsyncMock),
+    ):
+        await events_module.stop_flusher()
+        await events_module.start_flusher()
+        first = events_module._flush_task
+        assert first is not None
+        first.cancel()
+        try:
+            await first
+        except asyncio.CancelledError:
+            pass
+        await events_module.start_flusher()
+        assert events_module._flush_task is not None
+        assert events_module._flush_task is not first
+        await events_module.stop_flusher()
