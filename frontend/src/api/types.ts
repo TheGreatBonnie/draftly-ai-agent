@@ -92,6 +92,7 @@ export interface Doc {
   version: number;
   status: string;
   source_thread_id: string | null;
+  workflow_id: string | null;
   confidence_score: number;
   published_to: unknown;
   created_at: string;

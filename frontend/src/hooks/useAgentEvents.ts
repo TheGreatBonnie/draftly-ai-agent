@@ -5,7 +5,11 @@ import type { AgentEvent } from "../api/types";
 const DEFAULT_INTERVAL_MS = 3000;
 const MAX_EVENTS = 100;
 
-export function useAgentEvents(params?: AgentEventQuery, intervalMs: number = DEFAULT_INTERVAL_MS) {
+export function useAgentEvents(
+  params?: AgentEventQuery,
+  intervalMs: number = DEFAULT_INTERVAL_MS,
+  enabled: boolean = true,
+) {
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const paramsRef = useRef(params);
@@ -18,6 +22,7 @@ export function useAgentEvents(params?: AgentEventQuery, intervalMs: number = DE
     let active = true;
 
     const poll = async () => {
+      if (!enabled) return;
       try {
         const next = await getAgentEvents(paramsRef.current);
         if (!active) return;
@@ -35,7 +40,7 @@ export function useAgentEvents(params?: AgentEventQuery, intervalMs: number = DE
       active = false;
       clearInterval(interval);
     };
-  }, [intervalMs]);
+  }, [intervalMs, enabled]);
 
   return { events, loading };
 }
