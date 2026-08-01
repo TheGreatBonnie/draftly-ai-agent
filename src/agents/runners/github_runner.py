@@ -162,7 +162,7 @@ async def run_github_pipeline(payload: dict, installation_token: str) -> None:
                 structlog.contextvars.clear_contextvars()
 
     except Exception as e:
-        logger.error("github_pipeline_failed", error=str(e))
+        logger.error("github_pipeline_failed", error=str(e), exc_info=True)
         try:
             await post_error_comment(owner, repo_name, issue["number"], installation_token, str(e))
         except Exception:

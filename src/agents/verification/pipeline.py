@@ -1,6 +1,7 @@
 """Verification pipeline combining deterministic and rubric-based checks."""
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 import structlog
@@ -45,7 +46,7 @@ class VerificationResult:
 async def run_verification_pipeline(
     content: str,
     rubric_result: dict | None = None,
-    sources: list[dict] | None = None,
+    sources: Sequence[dict | str] | None = None,
 ) -> VerificationResult:
     """Run deterministic verification checks and combine with rubric results.
 

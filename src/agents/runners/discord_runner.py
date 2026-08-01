@@ -166,7 +166,7 @@ async def run_discord_pipeline(
                 structlog.contextvars.clear_contextvars()
 
     except Exception as e:
-        logger.error("discord_pipeline_failed", error=str(e))
+        logger.error("discord_pipeline_failed", error=str(e), exc_info=True)
         try:
             from src.integrations.discord import send_discord_message
 

@@ -186,7 +186,7 @@ async def run_slack_pipeline(
                 structlog.contextvars.clear_contextvars()
 
     except Exception as e:
-        logger.error("slack_pipeline_failed", error=str(e))
+        logger.error("slack_pipeline_failed", error=str(e), exc_info=True)
         try:
             from src.integrations.slack import send_slack_message
 
